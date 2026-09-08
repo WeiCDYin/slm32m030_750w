@@ -4,12 +4,7 @@
 #include "convert.h"
 #include "ntc.h"
 #include "tim.h"
-
-/* Interrupt-free critical section (Cortex-M0+), compiler-local: fault.c is not
- * part of FreeModbus, so it uses the same cpsid/cpsie pair directly instead of
- * pulling in port.h (which also defines the FreeModbus BOOL/TRUE/FALSE). */
-#define ENTER_CRITICAL_SECTION() __asm volatile("cpsid i" ::: "memory")
-#define EXIT_CRITICAL_SECTION()  __asm volatile("cpsie i" ::: "memory")
+#include "port.h"
 
 /* Limit enable mask for a [poll] channel's window edges, OR-ed into
  * fault_id_t.fault_msk at register time. */
@@ -106,10 +101,10 @@ static uint32_t fault_poll(uint16_t id, int32_t value)
             e->fault_detect_cnt++;
         if (e->fault_detect_cnt >= e->fault_detect_threshold)
         {
-            __disable_irq();
+            ENTER_CRITICAL_SECTION();
             f->fault_curr |= (uint32_t)1u << id;
             f->fault_latch |= (uint32_t)1u << id; /* sticky history: record the trip */
-            __enable_irq();
+            EXIT_CRITICAL_SECTION();
         }
     }
     else if (f->fault_curr & ((uint32_t)1u << id))
@@ -120,9 +115,9 @@ static uint32_t fault_poll(uint16_t id, int32_t value)
             e->fault_recover_cnt++;
         if (e->fault_recover_cnt >= e->fault_recover_threshold)
         {
-            __disable_irq();
+            ENTER_CRITICAL_SECTION();
             f->fault_curr &= ~((uint32_t)1u << id);
-            __enable_irq();
+            EXIT_CRITICAL_SECTION();
             e->fault_detect_cnt = 0;
         }
     }
@@ -285,10 +280,10 @@ void fault_set(uint16_t id)
     f->fault_id[id].fault_detect_cnt  = 0;
     f->fault_id[id].fault_recover_cnt = 0;
     /* Only the shared bit fields need the section (see the note above). */
-    __disable_irq();
+    ENTER_CRITICAL_SECTION();
     f->fault_curr |= (uint32_t)1u << id;
     f->fault_latch |= (uint32_t)1u << id; /* sticky history: record the trip */
-    __enable_irq();
+    EXIT_CRITICAL_SECTION();
 }
 
 uint32_t fault_get(void)
@@ -305,10 +300,10 @@ void fault_clr_all(void)
 {
     fault_t *f = &g_fault;
 
-    __disable_irq();
+    ENTER_CRITICAL_SECTION();
     f->fault_curr  = 0;
     f->fault_latch = 0; /* operator acknowledge also drops the sticky history */
-    __enable_irq();
+    EXIT_CRITICAL_SECTION();
     for (uint16_t i = 0; i < FAULT_ID_MAX; i++)
     {
         f->fault_id[i].fault_detect_cnt  = 0;
@@ -320,7 +315,7 @@ void fault_latch_clr(void)
 {
     fault_t *f = &g_fault;
 
-    __disable_irq();
+    ENTER_CRITICAL_SECTION();
     f->fault_latch = 0;
-    __enable_irq();
+    EXIT_CRITICAL_SECTION();
 }
