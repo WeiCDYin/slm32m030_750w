@@ -18,10 +18,10 @@ extern "C"
 /* ===== 0. input power ===== */
 #define AC_PEAK_WIN_MS         (200u) /* 10 x 50 Hz mains cycles */
 #define AC_INPUT_VOLTAGE_RATED (381.0f)
-#define AC_INPUT_VOLTAGE_MIN   (AC_INPUT_VOLTAGE_RATED * 0.8f * 1.414f) /* 431.0 V */
-#define AC_INPUT_VOLTAGE_MAX   (AC_INPUT_VOLTAGE_RATED * 1.2f * 1.414f) /* 646.5 V */
-#define DC_VOLTAGE_MIN         (AC_INPUT_VOLTAGE_RATED * 0.8f * 1.414f) /* 431.0 V */
-#define DC_VOLTAGE_MAX         (AC_INPUT_VOLTAGE_RATED * 1.2f * 1.414f) /* 646.5 V */
+#define AC_INPUT_VOLTAGE_MIN   (AC_INPUT_VOLTAGE_RATED * 0.8f * 1.414f) /* 431 V */
+#define AC_INPUT_VOLTAGE_MAX   (AC_INPUT_VOLTAGE_RATED * 1.2f * 1.414f) /* 646 V */
+#define DC_VOLTAGE_MIN         (AC_INPUT_VOLTAGE_RATED * 0.7f * 1.414f) /* 377 V */
+#define DC_VOLTAGE_MAX         (AC_INPUT_VOLTAGE_RATED * 1.2f * 1.414f) /* 646 V */
 
 /* power-delay pin PB7: pin control only, no alarm */
 #define DC_DELAY_PIN_ON_THRESH_MV ((uint32_t)(DC_VOLTAGE_MIN * 0.8f * 1000.0f)) /* raise at 0.8 * UV [mV] */
@@ -127,8 +127,8 @@ extern "C"
  *                 by CTRL=3 Recovery, not gated by FAULT_DETECT_ENABLE.
  * bit8~31 poll: window *_LIMIT + *_DETECT_CNT / *_RECOVER_CNT (1 ms polls). */
 #define FAULT_DETECT_ENABLE        (1) /* master switch for poll channels */
-#define DC_IN_OVER_VOLTAGE_ENABLE  (0)
-#define DC_IN_UNDER_VOLTAGE_ENABLE (0)
+#define DC_IN_OVER_VOLTAGE_ENABLE  (1)
+#define DC_IN_UNDER_VOLTAGE_ENABLE (1)
 #define POWER_OVER_LOAD_ENABLE     (0)
 #define MOTOR_OVER_SPEED_ENABLE    (0)
 #define TEMPERATURE_OVER_ENABLE    (1)
