@@ -48,6 +48,7 @@ enum
     FAULT_ID_MOTOR_LOST_PHASE       = 3, // 0x00000008, [one shot] motor lost phase
     FAULT_ID_ZERO_OFFSET_ERROR      = 4, // 0x00000010, [one shot] phase offset error
     FAULT_ID_USER_SET_ERROR         = 5, // 0x00000020, [one shot] user setting error state by FAULT cmd
+    FAULT_ID_FOC_STARTUP_ERROR      = 6, // 0x00000040, [one shot] foc startup error
 
     // [poll], bit8~bit31
     FAULT_ID_DC_OVER_VOLTAGE  = 8,  // 0x00000100, [poll] dc over voltage

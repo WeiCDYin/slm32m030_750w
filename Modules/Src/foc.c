@@ -3,6 +3,8 @@
 #include "conv.h"
 #include "convert.h"
 #include "cmdbus.h"
+#include "fault.h"
+#include "user_config.h"
 
 // FOC loop periods [s], derived from the rates configured in main.h
 #define TS_FAST (1.0f / FOC_FAST_HZ)
@@ -103,6 +105,26 @@ void foc_1ms_proc(void)
 {
     // sc_step or power_step
     mc_slow_step(g_hsm_ptr->mc);
+
+    /* Startup timeout watchdog: while the IF->FOC sequence is still in
+     * RESYNC/STARTUP it has FOC_STARTUP_TIMEOUT_MS to reach SENSORLESS_FOC.
+     * If it does not hand over within that window, the observer never locked
+     * and the run is latched as a startup fault. The counter clears the moment
+     * the drive reaches SENSORLESS_FOC or falls back to IDLE. */
+    static uint16_t startup_ms = 0;
+    if_foc_stage_t  stage      = g_hsm_ptr->mc->if_foc_stage;
+    if (stage == RESYNC || stage == STARTUP)
+    {
+        if (++startup_ms >= FOC_STARTUP_TIMEOUT_MS)
+        {
+            startup_ms = 0;
+            fault_set(FAULT_ID_FOC_STARTUP_ERROR);
+        }
+    }
+    else
+    {
+        startup_ms = 0;
+    }
 }
 
 void foc_poll_proc(uint8_t state)

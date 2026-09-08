@@ -144,6 +144,8 @@ extern "C"
 /* id 2: DC phase over current SW */
 #define SW_PHASE_OC_TRIP_A  (8.0f) /* dc phase software over current [A] */
 #define SW_PHASE_OC_TRIP_PU ((q15_t)((SW_PHASE_OC_TRIP_A / I_BASE_A) * Q15_ONE + 0.5f))
+/* id 6: FOC start timeout */
+#define FOC_STARTUP_TIMEOUT_MS (5000u) /* startup sequence (RESYNC/STARTUP -> sensorless FOC) */
 
 /* id 8: DC bus over voltage (sample: udc_mv [mV]) */
 #define DC_IN_OVER_VOLTAGE_LIMIT       (DC_VOLTAGE_MAX * 1000.0f)
