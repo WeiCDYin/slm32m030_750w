@@ -54,6 +54,12 @@ extern "C"
  * the SATURN register enum derived from it lives in the BSP afe.h. 4/8/16/32 */
 #define AFE_PGA_GAIN_NUM (8u)
 
+/* post-conversion current gain compensation, applied to the pu phase/bus
+ * currents in the ADC ISR (slm32m030_it.c). Float multiple: 1.2f = x1.2,
+ * 1.0f = no extra gain. Implemented as Q8 fixed-point (x * N >> 8). */
+#define CURRENT_GAIN_COMP    (1.2f)
+#define CURRENT_GAIN_Q8      ((int32_t)(CURRENT_GAIN_COMP * 256.0f + 0.5f))
+
 /* CMDBUS_CALI phase-current zero offset: zero-current code = 12-bit mid-scale */
 #define CALI_OFFSET_NOMINAL (2048) /* zero-current bias [adc count] */
 #define CALI_OFFSET_TOL     (100)  /* allowed |offset - nominal| [adc count] */
@@ -186,8 +192,6 @@ typedef struct
  * zero offsets through state_task_adc_off_ib/ic(). */
 extern mc_t                g_mc;
 extern monitor_parameter_t g_monitor_para;
-extern volatile uint32_t   g_isr_cyc;
-extern volatile uint32_t   g_isr_cyc_max;
 
 #ifdef __cplusplus
 }

@@ -1,11 +1,10 @@
-#include "bsp_hal.h"
-#include "user_config.h"
-#include "state_task.h"
 #include "ad.h"
+#include "bsp_hal.h"
+#include "convert.h"
+#include "state_task.h"
 #include "tim.h"
 #include "uart.h"
-#include "convert.h"
-#include "iwdg.h"
+#include "user_config.h"
 
 /* DMA sink for the SEQ1 conversions: one raw code per ADC_SEQ1_* channel,
  * filled by the ADC DMA every carrier frame (enum order == channel order). */
@@ -13,7 +12,7 @@ volatile uint32_t g_adc_seq1_code[ADC_SEQ1_COUNT];
 
 extern state_para_t g_state;
 /******************************************************************************/
-/*           Cortex-M0+ Processor Interruption and Exception Handlers          */
+/*           Cortex-M0+ Processor Interruption and Exception Handlers */
 /******************************************************************************/
 void NMI_Handler(void)
 {
@@ -61,10 +60,14 @@ void TIM1_BRK_UP_TRG_COM_IRQHandler(void)
  *        Handled inline: convert raw codes to pu, hand the frame to the
  *        state task, push the CCR it returns. Nothing else runs here.
  */
+extern volatile uint32_t g_isr_cyc;
+extern volatile uint32_t g_isr_cyc_max;
+
 void DMA1_Channel0_5_IRQHandler(void)
 {
     DMA_HandleTypeDef *hdma = g_adc_handle.hdmaSeq1;
-    uint32_t           ch   = 0x1U << hdma->ChannelNum;
+
+    uint32_t ch = 0x1U << hdma->ChannelNum;
 
     if (__HAL_DMA_GET_INTTCSTA_FLAG(hdma, ch) != RESET)
     {
@@ -79,9 +82,9 @@ void DMA1_Channel0_5_IRQHandler(void)
         g_state.udc_meas = udc_code_to_pu((int32_t)adc_get_code(ADC_SEQ1_V_DC));
 
         /* gain compensation */
-        g_state.ib_meas  = (q15_t)(((int32_t)g_state.ib_meas * 307 >> 8) + 149); /* 1.2 ~ 307.2 >> 8 */
-        g_state.ic_meas  = (q15_t)(((int32_t)g_state.ic_meas * 307 >> 8) + 146);
-        g_state.idc_meas = (q15_t)(((int32_t)g_state.idc_meas * 307 >> 8) + 146);
+        g_state.ib_meas  = (q15_t)(((int32_t)g_state.ib_meas * CURRENT_GAIN_Q8 >> 8));
+        g_state.ic_meas  = (q15_t)(((int32_t)g_state.ic_meas * CURRENT_GAIN_Q8 >> 8));
+        g_state.idc_meas = (q15_t)(((int32_t)g_state.idc_meas * CURRENT_GAIN_Q8 >> 8));
         g_state.ia_meas  = q15_sat(-g_state.ib_meas - g_state.ic_meas);
 
         /* state task: cali/charge timing + (when RUNNING) OC, poke, FOC -> ccr */
