@@ -184,7 +184,9 @@ static void entry_cali(void)
 
 static void exit_cali(void)
 {
+    ENTER_CRITICAL_SECTION();
     g_state.cali_active = 0;
+    EXIT_CRITICAL_SECTION();
 }
 
 static bool cali_offset_ok(void)
@@ -237,9 +239,11 @@ static void entry_charge(void)
 
 static void exit_charge(void)
 {
+    ENTER_CRITICAL_SECTION();
     g_state.charge_active = 0;
     tim_pwm_disable(); /* MOE off: all outputs to idle (all FETs off) */
     tim_pwm_restore(); /* re-enable CHx + CHxN of all 3 phases for FOC */
+    EXIT_CRITICAL_SECTION();
 }
 
 static void run_charge(void)
