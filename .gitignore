@@ -1,0 +1,6 @@
+*.uvguix*
+*/Objects/*
+*/Listings/*
+*.scvd*
+*JlinkLog.txt*
+*.uvoptx

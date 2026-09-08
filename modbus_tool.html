@@ -1,0 +1,892 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Modbus RTU 控制台 - SLM32M030_750W</title>
+<!--
+  Modbus RTU serial console (single file, no external deps).
+  Requires the browser Web Serial API: Chrome / Edge 87+, opened via https://
+  or http://localhost (navigator.serial is unavailable on file://).
+  Register map matches firmware modbus.h (mb_register_id):
+    0x0000 CTRL         rw  0:Stop  1:Start  2:Fault  3:Recovery(clear faults + reset)
+    0x0001 MST_STATE    r   main state machine: 0=INIT 1=IDLE(Stop)
+                            2=CALI 3=CHARGE 4=RUNNING 5=FAULT (latched, needs CTRL=3)
+    0x0002 FAULT_LATCH1 r   sticky fault history, LOW 16 bits; every fault
+                            id that ever tripped; NOT cleared when the fault
+                            recovers, only by CTRL=3 (Recovery)
+    0x0003 FAULT_LATCH2 r   sticky fault history, HIGH 16 bits (bits 16-31)
+    0x0004 REF_SPEED    rw  speed setpoint, rpm (dec; +-1460 = +-1.0 pu)
+    0x0005 ACT_SPEED    r   actual speed, rpm
+    0x0006 REF_POWER    rw  power setpoint, W
+    0x0007 ACT_POWER    r   actual power, W (DC bus V * I)
+    0x0008 ACT_TEMP     r   NTC temperature, deg C (signed)
+    0x0010 MODE         rw  run mode (debug): 1=DUTY 2=VV 3=VF 4=CV 5=IF 6=IF_FOC
+    0x0011 DUTY_A       rw  phase-A duty, percent 0~100 (debug)
+    0x0012 DUTY_B       rw  phase-B duty, percent 0~100 (debug)
+    0x0013 DUTY_C       rw  phase-C duty, percent 0~100 (debug)
+    0x0014 MAG          rw  vector magnitude, percent 0~100 (debug)
+    0x0015 ANG          rw  vector angle, deg 0~360 (debug)
+  rw registers get an input + write button; r registers are read-only (the
+  firmware rejects writes to them).
+-->
+<style>
+  :root { --bg:#e8f5e9; --panel:#fbfffb; --line:#cfe6d0; --fg:#2e3d2f; --dim:#5f6f60;
+          --ok:#1e7a45; --warn:#a86e00; --err:#c0392b; --acc:#2e7d32;
+          --ctrl:#e4f2e5; --ctrl-hover:#d4e8d6; --input-bg:#ffffff; --log-bg:#f4faf4; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:13px/1.4 "Microsoft YaHei",system-ui,sans-serif; }
+  header { padding:8px 16px; background:linear-gradient(90deg,#f0faf1,#fbfffb); border-bottom:1px solid var(--line);
+           display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
+  header h1 { font-size:15px; margin:0; }
+  .badge { padding:2px 10px; border-radius:10px; font-size:12px; border:1px solid var(--line); color:var(--dim); }
+  .badge.on  { color:var(--ok);  border-color:var(--ok);  background:#e0f2e4; }
+  .badge.off { color:var(--dim); background:var(--ctrl); }
+  main { padding:10px 16px; display:grid; grid-template-columns:minmax(0,1fr) 380px 320px; gap:12px; max-width:1600px;
+         align-items:start; }
+  #leftCol { display:grid; gap:10px; min-width:0; }
+  #col3 { display:flex; flex-direction:column; gap:10px; min-width:0; position:sticky; top:10px;
+          max-height:calc(100vh - 70px); overflow:auto; }
+  #secRef { position:sticky; top:10px; max-height:calc(100vh - 70px); overflow:auto; }
+  #secLog { display:flex; flex-direction:column; min-height:220px; flex:1; min-height:0; }
+  #secLog h2 { display:flex; justify-content:space-between; align-items:center; }
+  #log { flex:1; min-height:160px; }
+  section { background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:10px 12px;
+            box-shadow:0 1px 3px rgba(20,30,50,.06); }
+  section h2 { margin:0 0 6px; font-size:13px; color:var(--dim); letter-spacing:1px; }
+  .row { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin:5px 0; }
+  label { color:var(--dim); font-size:12px; }
+  select, input[type=number], input[type=text] {
+    background:var(--input-bg); color:var(--fg); border:1px solid var(--line); border-radius:6px;
+    padding:4px 8px; font-size:12px; min-width:80px;
+  }
+  select:focus, input:focus { outline:none; border-color:var(--acc); }
+  input[type=number] { width:96px; }
+  button { background:var(--ctrl); color:var(--fg); border:1px solid var(--line); border-radius:6px;
+           padding:5px 10px; font-size:12px; cursor:pointer; transition:background .15s; }
+  button:hover { background:var(--ctrl-hover); }
+  button:disabled { opacity:.45; cursor:not-allowed; }
+  button.primary { background:var(--acc); border-color:var(--acc); color:#fff; }
+  button.primary:hover { background:#276b29; }
+  button.danger  { background:#fdeaea; border-color:#eebcbc; color:var(--err); }
+  button.danger:hover { background:#fad6d6; }
+  button.small { padding:3px 8px; font-size:11px; }
+  #secCtrl { display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); column-gap:18px; }
+  #secCtrl h2 { grid-column:1 / -1; }
+  #ctrlLeft, #ctrlRight { display:grid; min-width:0; }
+  .reg { display:grid; grid-template-columns:160px 1fr; gap:4px 10px; align-items:center;
+         padding:5px 0; border-bottom:1px dashed var(--line); }
+  .reg:last-child { border-bottom:none; }
+  .reg .name { font-weight:600; font-size:12px; }
+  .reg .desc { color:var(--dim); font-size:11px; }
+  .reg .note { color:var(--dim); font-size:11px; opacity:.75; }
+  .reg .val  { color:var(--ok); font-size:11px; min-width:110px; }
+  .val-in { flex:1; min-width:0; background:var(--ctrl); color:var(--fg);
+            border:1px solid var(--line); border-radius:6px; padding:4px 8px;
+            font-size:12px; font-family:Consolas,monospace; }
+  .val-in[readonly] { color:var(--dim); cursor:default; }
+  #pollState { min-width:80px; }
+  #log { font-family:Consolas,monospace; font-size:11px; height:auto; overflow:auto;
+         background:var(--log-bg); border:1px solid var(--line); border-radius:6px; padding:6px;
+         color:var(--fg); }
+  #log div { white-space:pre-wrap; word-break:break-all; }
+  .t-ok { color:var(--ok); } .t-warn { color:var(--warn); } .t-err { color:var(--err); } .t-dim { color:var(--dim); }
+  kbd { background:var(--ctrl); border:1px solid var(--line); border-radius:4px; padding:0 6px; font-size:12px; }
+  #secRef h2 { margin:0 0 6px; font-size:13px; color:var(--dim); letter-spacing:1px; }
+  .ref-scroll { overflow-x:auto; } /* horizontal scrollbar when a table is wider than the panel */
+  .ref { border-collapse:collapse; font-size:11px; margin-bottom:8px; width:max-content; min-width:100%; }
+  .ref:last-child { margin-bottom:0; }
+  .ref caption { text-align:left; font-weight:600; color:var(--acc); padding:3px 0; font-size:11px; }
+  .ref th, .ref td { border:1px solid var(--line); padding:3px 8px; text-align:left; vertical-align:top; white-space:nowrap; }
+  .ref th { background:var(--ctrl); color:var(--dim); font-weight:600; }
+  .ref td.b { font-family:Consolas,monospace; color:var(--dim); }
+  .grp td { background:var(--log-bg); color:var(--dim); font-weight:600; }
+  @media (max-width: 1300px) {
+    main { grid-template-columns:1fr; }
+    #secCtrl { grid-template-columns:1fr; }
+    #col3, #secRef { position:static; max-height:none; overflow:visible; }
+    #log { min-height:160px; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>Modbus RTU 控制台 <span style="color:var(--dim);font-size:12px;">SLM32M030_750W</span></h1>
+  <span id="connBadge" class="badge off">未连接</span>
+  <span id="devInfo" class="t-dim" style="font-size:12px;"></span>
+</header>
+
+<main>
+  <div id="leftCol">
+  <!-- ===================== Serial connection ===================== -->
+  <section id="secConn">
+    <h2>串口连接</h2>
+    <div class="row">
+      <label>从站地址</label><input type="number" id="slaveAddr" value="1" min="1" max="247" style="width:70px;">
+      <label>波特率</label>
+      <select id="baud">
+        <option value="9600" selected>9600</option>
+        <option value="19200">19200</option>
+        <option value="38400">38400</option>
+        <option value="57600">57600</option>
+        <option value="115200">115200</option>
+      </select>
+      <label>校验</label>
+      <select id="parity"><option value="none" selected>无 (8N1)</option><option value="even">偶 (8E1)</option><option value="odd">奇 (8O1)</option></select>
+      <button id="btnConnect" class="primary">连接串口</button>
+      <button id="btnDisconnect" class="danger" disabled>断开</button>
+    </div>
+    <div class="row" style="border-top:1px dashed var(--line); margin-top:6px; padding-top:6px;">
+      <label style="display:flex;align-items:center;gap:4px;cursor:pointer">
+        <input type="checkbox" id="pollEnable" checked style="width:auto;min-width:0"> 周期读取
+      </label>
+      <label>间隔</label>
+      <input type="number" id="pollInterval" value="1000" min="100" max="60000" step="100" style="width:90px;">
+      <span class="t-dim" style="font-size:12px;">ms</span>
+      <span id="pollState" class="t-dim" style="font-size:12px;">已停止</span>
+    </div>
+  </section>
+
+  <!-- ===================== Control buttons (one per register) ===================== -->
+  <section id="secCtrl">
+    <h2>控制按钮（写后自动读回刷新）</h2>
+
+            <div id="ctrlLeft"><!-- 用户寄存器 0x0000-0x0007 -->
+    <div class="reg">
+      <div>
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" class="pollChk" data-addr="0" style="width:auto;min-width:0"> <span class="name">0x0000</span></label>
+        <div class="desc">CTRL · 控制：0 停止 / 1 启动 / 2 故障 / 3 恢复 · rw</div>
+        <div class="note">写后立即生效；故障=切入 FAULT 状态，恢复=清故障+复位参数</div>
+      </div>
+      <div class="row" style="margin:0">
+        <select id="ctrlSel" style="flex:1;min-width:0;">
+          <option value="0">停止 (0)</option>
+          <option value="1">启动 (1)</option>
+          <option value="2">故障 (2)</option>
+          <option value="3">恢复 (3)</option>
+        </select>
+        <button id="btnCtrl" class="primary">发送</button>
+        <button id="btnReadCtrl">读</button>
+      </div>
+    </div>
+    <div class="reg">
+      <div>
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" class="pollChk" data-addr="1" checked style="width:auto;min-width:0"> <span class="name">0x0001</span></label>
+        <div class="desc">MST_STATE · 主状态机状态 · r</div>
+        <div class="note">0=初始化 1=待机 2=零点标定 3=预充电 4=运行 5=故障（锁存）</div>
+      </div>
+
+      <div class="row" style="margin:0">
+        <input type="text" class="val-in" id="valMstState" readonly value="-">
+        <button id="btnReadMstState">读</button>
+      </div>
+    </div>
+    <div class="reg">
+      <div>
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" class="pollChk" data-addr="2" checked style="width:auto;min-width:0"> <span class="name">0x0002</span></label>
+        <div class="desc">FAULT_LATCH1 · 历史故障锁存码（低 16 位） · r</div>
+        <div class="note">记录曾发生的所有故障位；故障恢复不清除，仅 CTRL=3 恢复清除</div>
+      </div>
+
+      <div class="row" style="margin:0">
+        <input type="text" class="val-in" id="valFaultLatch1" readonly value="-">
+        <button id="btnReadFaultLatch1">读</button>
+      </div>
+    </div>
+    <div class="reg">
+      <div>
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" class="pollChk" data-addr="3" checked style="width:auto;min-width:0"> <span class="name">0x0003</span></label>
+        <div class="desc">FAULT_LATCH2 · 历史故障锁存码（高 16 位） · r</div>
+        <div class="note">与 0x0002 合成 32 位锁存码；仅 CTRL=3 恢复清除</div>
+      </div>
+
+      <div class="row" style="margin:0">
+        <input type="text" class="val-in" id="valFaultLatch2" readonly value="-">
+        <button id="btnReadFaultLatch2">读</button>
+      </div>
+    </div>
+    <div class="reg">
+      <div>
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" class="pollChk" data-addr="4" style="width:auto;min-width:0"> <span class="name">0x0004</span></label>
+        <div class="desc">REF_SPEED · 速度给定 rpm（±1460 = ±1.0pu） · rw</div>
+        <div class="note">负值反转</div>
+      </div>
+      <div class="row" style="margin:0">
+        <input type="number" id="refSpeedVal" value="0" min="-1460" max="1460" step="10" style="flex:1;min-width:0;">
+        <span class="t-dim" style="font-size:12px;">rpm</span>
+        <button id="btnRefSpeed" class="primary">设置</button>
+        <button id="btnReadRefSpeed">读</button>
+      </div>
+    </div>
+    <div class="reg">
+      <div>
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" class="pollChk" data-addr="5" checked style="width:auto;min-width:0"> <span class="name">0x0005</span></label>
+        <div class="desc">ACT_SPEED · 实际转速 rpm · r</div>
+        <div class="note">固件按观测器转速刷新</div>
+      </div>
+
+      <div class="row" style="margin:0">
+        <input type="text" class="val-in" id="valActSpeed" readonly value="-">
+        <button id="btnReadActSpeed">读</button>
+      </div>
+    </div>
+    <div class="reg">
+      <div>
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" class="pollChk" data-addr="6" style="width:auto;min-width:0"> <span class="name">0x0006</span></label>
+        <div class="desc">REF_POWER · 功率给定 W · rw</div>
+        <div class="note">应用层消费</div>
+      </div>
+      <div class="row" style="margin:0">
+        <input type="number" id="refPowerVal" value="0" min="0" max="65535" step="10" style="flex:1;min-width:0;">
+        <span class="t-dim" style="font-size:12px;">W</span>
+        <button id="btnRefPower" class="primary">设置</button>
+        <button id="btnReadRefPower">读</button>
+      </div>
+    </div>
+    <div class="reg">
+      <div>
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" class="pollChk" data-addr="7" checked style="width:auto;min-width:0"> <span class="name">0x0007</span></label>
+        <div class="desc">ACT_POWER · 实际功率 W · r</div>
+        <div class="note">母线 V×I 估算</div>
+      </div>
+
+      <div class="row" style="margin:0">
+        <input type="text" class="val-in" id="valActPower" readonly value="-">
+        <button id="btnReadActPower">读</button>
+      </div>
+    </div>
+    <div class="reg">
+      <div>
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" class="pollChk" data-addr="8" checked style="width:auto;min-width:0"> <span class="name">0x0008</span></label>
+        <div class="desc">ACT_TEMP · NTC 实际温度 °C · r（带符号）</div>
+        <div class="note">温度范围 -40~120 °C</div>
+      </div>
+
+      <div class="row" style="margin:0">
+        <input type="text" class="val-in" id="valActTemp" readonly value="-">
+        <button id="btnReadActTemp">读</button>
+      </div>
+    </div>
+    </div><!-- /ctrlLeft -->
+
+    <div id="ctrlRight"><!-- 调试寄存器 0x0010-0x0014 -->
+    <div class="reg">
+      <div>
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" class="pollChk" data-addr="16" style="width:auto;min-width:0"> <span class="name">0x0010</span></label>
+        <div class="desc">MODE · 运行模式 1~6 · rw（调试）</div>
+        <div class="note">下次启动生效</div>
+      </div>
+      <div class="row" style="margin:0">
+        <select id="modeSel" style="flex:1;min-width:0;">
+          <option value="1">DUTY (1)</option>
+          <option value="2">VV (2)</option>
+          <option value="3">VF (3)</option>
+          <option value="4">CV (4)</option>
+          <option value="5">IF (5)</option>
+          <option value="6">IF_FOC (6)</option>
+        </select>
+        <button id="btnMode" class="primary">设置</button>
+        <button id="btnReadMode">读</button>
+      </div>
+    </div>
+    <div class="reg">
+      <div>
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" class="pollChk" data-addr="17" style="width:auto;min-width:0"> <span class="name">0x0011</span></label>
+        <div class="desc">DUTY_A · A 相占空比 % · rw（调试）</div>
+        <div class="note">0~100</div>
+      </div>
+      <div class="row" style="margin:0">
+        <input type="number" id="dutyAVal" value="0" min="0" max="100" step="1" style="flex:1;min-width:0;">
+        <span class="t-dim" style="font-size:12px;">%</span>
+        <button id="btnDutyA" class="primary">设置</button>
+        <button id="btnReadDutyA">读</button>
+      </div>
+    </div>
+    <div class="reg">
+      <div>
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" class="pollChk" data-addr="18" style="width:auto;min-width:0"> <span class="name">0x0012</span></label>
+        <div class="desc">DUTY_B · B 相占空比 % · rw（调试）</div>
+        <div class="note">0~100</div>
+      </div>
+      <div class="row" style="margin:0">
+        <input type="number" id="dutyBVal" value="0" min="0" max="100" step="1" style="flex:1;min-width:0;">
+        <span class="t-dim" style="font-size:12px;">%</span>
+        <button id="btnDutyB" class="primary">设置</button>
+        <button id="btnReadDutyB">读</button>
+      </div>
+    </div>
+    <div class="reg">
+      <div>
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" class="pollChk" data-addr="19" style="width:auto;min-width:0"> <span class="name">0x0013</span></label>
+        <div class="desc">DUTY_C · C 相占空比 % · rw（调试）</div>
+        <div class="note">0~100</div>
+      </div>
+      <div class="row" style="margin:0">
+        <input type="number" id="dutyCVal" value="0" min="0" max="100" step="1" style="flex:1;min-width:0;">
+        <span class="t-dim" style="font-size:12px;">%</span>
+        <button id="btnDutyC" class="primary">设置</button>
+        <button id="btnReadDutyC">读</button>
+      </div>
+    </div>
+    <div class="reg">
+      <div>
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" class="pollChk" data-addr="20" style="width:auto;min-width:0"> <span class="name">0x0014</span></label>
+        <div class="desc">MAG · 矢量幅值 % · rw（调试）</div>
+        <div class="note">VV/CV 模式有效</div>
+      </div>
+      <div class="row" style="margin:0">
+        <input type="number" id="magVal" value="0" min="0" max="100" step="1" style="flex:1;min-width:0;">
+        <span class="t-dim" style="font-size:12px;">%</span>
+        <button id="btnMag" class="primary">设置</button>
+        <button id="btnReadMag">读</button>
+      </div>
+    </div>
+
+    <div class="reg">
+      <div>
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" class="pollChk" data-addr="21" style="width:auto;min-width:0"> <span class="name">0x0015</span></label>
+        <div class="desc">ANG · 矢量角度 ° · rw（调试）</div>
+        <div class="note">VV/CV 模式有效；VV 下固件自动回退 90°</div>
+      </div>
+      <div class="row" style="margin:0">
+        <input type="number" id="angVal" value="0" min="0" max="360" step="1" style="flex:1;min-width:0;">
+        <span class="t-dim" style="font-size:12px;">°</span>
+        <button id="btnAng" class="primary">设置</button>
+        <button id="btnReadAng">读</button>
+      </div>
+    </div>
+    </div><!-- /ctrlRight -->
+  </section>
+
+  </div><!-- /leftCol -->
+
+  <!-- ===================== Middle column: field reference ===================== -->
+  <section id="secRef">
+    <h2>字段含义</h2>
+    <div class="ref-scroll">
+    <table class="ref">
+      <caption>0x0001 MST_STATE（主状态机）</caption>
+      <tr><th>值</th><th>名称</th><th>含义</th></tr>
+      <tr><td class="b">0</td><td>INIT</td><td>上电初始化，自动进入 IDLE</td></tr>
+      <tr><td class="b">1</td><td>IDLE</td><td>待机，等待启动命令</td></tr>
+      <tr><td class="b">2</td><td>CALI</td><td>启动前两相电流零点标定（约 128 载波周期），合格转 CHARGE，不合格转 FAULT</td></tr>
+      <tr><td class="b">3</td><td>CHARGE</td><td>自举预充电：三相下管导通若干载波周期（期间屏蔽过流保护），完成转 RUNNING</td></tr>
+      <tr><td class="b">4</td><td>RUNNING</td><td>运行中</td></tr>
+      <tr><td class="b">5</td><td>FAULT</td><td>故障锁存，需 CTRL=3 恢复</td></tr>
+    </table>
+    </div>
+    <div class="ref-scroll">
+    <table class="ref">
+      <caption>0x0002 / 0x0003 FAULT_LATCH（历史故障位，1=曾发生；仅 CTRL=3 清除）</caption>
+      <tr><th>Bit</th><th>故障名</th><th>含义</th></tr>
+      <tr class="grp"><td colspan="3">单次故障（bit0–7，硬件/ISR 立即锁存）</td></tr>
+      <tr><td class="b">0</td><td>HW_DC_OVER_CURRENT</td><td>硬件母线过流（TIM1 Break / DAC 比较器）</td></tr>
+      <tr><td class="b">1</td><td>SW_DC_OVER_CURRENT</td><td>软件母线过流（预留）</td></tr>
+      <tr><td class="b">2</td><td>SW_PHASE_OVER_CURRENT</td><td>软件相电流过流（载波 ISR）</td></tr>
+      <tr><td class="b">3</td><td>MOTOR_LOST_PHASE</td><td>电机缺相（预留）</td></tr>
+      <tr><td class="b">4</td><td>ZERO_OFFSET_ERROR</td><td>电流零点标定超差（偏移远离 2048）</td></tr>
+      <tr><td class="b">5</td><td>USER_SET_ERROR</td><td>用户下发故障指令（CTRL=2）</td></tr>
+      <tr><td class="b">6–7</td><td>—</td><td>保留</td></tr>
+      <tr class="grp"><td colspan="3">轮询故障（bit8–17，1ms 防抖检测）</td></tr>
+      <tr><td class="b">8</td><td>DC_OVER_VOLTAGE</td><td>母线过压</td></tr>
+      <tr><td class="b">9</td><td>DC_UNDER_VOLTAGE</td><td>母线欠压</td></tr>
+      <tr><td class="b">10</td><td>OVER_LOADING</td><td>输出过载（功率超限）</td></tr>
+      <tr><td class="b">11</td><td>OVER_SPEED</td><td>电机超速</td></tr>
+      <tr><td class="b">12</td><td>OVER_TEMPERATURE</td><td>过温</td></tr>
+      <tr><td class="b">13</td><td>AC_OVER_VOLTAGE</td><td>交流过压（AC 峰值）</td></tr>
+      <tr><td class="b">14</td><td>AC_UNDER_VOLTAGE</td><td>交流欠压（AC 峰值）</td></tr>
+      <tr><td class="b">15</td><td>AC_LOST_PHASE</td><td>交流缺相（整流谷值塌陷）</td></tr>
+      <tr><td class="b">16</td><td>SHORT_CIRCUIT</td><td>输出短路（预留）</td></tr>
+      <tr><td class="b">17</td><td>MOTOR_STALL</td><td>电机堵转（预留）</td></tr>
+      <tr><td class="b">18–31</td><td>—</td><td>保留（高 16 位在 0x0003）</td></tr>
+    </table>
+    </div>
+  </section>
+
+  <!-- ===================== Right column: generic read / write + log ===================== -->
+  <div id="col3">
+  <section id="secGenRead">
+    <h2>通用寄存器读（0x03）</h2>
+    <div class="row">
+      <label>地址</label><input type="number" id="genAddr" value="0" min="0" max="65535" style="width:96px;">
+      <label>数量</label><input type="number" id="genCount" value="1" min="1" max="125" style="width:64px;">
+      <button id="btnRead" class="primary">读</button>
+    </div>
+    <div class="row" style="white-space:normal;word-break:break-all;">
+      <span class="t-dim">读回：</span><span id="genResult">-</span>
+    </div>
+  </section>
+
+  <section id="secGenWrite">
+    <h2>通用寄存器写（0x06 单 / 0x10 多）</h2>
+    <div class="row">
+      <label>地址</label><input type="number" id="genWrAddr" value="0" min="0" max="65535" style="width:96px;">
+    </div>
+    <div class="row">
+      <label>写值</label><input type="text" id="genWrite" value="0" style="width:150px;" placeholder="多值逗号分隔，如 1,0,1">
+      <button id="btnWrite">写</button>
+    </div>
+  </section>
+
+  <section id="secLog">
+    <h2>通信日志 <button id="btnClearLog" class="small">清除日志</button></h2>
+    <div id="log"></div>
+  </section>
+  </div><!-- /col3 -->
+</main>
+
+<script>
+'use strict';
+/* ================================================================== */
+/* Modbus RTU over Web Serial                                          */
+/* ================================================================== */
+
+const SLAVE_DEFAULT = 1;
+const TIMEOUT_MS = 600;          /* response timeout */
+const BASE_RPM = 1460;           /* speed range hint: +-1460 rpm = +-1.0 pu (main.h W_BASE_HZ) */
+const FAULTS = ['HW_DC_OVER_CURRENT','SW_DC_OVER_CURRENT','SW_PHASE_OVER_CURRENT','MOTOR_LOST_PHASE','ZERO_OFFSET_ERROR','USER_SET_ERROR', null, null,
+                'DC_OVER_VOLTAGE','DC_UNDER_VOLTAGE','OVER_LOADING','OVER_SPEED','OVER_TEMPERATURE',
+                'AC_OVER_VOLTAGE','AC_UNDER_VOLTAGE','AC_LOST_PHASE','SHORT_CIRCUIT','MOTOR_STALL'];
+const REGS = [
+  { addr: 0x0000, id: 'ctrlSel',        name: 'CTRL',          ro: false, ctl: 'select' },
+  { addr: 0x0001, id: 'valMstState',    name: 'MST_STATE',     ro: true  },
+  { addr: 0x0002, id: 'valFaultLatch1', name: 'FAULT_LATCH1',  ro: true  },
+  { addr: 0x0003, id: 'valFaultLatch2', name: 'FAULT_LATCH2',  ro: true  },
+  { addr: 0x0004, id: 'refSpeedVal',    name: 'REF_SPEED',     ro: false, signed: true },
+  { addr: 0x0005, id: 'valActSpeed',    name: 'ACT_SPEED',     ro: true  },
+  { addr: 0x0006, id: 'refPowerVal',    name: 'REF_POWER',     ro: false },
+  { addr: 0x0007, id: 'valActPower',    name: 'ACT_POWER',     ro: true  },
+  { addr: 0x0008, id: 'valActTemp',     name: 'ACT_TEMP',      ro: true  },
+  { addr: 0x0010, id: 'modeSel',        name: 'MODE',          ro: false, ctl: 'select' },
+  { addr: 0x0011, id: 'dutyAVal',       name: 'DUTY_A',        ro: false },
+  { addr: 0x0012, id: 'dutyBVal',       name: 'DUTY_B',        ro: false },
+  { addr: 0x0013, id: 'dutyCVal',       name: 'DUTY_C',        ro: false },
+  { addr: 0x0014, id: 'magVal',         name: 'MAG',           ro: false },
+  { addr: 0x0015, id: 'angVal',         name: 'ANG',           ro: false },
+];
+
+let port = null, reader = null, writer = null;
+let rxBuf = [];                  /* bytes read but not yet consumed */
+let pendingRead = null;          /* pending reader.read() promise */
+let rxToken = 0;                /* bumped on resetRx; stale reads are dropped */
+
+const $ = id => document.getElementById(id);
+
+/* ---------------- Logging ---------------- */
+function log(msg, cls) {
+  const d = document.createElement('div');
+  const t = new Date().toLocaleTimeString('zh-CN', { hour12: false });
+  if (cls) d.className = cls;
+  d.textContent = `[${t}] ${msg}`;
+  const box = $('log');
+  box.appendChild(d);
+  while (box.childElementCount > 60) box.removeChild(box.firstChild);
+  box.scrollTop = box.scrollHeight;
+}
+
+/* ---------------- Modbus CRC16 ---------------- */
+let rxRawLog = [];               /* raw bytes of the current response frame */
+
+function logRxRaw(tag, bytes) {
+  if (bytes.length) {
+    rxRawLog.push(...bytes);
+    log(`RAW ${tag} ${hex(bytes)}`, 't-dim');
+  }
+}
+
+function crc16(bytes) {
+  let crc = 0xFFFF;
+  for (const b of bytes) {
+    crc ^= b;
+    for (let i = 0; i < 8; i++) crc = (crc & 1) ? (crc >> 1) ^ 0xA001 : crc >> 1;
+  }
+  return crc;
+}
+
+/* PDU only (func + addr + data). request() prepends the slave address and
+ * appends the CRC -- do NOT add a CRC here, or the frame gets double-CRC'd. */
+function frame(func, addr, ...data) {
+  return [func, (addr >> 8) & 0xFF, addr & 0xFF, ...data];
+}
+
+function hex(bytes) {
+  return Array.from(bytes).map(b => b.toString(16).padStart(2, '0').toUpperCase()).join(' ');
+}
+
+/* ---------------- Serial read/write ---------------- */
+/* IMPORTANT: Web Serial's ReadableStreamDefaultReader allows only ONE pending
+ * read() at a time. Never null out `pendingRead` while the underlying reader.read()
+ * is still in flight (timeout / reset), or the next call will start a second
+ * read() and the stream will reject it ("read already in progress"), silently
+ * losing bytes. The in-flight promise is reused; its result is dropped via the
+ * rxToken generation check if a reset happened while awaiting. */
+async function nextByte(deadline) {
+  const myToken = rxToken;
+  while (true) {
+    if (rxBuf.length) return rxBuf.shift();
+    if (!pendingRead) pendingRead = reader.read();
+    const remain = deadline - Date.now();
+    if (remain <= 0) throw new Error('响应超时');
+    const r = await Promise.race([
+      pendingRead,
+      new Promise(res => setTimeout(() => res('TIMEOUT'), remain)),
+    ]);
+    if (myToken !== rxToken) {
+      /* stale result from before a resetRx: discard, drop the (now settled)
+       * promise, and loop back to start a fresh read for the new request. */
+      pendingRead = null;
+      continue;
+    }
+    if (r === 'TIMEOUT') throw new Error('响应超时');
+    pendingRead = null;
+    if (r.done) throw new Error('串口已关闭');
+    for (const b of r.value) rxBuf.push(b);
+    logRxRaw('CHUNK', Array.from(r.value));   /* raw bytes as the serial layer sees them */
+  }
+}
+
+async function readN(n, deadline) {
+  const out = [];
+  for (let i = 0; i < n; i++) out.push(await nextByte(deadline));
+  return out;
+}
+
+function resetRx() {
+  rxBuf = [];
+  rxRawLog = [];
+  rxToken++;                   /* invalidate any in-flight reader result; do NOT clear pendingRead */
+}
+
+/* Send a request and read the full response (CRC checked). Returns the
+ * response data bytes (address/function/CRC stripped). */
+async function request(pdu) {
+  const slave = parseInt($('slaveAddr').value, 10) || SLAVE_DEFAULT;
+  const frameBytes = new Uint8Array([slave, ...pdu]);
+  const crc = crc16(Array.from(frameBytes));
+  const tx = new Uint8Array([...frameBytes, crc & 0xFF, (crc >> 8) & 0xFF]);
+
+  resetRx();
+  log(`TX  ${hex(tx)}`, 't-dim');
+  await writer.write(tx);
+
+  const deadline = Date.now() + TIMEOUT_MS;
+  const head = await readN(2, deadline);          /* 地址 + 功能码 */
+  const respAddr = head[0], respFunc = head[1];
+  if (respAddr !== slave) throw new Error(`响应从站地址不匹配 (${respAddr})`);
+  if (respFunc & 0x80) {                          /* 异常响应 */
+    const tail = await readN(3, deadline);
+    log(`RX  ${hex([...head, ...tail])}`, 't-err');
+    throw new Error(`Modbus 异常: 功能码 0x${respFunc.toString(16)}, 异常码 ${tail[1]}`);
+  }
+  let data;
+  let byteCnt = null;              /* 0x03 response: byte-count field */
+  if (respFunc === 0x03) {
+    byteCnt = (await readN(1, deadline))[0];
+    data = await readN(byteCnt + 2, deadline);   /* 数据 + CRC */
+  } else if (respFunc === 0x06 || respFunc === 0x10) {
+    data = await readN(6, deadline);             /* 回显 + CRC */
+  } else {
+    throw new Error(`未知功能码响应 0x${respFunc.toString(16)}`);
+  }
+  /* Assemble the FULL wire frame -- the byte-count field must be included,
+   * otherwise the frame is short one byte and the CRC check fails. */
+  const resp = byteCnt === null ? [...head, ...data] : [...head, byteCnt, ...data];
+  if (rxRawLog.length && hex(resp) !== hex(rxRawLog)) log(`RAW FULL ${hex(rxRawLog)}`, 't-dim');
+  log(`RX  ${hex(resp)}`, 't-ok');
+  const calc = crc16(resp.slice(0, -2));
+  const got  = resp[resp.length - 2] | (resp[resp.length - 1] << 8);
+  if (calc !== got) throw new Error(`CRC 错误 (计算 ${calc.toString(16)}, 收到 ${got.toString(16)})`);
+  /* data = raw register bytes: 0x03 skips addr+func+bytecount, 0x06/0x10 skips addr+func */
+  const off = (respFunc === 0x03) ? 3 : 2;
+  return { func: respFunc, data: resp.slice(off, -2) };
+}
+
+/* ---------------- Register operations ---------------- */
+function u16(hi, lo) { return (hi << 8) | lo; }
+function s16(hi, lo) { const v = u16(hi, lo); return v >= 0x8000 ? v - 0x10000 : v; }
+
+async function readRegs(addr, count) {
+  const r = await request(frame(0x03, addr, count >> 8, count & 0xFF));
+  const vals = [];
+  for (let i = 0; i < count; i++) vals.push(u16(r.data[i * 2], r.data[i * 2 + 1]));
+  return vals;
+}
+
+async function writeReg(addr, value) {
+  await request(frame(0x06, addr, (value >> 8) & 0xFF, value & 0xFF));
+}
+
+async function writeRegs(addr, values) {
+  const body = [values.length >> 8, values.length & 0xFF, values.length * 2];
+  for (const v of values) body.push((v >> 8) & 0xFF, v & 0xFF);
+  await request(frame(0x10, addr, ...body));
+}
+
+/* Cached halves of the 32-bit sticky fault latch (0x0002 low / 0x0003 high),
+ * so either row alone can still render the full fault-name decode. */
+let latchLo = 0, latchHi = 0;
+
+function renderFaultLatch() {
+  const v = (latchHi << 16) | (latchLo & 0xFFFF);
+  const names = FAULTS.map((n, b) => (v & (1 << b)) ? n : null).filter(Boolean);
+  const dec = names.length ? '  [' + names.join(', ') + ']' : '  [无历史故障]';
+  const cls = 'val-in' + (v !== 0 ? ' t-warn' : '');
+  const el1 = $('valFaultLatch1');
+  const el2 = $('valFaultLatch2');
+  if (el1) { el1.value = '0x' + (v & 0xFFFF).toString(16).padStart(4, '0') + '  (低16位)' + dec; el1.className = cls; }
+  if (el2) { el2.value = '0x' + ((v >>> 16) & 0xFFFF).toString(16).padStart(4, '0') + '  (高16位)' + dec; el2.className = cls; }
+}
+
+/* Render one register value into its display element.
+ * RW registers reuse the same control used to set the value (number / select);
+ * RO registers use the dedicated read-only value box (with unit / decode text). */
+function renderReg(r, v) {
+  const el = $(r.id);
+  if (r.addr === 0x0002) latchLo = v; /* cache the latch halves; the full 32-bit */
+  if (r.addr === 0x0003) latchHi = v; /* decode runs in renderFaultLatch()       */
+
+  if (!r.ro) {
+    if (el) el.value = (r.signed ? s16((v >> 8) & 0xFF, v & 0xFF) : v).toString();
+    return;
+  }
+
+  let txt = '0x' + v.toString(16).padStart(4, '0') + '  (' + v + ')';
+  if (r.addr === 0x0005) txt += ' rpm';
+  if (r.addr === 0x0007) txt += ' W';
+  if (r.addr === 0x0008) { const s = v >= 0x8000 ? v - 0x10000 : v; txt = '0x' + v.toString(16).padStart(4, '0') + '  (' + s + ' °C)'; }
+  if (r.addr === 0x0001) { /* MST_STATE: main state machine */
+    const names = ['INIT 初始化', 'IDLE 待机', 'CALI 零点标定', 'CHARGE 预充电', 'RUNNING 运行', 'FAULT 故障'];
+    txt = '0x' + v.toString(16).padStart(4, '0') + '  [' + ((v < names.length) ? names[v] : '未知') + ']';
+  }
+  let warn = (v !== 0);
+  if (r.addr === 0x0001) warn = (v === 5); /* MST_STATE: only FAULT is alarming */
+  if (el) {
+    el.value = txt;
+    el.className = 'val-in' + (warn ? ' t-warn' : '');
+  }
+}
+
+/* Addresses currently checked in the register rows. */
+function selectedAddrs() {
+  return Array.from(document.querySelectorAll('.pollChk:checked')).map(c => parseInt(c.dataset.addr, 10));
+}
+
+/* Group sorted addresses into contiguous ranges for batched 0x03 reads. */
+function addrRanges(addrs) {
+  const a = [...addrs].sort((x, y) => x - y);
+  const out = [];
+  let s = a[0], p = a[0];
+  for (let i = 1; i <= a.length; i++) {
+    if (i === a.length || a[i] !== p + 1) {
+      out.push({ start: s, count: p - s + 1 });
+      s = a[i]; p = a[i];
+    } else {
+      p = a[i];
+    }
+  }
+  return out;
+}
+
+/* Read only the selected registers (contiguous selections share one frame). */
+async function updateSelected(quiet) {
+  const addrs = selectedAddrs();
+  if (!addrs.length) {
+    if (!quiet) log('请先选择要读取的寄存器', 't-warn');
+    return false;
+  }
+  try {
+    const byAddr = {};
+    for (const { start, count } of addrRanges(addrs)) {
+      const vals = await readRegs(start, count);
+      vals.forEach((v, i) => { byAddr[start + i] = v; });
+    }
+    REGS.forEach(r => { if (r.addr in byAddr) renderReg(r, byAddr[r.addr]); });
+    renderFaultLatch(); /* 0x0002/0x0003 合成 32 位锁存码并解码故障名 */
+    if (!quiet) log('读取所选寄存器成功', 't-ok');
+    return true;
+  } catch (e) {
+    if (!quiet) log('读取失败: ' + e.message, 't-err');
+    throw e; /* 通讯失败：让周期轮询感知并退出 */
+  }
+}
+
+/* ---------------- Periodic polling ---------------- */
+let pollTimer = null;
+let pollBusy  = false;
+
+function pollStop() {
+  if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+  const st = $('pollState');
+  if (st) st.textContent = '已停止';
+}
+
+function pollStart() {
+  pollStop();
+  const ms = Math.max(100, parseInt($('pollInterval').value, 10) || 1000);
+  pollTimer = setInterval(async () => {
+    if (pollBusy) return;                     /* skip a tick while the previous read is in flight */
+    if (!selectedAddrs().length) return;      /* nothing checked: keep waiting */
+    pollBusy = true;
+    try {
+      await updateSelected(true);
+    } catch (e) {
+      log('通讯失败：从机无响应，已停止周期读取', 't-err');
+      $('pollEnable').checked = false;        /* 取消周期读取勾选，退出轮询 */
+      pollStop();
+    } finally {
+      pollBusy = false;
+    }
+  }, ms);
+  $('pollState').textContent = '每 ' + ms + ' ms';
+}
+
+$('pollEnable').onchange = () => {
+  if ($('pollEnable').checked) {
+    if (!port) { log('请先连接串口', 't-warn'); $('pollEnable').checked = false; return; }
+    pollStart();
+  } else {
+    pollStop();
+  }
+};
+
+/* ---------------- Connection management ---------------- */
+function setConnected(on) {
+  ['btnConnect','btnDisconnect','btnRead','btnWrite','btnCtrl','btnRefSpeed','btnRefPower','btnMode',
+   'btnDutyA','btnDutyB','btnDutyC','btnMag','btnAng'].forEach(id => {
+    const el = $(id);
+    if (el) el.disabled = (id === 'btnConnect') ? on : !on;
+  });
+  const badge = $('connBadge');
+  badge.textContent = on ? '已连接' : '未连接';
+  badge.className = 'badge ' + (on ? 'on' : 'off');
+}
+
+async function connect() {
+  if (!('serial' in navigator)) {
+    log('此浏览器不支持 Web Serial，请用 Chrome/Edge 并通过 https 或 localhost 打开', 't-err');
+    return;
+  }
+  try {
+    port = await navigator.serial.requestPort();
+    await port.open({
+      baudRate: parseInt($('baud').value, 10),
+      dataBits: 8, stopBits: 1, parity: $('parity').value,
+    });
+    reader = port.readable.getReader();
+    writer = port.writable.getWriter();
+    rxBuf = []; pendingRead = null;
+    const info = port.getInfo();
+    $('devInfo').textContent = info.usbVendorId ? `USB VID:PID ${info.usbVendorId.toString(16)}:${info.usbProductId.toString(16)}` : '';
+    setConnected(true);
+    log('串口已连接', 't-ok');
+    updateSelected().catch(() => { /* 首次读取失败仅记日志，不算连接失败 */ });
+    if ($('pollEnable').checked) pollStart(); /* 重连后按勾选状态恢复轮询 */
+  } catch (e) {
+    log('连接失败: ' + e.message, 't-err');
+    port = null;
+  }
+}
+
+async function disconnect() {
+  pollStop();
+  $('pollEnable').checked = false;
+  try {
+    if (reader) { await reader.cancel(); reader = null; }
+    if (writer) { try { await writer.close(); } catch (_) {} writer = null; }
+    if (port) { await port.close(); port = null; }
+    pendingRead = null; rxBuf = [];
+    setConnected(false);
+    log('串口已断开', 't-warn');
+  } catch (e) {
+    log('断开失败: ' + e.message, 't-err');
+  }
+}
+
+/* ---------------- Event wiring ---------------- */
+$('btnConnect').onclick = connect;
+$('btnDisconnect').onclick = disconnect;
+
+$('btnRead').onclick = async () => {
+  const addr = parseInt($('genAddr').value, 10) || 0;
+  const cnt  = Math.min(parseInt($('genCount').value, 10) || 1, 125);
+  try {
+    const vals = await readRegs(addr, cnt);
+    $('genResult').textContent = vals.map((v, i) =>
+      `0x${(addr + i).toString(16).padStart(4, '0')} = 0x${v.toString(16).padStart(4, '0')} (${v})`).join('  |  ');
+  } catch (e) { $('genResult').textContent = '错误: ' + e.message; log(e.message, 't-err'); }
+};
+
+$('btnWrite').onclick = async () => {
+  const addr = parseInt($('genWrAddr').value, 10) || 0;
+  /* 0x prefix parses as hex, otherwise decimal */
+  const parseVal = s => { s = s.trim(); return /^0x/i.test(s) ? parseInt(s, 16) : parseInt(s, 10); };
+  const vals = $('genWrite').value.split(/[,，\s]+/).map(parseVal).filter(v => !isNaN(v));
+  if (!vals.length) { log('写入值无效', 't-warn'); return; }
+  try {
+    if (vals.length === 1) await writeReg(addr, vals[0]);
+    else await writeRegs(addr, vals);
+    log(`写入 0x${addr.toString(16)}: ${vals.join(', ')} 成功`, 't-ok');
+  } catch (e) { log(e.message, 't-err'); }
+};
+
+/* Common helper: read an input and write one register. Write only -- no
+ * follow-up read of the selected registers. */
+async function setReg(addr, val, unit, name, min, max) {
+  if (val < min || val > max) { log(`${name} 超出范围（${min}~${max}${unit}）`, 't-warn'); return; }
+  try { await writeReg(addr, val & 0xFFFF); log(`${name}=0x${addr.toString(16)} <- ${val} ${unit} 成功`, 't-ok'); }
+  catch (e) { log(e.message, 't-err'); }
+}
+
+/* Read a single register and refresh its display box. */
+async function readOne(addr, name) {
+  const r = REGS.find(x => x.addr === addr);
+  try {
+    const vals = await readRegs(addr, 1);
+    if (r) renderReg(r, vals[0]);
+    else if ($('genResult')) $('genResult').textContent = `0x${addr.toString(16).padStart(4, '0')} = 0x${vals[0].toString(16).padStart(4, '0')}`;
+    log(`${r ? r.name : name} (0x${addr.toString(16).padStart(4, '0')}) 读取成功`, 't-ok');
+  } catch (e) {
+    log(`${r ? r.name : name} (0x${addr.toString(16).padStart(4, '0')}) 读取失败: ${e.message}`, 't-err');
+  }
+}
+
+/* Per-register read buttons. */
+const READ_BTNS = [
+  [0x0000, 'btnReadCtrl',        'CTRL'],
+  [0x0001, 'btnReadMstState',    'MST_STATE'],
+  [0x0002, 'btnReadFaultLatch1', 'FAULT_LATCH1'],
+  [0x0003, 'btnReadFaultLatch2', 'FAULT_LATCH2'],
+  [0x0004, 'btnReadRefSpeed',    'REF_SPEED'],
+  [0x0005, 'btnReadActSpeed',    'ACT_SPEED'],
+  [0x0006, 'btnReadRefPower',    'REF_POWER'],
+  [0x0007, 'btnReadActPower',    'ACT_POWER'],
+  [0x0008, 'btnReadActTemp',     'ACT_TEMP'],
+  [0x0010, 'btnReadMode',        'MODE'],
+  [0x0011, 'btnReadDutyA',       'DUTY_A'],
+  [0x0012, 'btnReadDutyB',       'DUTY_B'],
+  [0x0013, 'btnReadDutyC',       'DUTY_C'],
+  [0x0014, 'btnReadMag',         'MAG'],
+  [0x0015, 'btnReadAng',         'ANG'],
+];
+READ_BTNS.forEach(([addr, id, name]) => {
+  const btn = $(id);
+  if (btn) btn.onclick = () => readOne(addr, name);
+});
+
+$('btnCtrl').onclick    = async () => { await setReg(0x0000, parseInt($('ctrlSel').value, 10),     '',   'CTRL',      0, 3); };
+$('btnRefSpeed').onclick = async () => { await setReg(0x0004, parseInt($('refSpeedVal').value, 10) || 0, 'rpm', 'REF_SPEED', -BASE_RPM, BASE_RPM); };
+$('btnRefPower').onclick = async () => { await setReg(0x0006, parseInt($('refPowerVal').value, 10) || 0, 'W', 'REF_POWER', 0, 65535); };
+$('btnMode').onclick    = async () => { await setReg(0x0010, parseInt($('modeSel').value, 10),     '',   'MODE',      1, 6); };
+$('btnDutyA').onclick   = async () => { await setReg(0x0011, parseInt($('dutyAVal').value, 10) || 0, '%', 'DUTY_A',    0, 100); };
+$('btnDutyB').onclick   = async () => { await setReg(0x0012, parseInt($('dutyBVal').value, 10) || 0, '%', 'DUTY_B',    0, 100); };
+$('btnDutyC').onclick   = async () => { await setReg(0x0013, parseInt($('dutyCVal').value, 10) || 0, '%', 'DUTY_C',    0, 100); };
+$('btnMag').onclick     = async () => { await setReg(0x0014, parseInt($('magVal').value, 10) || 0,   '%', 'MAG',       0, 100); };
+$('btnAng').onclick     = async () => { await setReg(0x0015, parseInt($('angVal').value, 10) || 0,   '°', 'ANG',       0, 360); };
+
+$('btnClearLog').onclick = () => { $('log').innerHTML = ''; log('日志已清除', 't-dim'); };
+
+setConnected(false);
+log('就绪。请点击「连接串口」选择设备（Chrome/Edge，https 或 localhost 打开）。', 't-dim');
+</script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+si SWD
+speed 4000
+device SLM32M030CCT7
+connect
+r
+h
+loadfile build/slm32m030/port/slm32m030/firmware.hex
+verifyfile build/slm32m030/port/slm32m030/firmware.hex
+r
+g
+q

@@ -1,0 +1,6126 @@
+﻿扉页 
+
+ 
+
+ 
+ 
+
+上海朔集半导体科技有限公司 
+
+ 
+
+ 
+
+ 
+
+ 
+
+SLM32M030 
+
+ 
+电机控制系列 
+
+基于 Arm® Cortex®-M0+微控制器 
+
+集成 8 个电压比较器 VC、4 个可编程运算放大器 PGA、 
+
+1 个数模转换器 DAC、内置 BEMF 功能 
+
+适用于电机应用 
+
+ 
+
+数据手册 
+
+Datasheet 
+
+ 
+Version: 1.6 
+
+2025 年 12 月 12 日 
+
+http://www.soulsemi.com 
+ 
+
+
+
+SLM32M030 数据手册 
+ 
+
+1 产品概述 
+ 
+
+ 
+
+1 
+1 
+
+1 产品概述 
+
+SLM32M030 系列产品是基于 Arm® Cortex®-M0+内核的电机专用微处理器，最高运行速率可以达
+到 64MHz，集成了丰富的外设，大容量的 Flash 和 SRAM，专为各种电机应用开发。提供
+LQFP48 和 LQFP64 两种封装形式。 
+
+⚫ 2.5~5.5V 宽电源 
+
+⚫ 内核 
+◼ Arm® 32-bit Cortex®-M0+ CPU 
+◼ 最高频率 64 MHz 
+
+⚫ 片上存储 
+
+◼ 256KB Flash 存储器，32MHz 及以下 0 等待周期，32MHz 以上一个等待周期 
+◼ 32KB SRAM 存储器，0 等待周期 
+
+⚫ 时钟 
+
+◼ 4~32MHz 外部高速时钟（HSE） 
+◼ 8MHz 内部高速时钟（HSI） 
+◼ 32.768kHz 外部低速时钟（LSE） 
+◼ 40kHz 内部低速时钟（LSI） 
+
+⚫ 6 通道 DMA 控制器 
+
+⚫ 低功耗模式 
+
+◼ 睡眠/停止/待机模式 
+
+⚫ 上电复位（POR）/掉电复位（PDR） 
+
+⚫ 1 个 12 位模数转换器，18 通道（包含内置温度传感器和内置参考电压通道） 
+
+⚫ 低电压监测（LVD） 
+
+⚫ 8 个电压比较器 VC（2 个 MCU 内置，6 个在 AFE 模块中） 
+
+⚫ 4 个可编程运算放大器 PGA（在 AFE 模块中） 
+
+⚫ 1 个数模转换器 DAC（在 AFE 模块中） 
+
+⚫ 内置 BEMF 功能（部分型号） 
+
+⚫ 定时器 
+
+◼ 5 个 32 位通用定时器 
+◼ 1 个 32 位高级定时器 
+◼ 2 个 32 位基本定时器 
+◼ 1 个 16 位低功耗定时器 
+◼ 1 个 8 位自唤醒定时器 
+◼ 1 个 24 位 SysTick 定时器 
+◼ 1 个 RTC 
+◼ 1 个 IWDG 
+◼ 1 个 WWDG 
+
+⚫ 通信接口 
+
+◼ 2 路 USART 
+◼ 1 路 LPUART 
+◼ 2 路 I2C 
+◼ 1 路 SPI（仅 SPI2 由应用配置，而 SPI1 保留给内部连接控制 AFE） 
+
+⚫ CRC 计算单元 
+
+⚫ 高级加密标准（AES） 
+
+⚫ 蜂鸣发生器（Beep） 
+
+⚫ 真随机数生成（TRNG） 
+
+⚫ 支持红外接口（IRTIM） 
+
+上海朔集半导体科技有限公司 第 2 页 / 共 73 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+
+
+
+SLM32M030 数据手册 
+ 
+
+1 产品概述 
+ 
+
+ 
+
+⚫ 128 位唯一 ID 
+
+⚫ 内置 ISP Bootloader，支持 USART 进行程序升级 
+
+⚫ 支持 SWD 调试模式 
+
+⚫ 封装 LQFP64、LQFP48 
+
+应用 
+
+⚫ 电机、风机、水泵 
+
+产品描述 
+
+表1.1 产品选型列表 
+
+品名 订单产品型号 封装 
+
+SLM32M030 SLM32M030CCT7 LQFP48 
+
+SLM32M030 SLM32M030RCT7 LQFP64 
+
+SLM32M031 SLM32M031RCT7 LQFP64 
+
+ 
+
+  
+
+上海朔集半导体科技有限公司 第 3 页 / 共 73 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+
+
+
+SLM32M030 数据手册 
+ 
+
+1 产品概述 
+ 
+
+ 
+
+1.1 产品系列 
+
+表1.2 SLM32M030 特性和外设配置 
+
+产品型号 SLM32M030CCT SLM32M030RCT SLM32M031RCT 
+BEMF No No Yes 
+频率 64MHz 
+
+Flash (Kbytes) 256KB 
+SRAM (Kbytes) 32KB 
+
+DMA 6 通道 
+高级定时器 1 (32-bit) 
+通用定时器 5 (32-bit) 
+基本定时器 2 (32-bit) 
+低功耗定时器 1 (16-bit) 
+自唤醒定时器 1 (8-bit) 
+
+RTC 1 
+IWDG 1 
+
+WWDG 1 
+BEEP 1 
+
+USART 2 
+LPUART 1 
+
+I2C 2 
+SPI 1 
+ADC 1 (12-bit) 
+
+ADC 通道数量 (16 ext.+2 int.) (15 ext.+2 int.) (15 ext.+2 int.) 
+VC 8 (2 in MCU, 6 in AFE) 
+
+PGA 4 in AFE 
+DAC 1 in AFE 
+
+GPIOs 17 29 21 
+封装 LQFP48 LQFP64 LQFP64 
+
+工作电压 2.5~5.5V 
+工作温度（Ta） 7: −40 ~ 105 °C 
+
+  
+
+上海朔集半导体科技有限公司 第 4 页 / 共 73 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+
+
+
+SLM32M030 数据手册 
+ 
+
+2 产品框图与应用框图 
+ 
+
+ 
+
+2 
+2 
+
+2 产品框图与应用框图 
+
+2.1 产品框图 
+
+图2.1 产品框图 
+
+@VDDA
+
+Power
+Volt. reg.
+
+DVDD20  2.0V
+
+DVDD12 Volt. reg. VSS
+1.2V
+
+SWCLK SWD
+SWDIO
+
+Flash 256 Kbytes @ VDDA
+
+Supply
+supervision
+
+POR
+Cortex-M0+ CPU VDDA
+
+@ VDDA Reset POR/PDR
+     F V
+
+max=64MHz SSA
+SRAM
+32KB RC8MHz Int PVD
+
+OSC_IN
+ OSC4-32MHz
+
+NVIC OSC_OUT
+
+RC 40 kHz
+
+GP DMA PLL
+
+6 channels @ DVDD20
+
+PCLK1 IWDG
+Reset & PCLK2
+Clock TAMPER-RTC/
+control HCLK RTC ALARM/SECOND OUT
+
+FCLK
+Bakup register
+
+PA[15:0] GPIO port A @ VDDA
+OSC32_OUT
+
+XTAL32kHz
+PB[15:0] GPIO port B OSC32_IN
+
+PC[15:13] GPIO port C
+WWDG
+
+PD[7:6] TIM3 4 channels, ETR
+
+PD[1:0] GPIO port D
+TIM6
+
+TIM14 1 channels
+
+TIM7
+USART2 RX, TX, CTS, RTS,CK
+
+MOSI/SD, MISO
+AHB2 AHB2 SPI2/I2S2
+
+SCK/CK, NSS/WS
+APB2 APB1
+
+LPUART LPUART_TXD,LPUART_RXD  
+EXT. IT WKUP
+
+I2C1 SCL, SDA
+
+I2C2 SCL, SDA
+4channels,3compl.  channels 
+
+TIM1
+BKIN,ETR
+
+2channels,1compl.  channels
+TIM15
+
+BKIN
+
+1channels,1compl.  channels AWKTimer
+TIM16
+
+BKIN @ VDDA
+1channels,1compl.  channels TIM17
+BKIN
+
+IF VC0 VC0_INN/INP/OUT
+LPTIM_TOG,LPTIM_TOGN, VC1 VC1_INN/INP/OUT
+LPTIM_EXT,LPTIM_GATE LpTimer
+
+RX,TX,CTS,RTS,CK USART1
+
+AFE
+
+DAC AFE_DAC_CLK/OUT
+BEEP BEEP
+
+BEMF
+AFE_BEMF_IN0/IN1/IN2/OUT
+
+Temp.sensor
+OP0
+OP1 AFE_OP0_INN/INP/OUT
+
+18 Channels 12-bit ADC1 IF OP2 AFE_OP1_INN/INP/OUT
+OP3 AFE_OP2_INN/INP/OUT
+
+AFE_OP3_INN/INP/OUT
+IF
+
+VREF- SPI1
+VREF+ VC0 AFE_VC0_INN/INP/OUT
+
+VC1 AFE_VC1_INN/INP/OUT
+@ VDDA VC2 AFE_VC2_INN/INP/OUT
+
+VC3 AFE_VC3_INN/INP/OUT
+VC4 AFE_VC4_INN/INP/OUT
+VC5 AFE_VC5_INN/INP/OUT
+
+LVD_OUT LVD IF
+
+A4_DS_PP_V1_C3
+
+  
+
+上海朔集半导体科技有限公司 第 5 页 / 共 73 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+
+APB2: Fmax=64MHz
+
+AHB: Fmax=64MHz Flash
+Interface
+
+APB1: Fmax=64MHz
+Bus Matrix
+
+
+
+SLM32M030 数据手册 
+ 
+
+2 产品框图与应用框图 
+ 
+
+ 
+
+2.2 典型应用框图 
+
+2.2.1 电机应用（有 BEMF 封装） 
+
+图2.2 电机应用（有 BEMF 封装） 
+
+M031
+CMP0O
+
+CMP1O Fault
+OR OC
+
+CMP2O
+
+PB12
+BEMF_IN0
+
+TIM3_CH1 + CMP3P PROT
+
+PA6 CMP3
+BEMF_OUT
+
+- VIN
+
+TIM1_CH1
+PA8
+
+CMP012N PRED
+RV
+
+CMP0O -
+CMP0 PB13
+
++
+
+OP0P R
+ADC_in3 +
+
+PA3 OP0 R
+-
+
+OP0N R
+
+PGND
+OP0O R
+
+BEMF_IN1
+
++ CMP4P PROT
+
+PA7 CMP4
+BEMF_OUT
+
+- VIN
+
+TIM1_CH2
+PA9
+
+CMP012N PRED
+RV
+
+CMP1O -
+CMP1 PB14
+
++
+
+ 
+OP1P R
+
+ADC_in4 +
+PA4 OP1 R
+
+-
+OP1N R
+
+PGND
+OP1O R
+
+BEMF_IN2
+
++ CMP5P PROT
+
+PB0 CMP5
+BEMF_OUT
+
+- VIN
+
+TIM1_CH3
+PA10
+
+CMP012N PRED
+RV
+
+CMP2O -
+CMP2 PB15
+
++
+
+OP2P R
+ADC_in5 +
+
+PA5 OP2 R
+
+-
+OP2N R
+
+PGND
+OP2O R
+
+PGND
+
+OP3P R
+ADC_in14 +
+
+PA12 OP3 GND
+
+- OP3N R
+
+BEMF_IN0
+R OP3O R
+
+BEMF_IN1
+R v_set
+
+DAC DAC
+BEMF_IN2
+
+R CMP012N
+CMP012N
+
+A4_DS_BEMFAPP_V1_C3
+
+ 
+  
+
+上海朔集半导体科技有限公司 第 6 页 / 共 73 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+
+
+
+SLM32M030 数据手册 
+ 
+
+2 产品框图与应用框图 
+ 
+
+ 
+
+2.2.2 电机应用（无 BEMF 封装） 
+
+图2.3 电机应用（无 BEMF 封装） 
+
+M030
+VIN
+
+PA8
+PRED U
+
+RV
+
+PB13
+
+OP0P R
+ADC_in3 +
+
+PA3 OP0 R
+- OP0N R
+
+PGND
+
+OP0O R
+
+VIN
+
+PA9
+PRED V
+
+RV
+
+PB14
+
+OP1P R
+ADC_in5 +
+
+PA5 OP1 R
+
+- OP1N R
+
+PGND
+
+OP1O R
+VIN
+
+PA10
+PRED W
+
+RV
+
+PB15
+
+OP2P R
+ADC_in9 +
+
+PB1 OP2 R
+ 
+
+- OP2N R
+
+PGND
+
+OP2O R
+
+PGND
+
+OP3P R
++
+
+OP3 GND
+
+- OP3N R
+
+OP3O R
+
+ADC_in14 BUS_AV
+PA12 RC滤波
+
+BUS_PEAK
+CMP5P
+
+CMP5O +
+CMP5
+
+- CMP5N
+
+v_set
+DAC DAC
+
+OC
+CMP5O
+
+TIM1_BRK
+PB12
+
+A4_DS_NBEMFAPP_V1_C3
+
+  
+
+上海朔集半导体科技有限公司 第 7 页 / 共 73 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+
+
+
+SLM32M030 数据手册 
+ 
+
+3 时钟树与存储架构 
+ 
+
+ 
+
+3 
+3 
+
+3 时钟树与存储架构 
+
+3.1 系统时钟树 
+
+图3.1 时钟树 
+
+AON(1.8v)
+
+LSE STAB LSE_CLK
+
+32.768K (512-32k dly) RTC_CLK
+HSE_DIV128
+
+LSI STAB LSI_CLK
+
+40K (8 dly)
+
+HSI_CLK FLASH_C_CLK
+G
+
+HSI STAB
+8M (16-1024 dly) HSI_STAB
+
+MAIN(1.2v)
+G
+
+PLL STAB PLL_CLK SYS_CLK HCLK
+G DIV1-512
+
+x2-x16 (8-512 dly)
+
+CPU_SCLK PCLK1 PCLK2
+LSI_CLK G DIV1-16 DIV1-16
+
+LSE_CLK CPU_DCLK TIM3/6/7/14_PCLK SYSCFG_PCLK
+G IWDG_PCLK G G
+
+G
+
+CPU_HCLK WWDG_PCLK ADC1_PCLK
+G G G
+
+IOA_HCLK PMU_PCLK
+G G
+
+SRAM_HCLK SPI2_PCLK TIM1_PCLK
+G G G  
+
+HSE STAB HSE_CLK
+
+4-32M (8-512 dly) RTC_PCLK
+IOB_HCLK G
+
+G FLASH_HCLK UART2/3/4/5_PCLK SPI1_PCLK
+G G G
+
+DIV12 HSE_DIV128
+
+8 IOC_HCLK
+G DMA1_HCLK I2C1/2_PCLK UART1_PCLK
+
+G G G
+LSI_CLK
+
+CPU_STCLKEN
+STCLK TIM15/16/17_PCLK
+
+LSE_CLK IOD_HCLK CRC_HCLK
+GEN G G G
+
+AES_HCLK DBG_PCLK
+G G
+
+TIM_CLK1
+RTC_CLK DIV1-16
+
+LSI_CLK RNG_HCLK
+G
+
+TIM3/6/7/14_CLK
+G ADC_CLK
+
+DIV1-8
+LSE_CLK
+
+SYS_CLK MCO_CLK
+DIV1-128 TIM_CLK2
+
+DIV1-16
+HSI_CLK
+
+HSE_CLK TIM15/16/17_CLK
+G
+
+PLL_CLK
+DIV2
+
+A4_DS_CLKTR_V1_C3
+
+  
+
+上海朔集半导体科技有限公司 第 8 页 / 共 73 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+
+
+
+SLM32M030 数据手册 
+ 
+
+3 时钟树与存储架构 
+ 
+
+ 
+
+3.2 存储架构 
+
+3.2.1 存储地址映射 
+
+图3.2 存储地址映射 
+
+0xFFFF_FFFF
+
+7 Reversed
+0xE010 0000
+
+Cortex-M0 internal 
+0xE000_0000 peripherals
+
+0x4800_17FF
+AHB2
+
+0x4800_0000
+6 Reversed
+
+Reversed
+
+0xC000_0000 0x4002_43FF
+
+AHB1
+5 0x4002_0000
+
+Reversed
+
+Reversed
+0xA000_0000 0x4001_8000
+
+APB2
+0x4001_0000
+
+4 Reversed
+Reversed
+
+0x4000_8000
+0x8000_0000
+
+APB1
+0x4000_0000
+
+3 Reversed  
+
+0x6000_0000
+
+Reversed
+
+2
+
+0x1FFF_FFFF
+Pheripherals Reversed
+
+0x4000_0000 0x1FFF_FC00
+
+Option bytes
+0x1FFF_F800
+
+Reversed System memory
+0x1FFF_E800
+
+1
+Reversed
+
+0x0804_000
+0
+
+0x2000_0000 SRAM Flash memory
+0x0800_0000
+
+Reversed
+0x0004_0000
+
+0
+CODE
+
+Flash，System memory
+或sram（depending on 
+
+0x0000_0000
+BOOT configuration）
+
+0x0000_0000
+
+A4_DS_SAM_V1_C3
+
+ 
+ 
+
+  
+
+上海朔集半导体科技有限公司 第 9 页 / 共 73 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+
+
+
+SLM32M030 数据手册 
+ 
+
+3 时钟树与存储架构 
+ 
+
+ 
+
+表3.1 外设寄存器地址 
+
+Bus Boundary address Size Peripheral 
+
+- 0x4801 1000 - 0x5FFF FFFF ~384 MB Reserved 
+
+0x4801 0C00 - 0x4801 0FFF 1 KB FASTIOD 
+
+0x4801 0800 - 0x4801 0BFF 1 KB FASTIOC 
+
+0x4801 0400 - 0x4801 07FF 1 KB FASTIOB 
+
+0x4801 0000 - 0x4801 03FF 1 KB FASTIOA 
+
+AHB2 0x4801 1000 - 0x4800 FFFF 60 KB Reserved 
+
+0x4800 0C00 - 0x4800 0FFF 1 KB GPIOD 
+
+0x4800 0800 - 0x4800 0BFF 1 KB GPIOC 
+
+0x4800 0400 - 0x4800 07FF 1 KB GPIOB 
+
+0x4800 0000 - 0x4800 03FF 1 KB GPIOA 
+
+- 0x4002 4000 - 0x47FF FFFF ~128 MB Reserved 
+
+0x4002 3C00 - 0x4002 3FFF 1 KB Reserved 
+
+0x4002 3800 - 0x4002 3BFF 1 KB AES 
+
+0x4002 3400 - 0x4002 37FF 1 KB TRNG 
+
+0x4002 3000 - 0x4002 33FF 1 KB CRC 
+
+0x4002 2400 - 0x4002 27FF 1 KB Reserved 
+
+0x4002 2800 - 0x4002 2BFF 1 KB SRAM Controller 
+AHB1 
+
+0x4002 2400 - 0x4002 27FF 1 KB Reserved 
+
+0x4002 2000 - 0x4002 23FF 1 KB FLASH Interface 
+
+0x4002 1400 - 0x4002 1FFF 3 KB Reserved 
+
+0x4002 1000 - 0x4002_13FF 1 KB RCMU 
+
+0x4002 0400 - 0x4002 0FFF 3 KB Reserved 
+
+0x4002 0000 - 0x4002 03FF 1 KB DMA 
+
+- 0x4001 8000 - 0x4001 FFFF 32 KB Reserved 
+
+0x4001 5C00 - 0x4001 7FFF 9 KB Reserved 
+
+0x4001 5800 - 0x4001 5BFF 1 KB DBGMCU 
+
+0x4001 5400 - 0x4001 57FF 1 KB BEEP 
+
+0x4001 5000 - 0x4001 53FF 1KB LVD 
+
+0x4001 4C00 - 0x4001 4FFF 1 KB Reserved 
+
+0x4001 4800 - 0x4001 4BFF 1 KB TIM17 
+
+0x4001 4400 - 0x4001 47FF 1 KB TIM16 
+
+0x4001 4000 - 0x4001 43FF 1 KB TIM15 
+
+0x4001 3C00 - 0x4001 3FFF 1 KB LPTIMER 
+APB2 
+
+0x4001 3800 - 0x4001 3BFF 1 KB USART1 
+
+0x4001 3400 - 0x4001 37FF 1 KB Reserved 
+
+0x4001 3000 - 0x4001 33FF 1 KB SPI1 
+
+0x4001 2C00 - 0x4001 2FFF 1 KB TIM1 
+
+0x4001 2800 - 0x4001 2BFF 1 KB AWK 
+
+0x4001 2400 - 0x4001 27FF 1 KB ADC 
+
+0x4001 0800 - 0x4001 23FF 12 KB Reserved 
+
+0x4001 0400 - 0x4001 07FF 1 KB EXTI 
+
+0x4001 0000 - 0x4001 03FF 1 KB SYSCFG 
+
+- 0x4000 8000 - 0x4000 FFFF 32 KB Reserved 
+
+0x4000 7400 - 0x4000 7FFF 3 KB Reserved 
+
+APB1 0x4000 7000 - 0x4000 73FF 1 KB PWR 
+
+0x4000 6000 - 0x4000 6FFF 4 KB Reserved 
+
+上海朔集半导体科技有限公司 第 10 页 / 共 73 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+
+
+
+SLM32M030 数据手册 
+ 
+
+3 时钟树与存储架构 
+ 
+
+ 
+
+Bus Boundary address Size Peripheral 
+
+0x4000 5C00 - 0x4000 5FFF 1 KB VC 
+
+0x4000 5800 - 0x4000 5BFF 1 KB I2C2 
+
+0x4000 5400 - 0x4000 57FF 1 KB I2C1 
+
+0x4000 5000 - 0x4000 53FF 1 KB LPUART 
+
+0x4000 4C00 - 0x4000 4FFF 1 KB Reversed 
+
+0x4000 4800 - 0x4000 4BFF 1 KB Reserved 
+
+0x4000 4400 - 0x4000 47FF 1 KB USART2  
+
+0x4000 3C00 - 0x4000 43FF 2 KB Reserved 
+
+0x4000 3800 - 0x4000 3BFF 1 KB SPI2  
+
+0x4000 3400 - 0x4000 37FF 1 KB Reserved 
+
+0x4000 3000 - 0x4000 33FF 1 KB IWDG 
+
+0x4000 2C00 - 0x4000 2FFF 1 KB WWDG 
+
+0x4000 2800 - 0x4000 2BFF 1 KB RTC 
+
+0x4000 2400 - 0x4000 27FF 1 KB Reserved 
+
+0x4000 2000 - 0x4000 23FF 1 KB TIM14 
+
+0x4000 1800 - 0x4000 1FFF 2 KB Reserved 
+
+0x4000 1400 - 0x4000 17FF 1 KB TIM7  
+
+0x4000 1000 - 0x4000 13FF 1 KB TIM6  
+
+0x4000 0800 - 0x4000 0FFF 2 KB Reserved 
+
+0x4000 0400 - 0x4000 07FF 1 KB TIM3 
+
+0x4000 0000 - 0x4000 03FF 1 KB Reserved 
+
+ 
+  
+
+上海朔集半导体科技有限公司 第 11 页 / 共 73 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+
+
+
+SLM32M030 数据手册 
+ 
+
+4 引脚和定义 
+ 
+
+ 
+
+4 
+4 
+
+4 引脚和定义 
+
+4.1 引脚分配表中使用的术语和符号 
+
+表4.1 引脚分配表中使用的术语和符号 
+
+列 符号 定义 
+引脚名称 端子名称与其复位时的默认功能相对应（除非引脚名称下的括号中另有说明）。 
+
+PG 电源引脚包括电源供电、稳压器输出、接地焊盘 
+I 输入 
+O 输出 
+
+引脚类型字母含义 
+IO 输入/输出引脚 
+A 模拟信号 
+S 特殊功能包括 NRST、BOOT、VCAP、NC 等 
+
+模拟功能 通过外设寄存器直接选择/启用的功能，或合封直连的模拟功能 
+数字功能 通过 GPIO 复用功能寄存器选择的功能 
+
+4.2 LQFP64（SLM32M030RCT 不支持 BEMF） 
+
+4.2.1 LQFP64（SLM32M030RCT 不支持 BEMF）引脚布局 
+
+图4.1 LQFP64（SLM32M030RCT 不支持 BEMF）引脚布局示意图 
+
+TOP VIEW
+
+AFE_PGA1N 1 48 AFE_PGA2N
+VCAP 2 47 PD7
+
+VCAP2 3 46 PD6
+NC 4 45 AFE_PGA3P
+NC 5 44 PA13
+
+PC13 6 43 PA12
+PC14 7 42 PA11
+PC15 8 41 PA10
+PD0 9 40 AFE_PGA3O
+PD1 10 39 PA9  
+
+NRST 11 38 PA8
+VSSA 12 37 PB15
+VDDA 13 36 PB14
+
+PA0 14 35 PB13
+PA1 15 34 PB12
+PA2 16 33 AFE_PGA3N
+
+Device Info:
+A4_DS_LQFP64_V1_C3
+
+    SLM32M030 LQFP64(Not BEMF)
+
+  
+
+上海朔集半导体科技有限公司 第 12 页 / 共 73 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+
+AFE_PGA0O 17 64 AFE_PGA1P
+PA4 18 63 AFE_DAC1O
+
+AFE_PGA1O 19 62 AFE_VC3P
+HALL0 20 61 AFE_VC5P
+HALL1 21 60 NC
+HALL2 22 59 VDD
+
+AFE_PGA2O 23 58 AFE_VC3N
+PB2 24 57 VSS
+
+PB10 25 56 PB9
+PB11 26 55 PB8
+
+AFE_VC3O 27 54 BOOT0
+VSS 28 53 PB7
+VDD 29 52 AFE_VC5N
+
+AFE_VC5O 30 51 PB6
+AFE_PGA0P 31 50 PA14
+AFE_PGA0N 32 49 AFE_PGA2P
+
+
+
+SLM32M030 数据手册 
+ 
+
+4 引脚和定义 
+ 
+
+ 
+
+4.2.2 LQFP64（SLM32M030RCT 不支持 BEMF）引脚分配和描述 
+
+表4.2 LQFP64（SLM32M030RCT 不支持 BEMF）引脚定义 
+
+LQFP
+引脚名称 类型 描述 模拟功能 数字功能 
+
+64 
+
+1 AFE_PGA1N AI  AFE_PGA1_INN  
+
+2 VCAP S 外连 1~4.7uF 的电容接地   
+
+3 VCAP2 S 外连 1~4.7uF 的电容接地   
+
+4 NC S 浮空   
+
+5 NC S 浮空   
+
+RTC_TAMP1,RTC_OUT, 
+6 PC13 DIO   
+
+WKUP2,TIM1_BKIN 
+
+7 PC14 DIO  OSC32_IN BEEP 
+
+TIM15_BKIN 
+8 PC15 DIO  OSC32_OUT 
+
+BEEP 
+I2C2_SCL 
+USART2_TXD 
+LPUART_TXD 
+
+9 PD0-OSC_IN ADIO  OSC_IN 
+I2C1_SCL 
+TIM14_CH1 
+LPTIM_TOG 
+I2C2_SDA 
+USART2_RXD 
+
+PD1- LPUART_RXD 
+10 ADIO  OSC_OUT 
+
+OSC_OUT I2C1_SDA 
+TIM15_CH1N 
+LPTIM_TOGN 
+
+11 NRST S    
+
+12 VSSA PG Analog ground   
+
+13 VDDA PG Analog power supply   
+
+ADC_IN0 WKUP1 
+VC0_INP0 SPI2_NSS 
+
+14 PA0 ADIO  
+VC0_INN0 USART1_CTS 
+VC1_INP0 USART2_CTS 
+
+SPI2_SCK 
+ADC_IN1 
+
+USART1_RTS 
+VC0_INP1 
+
+15 PA1 ADIO  USART2_RTS 
+VC0_INN1 
+
+TIM15_CH1N 
+VC1_INP1 
+
+EVENTOUT 
+WKUP4 
+
+ADC_IN2 
+SPI2_MISO 
+
+VC0_INP2 
+16 PA2 ADIO  USART1_TXD 
+
+VC0_INN2 
+USART2_TXD 
+
+VC1_INP2 
+TIM15_CH1 
+
+AFE_PGA0_OUT SPI2_MOSI (by PA3) 
+AFE_PGA0O/ USART1_RXD (by PA3) 
+
+17 ADIO PGA0O/PA3 内部互连 ADC_IN3（by 
+PA3 USART2_RXD (by PA3) 
+
+PA3） 
+TIM15_CH2 (by PA3) 
+SPI1_NSS 
+USART1_CK 
+USART2_CK 
+
+18 PA4 ADIO   
+TIM14_CH1 
+LPTIM_EXT 
+VC1_OUT 
+
+AFE_PGA1_OUT SPI1_SCK (by PA5) 
+AFE_PGA1O/
+
+19 ADIO PGA1O/PA5 内部互连 ADC_IN5（by TIM3_ETR (by PA5) 
+PA5 
+
+PA5） LVD_OUT (by PA5) 
+
+上海朔集半导体科技有限公司 第 13 页 / 共 73 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+
+
+
+SLM32M030 数据手册 
+ 
+
+4 引脚和定义 
+ 
+
+ 
+
+LQFP
+引脚名称 类型 描述 模拟功能 数字功能 
+
+64 
+
+SPI1_MISO 
+ADC_IN6 
+
+TIM16_CH1 
+通过 PA6 复用为 VC0_INP6 
+
+TIM1_BKIN 
+20 HALL0(PA6) ADIO TIM3_CH1 VC0_INN6 
+
+TIM3_CH1 
+实现 HALL0 功能 VC1_INP6 
+
+VC1_OUT 
+VC1_INN1 
+
+EVENTOUT 
+SPI1_MOSI 
+
+ADC_IN7 
+TIM17_CH1 
+
+通过 PA7 复用为 VC0_INP7 
+TIM1_CH1N 
+
+21 HALL1(PA7) ADIO TIM3_CH2 VC0_INN7 
+TIM3_CH2 
+
+实现 HALL1 功能 VC1_INP7 
+TIM14_CH1 
+
+VC1_INN2 
+EVENTOUT 
+
+ADC_IN8 
+ADC_VRef LPUART_TXD 
+
+通过 PB0 复用为
+VC0_INP8 TIM1_CH2N 
+
+22 HALL2(PB0) ADIO TIM3_CH3 
+VC0_INN8 TIM3_CH3 
+
+实现 HALL2 功能 
+VC1_INP8 EVENTOUT 
+VC1_INN3 
+AFE_PGA2_OUT 
+
+LPUART_RXD (by PB1) 
+ADC_IN9 (by PB1) 
+
+TIM14_CH1 (by PB1) 
+AFE_PGA2O/ VC0_INP9 (by PB1) 
+
+23 ADIO PGA2O/PB1 内部互连 TIM1_CH3N (by PB1) 
+PB1 VC0_INN9 (by PB1) 
+
+TIM3_CH4 (by PB1) 
+VC1_INP9 (by PB1) 
+
+LPTIM_GATE (by PB1) 
+VC1_INN4 (by PB1)  
+
+TIM15_CH1 
+TIM1_BKIN 
+
+24 PB2 DIO   
+BEEP 
+LVD_OUT 
+SPI2_SCK 
+I2C2_SCL 
+
+25 PB10 DIO   
+I2C1_SCL 
+LPTIM_TOG 
+I2S_MCLK 
+I2C2_SDA 
+
+26 PB11 DIO   I2C1_SDA 
+LPTIM_TOGN 
+EVENTOUT 
+
+27 AFE_VC3O DO  AFE_VC3O  
+
+28 VSS PG    
+
+29 VDD PG    
+
+30 AFE_VC5O DO  AFE_VC5O  
+
+31 AFE_PGA0P AI  AFE_PGA0_INP  
+
+32 AFE_PGA0N AI  AFE_PGA0_INN  
+
+33 AFE_PGA3N AI  AFE_PGA3_INN  
+
+SPI2_NSS 
+SPI1_NSS 
+
+34 PB12 DIO   TIM1_BKIN 
+TIM15_CH1 
+EVENTOUT 
+SPI2_SCK 
+SPI1_SCK 
+
+35 PB13 DIO   
+I2C2_SCL 
+TIM1_CH1N 
+SPI2_MISO 
+SPI1_MISO 
+
+36 PB14 DIO   I2C2_SDA 
+TIM1_CH2N 
+TIM15_CH1 
+
+上海朔集半导体科技有限公司 第 14 页 / 共 73 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+
+
+
+SLM32M030 数据手册 
+ 
+
+4 引脚和定义 
+ 
+
+ 
+
+LQFP
+引脚名称 类型 描述 模拟功能 数字功能 
+
+64 
+
+WKUP7 
+SPI2_MOSI 
+SPI1_MOSI 
+
+37 PB15 DIO   
+TIM1_CH3N 
+TIM15_CH2 
+TIM15_CH1N 
+
+ADC_IN10 USART1_CK 
+VC0_INP10 TIM1_CH1 
+
+38 PA8 ADIO  VC0_INN10 MCO 
+VC1_INP10 EVENTOUT 
+VC1_INN5 VC0_OUT 
+
+LPUART_TXD 
+ADC_IN11 USART1_TXD 
+VC0_INP11 I2C1_SCL 
+
+39 PA9 ADIO  
+VC1_INP11 TIM1_CH2 
+VC1_INN6 TIM15_BKIN 
+
+MCO 
+
+40 AFE_PGA3O AO  AFE_PGA3_OUT  
+
+LPUART_RXD 
+ADC_IN12 
+
+USART1_RXD 
+VC0_INP12 
+
+41 PA10 ADIO  I2C1_SDA 
+VC1_INP12 
+
+TIM1_CH3 
+VC1_INN7 
+
+TIM17_BKIN 
+I2C1_SCL 
+
+ADC_IN13 USART1_CTS 
+VC0_INP13 I2C2_SCL 
+
+42 PA11 ADIO  
+VC1_INP13 TIM1_CH4 
+VC1_INN8 TIM15_CH1 
+
+EVENTOUT 
+I2C1_SDA 
+
+ADC_IN14 USART1_RTS 
+VC0_INP14 I2C2_SDA 
+
+43 PA12 ADIO  
+VC1_INP14 TIM1_ETR 
+VC1_INN9 TIM15_CH2 
+
+EVENTOUT 
+SWDIO 
+
+ADC_IN15 IR_OUT 
+VC0_INP15 VC1_OUT 
+
+44 PA13 (SWDIO) ADIO  
+VC1_INP15 TIM3_ETR 
+VC1_INN10 BEEP 
+
+VC0_OUT 
+
+45 AFE_PGA3P AI  AFE_PGA3_INP  
+
+I2C2_SCL 
+46 PD6 DIO   
+
+I2C1_SCL 
+
+I2C2_SDA 
+47 PD7 DIO   
+
+I2C1_SDA 
+
+48 AFE_PGA2N AI  AFE_PGA2_INN  
+
+49 AFE_PGA2P AI  AFE_PGA2_INP  
+
+SWCLK 
+PA14 USART1_TXD 
+
+50 DIO   
+(SWCLK) USART2_TXD 
+
+LVD_OUT 
+USART1_TXD 
+LPUART_TXD 
+
+51 PB6 DIO   I2C1_SCL 
+TIM16_CH1N 
+LVD_OUT 
+
+上海朔集半导体科技有限公司 第 15 页 / 共 73 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+
+
+
+SLM32M030 数据手册 
+ 
+
+4 引脚和定义 
+ 
+
+ 
+
+LQFP
+引脚名称 类型 描述 模拟功能 数字功能 
+
+64 
+
+52 AFE_VC5N AI    
+
+USART1_RXD 
+LPUART_RXD 
+
+53 PB7 DIO   I2C1_SDA 
+TIM17_CH1N 
+BEEP 
+
+54 BOOT0 S    
+
+USART1_TXD 
+USART2_TXD 
+
+55 PB8 DIO   I2C1_SCL 
+TIM16_CH1 
+VC1_OUT 
+
+SPI2_NSS 
+USART1_RXD 
+USART2_RXD 
+
+56 PB9 DIO   I2C1_SDA 
+TIM17_CH1 
+IR_OUT 
+EVENTOUT 
+
+57 VSS PG    
+
+58 AFE_VC3N AI  AFE_VC3_INN   
+
+59 VDD PG    
+
+60 NC S    
+
+AFE_VC5_INP 
+61 AFE_VC5P AI   
+
+ 
+
+AFE_VC3_INP 
+62 AFE_VC3P AI   
+
+ 
+
+63 AFE_DAC1O AO  AFE_DAC_OUT  
+
+64 AFE_PGA1P AI  AFE_PGA1_INP  
+
+AFE_SPI_NSS/ 
+    SPI1_NSS (by PA15) 
+
+PA15(内部互连) 
+AFE_SPI_SCK/ 
+
+    SPI1_SCK (by PB3) 
+PB3(内部互连) 
+AFE_SPI_MISO/ 
+
+    SPI1_MISO (by PB4) 
+PB4(内部互连) 
+AFE_SPI_MOSI/ 
+
+    SPI1_MOSI (by PB5) 
+PB5(内部互连) 
+
+表4.3 LQFP64（SLM32M030RCT 不支持 BEMF）HALL 引脚的使用说明 
+
+HALL Pins 支持 HALL 时 标准 GPIO 或其他复用功能 
+
+引 脚 外 接 HALL0 ， HALL0 → PA6 → 
+HALL0 引脚外接，使用 PA6 功能 
+
+TIM3_CH1 
+引 脚 外 接 HALL1 ， HALL1 → PA7 → 
+
+HALL1 引脚外接，使用 PA7 功能 
+TIM3_CH2 
+引 脚 外 接 HALL2 ， HALL2 → PB0 → 
+
+HALL2 引脚外接，使用 PB0 功能 
+TIM3_CH3 
+
+  
+
+上海朔集半导体科技有限公司 第 16 页 / 共 73 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+
+
+
+SLM32M030 数据手册 
+ 
+
+4 引脚和定义 
+ 
+
+ 
+
+4.3 LQFP64（SLM32M031RCT 支持 BEMF） 
+
+4.3.1 LQFP64（SLM32M031RCT 支持 BEMF）引脚布局 
+
+图4.2 LQFP64（SLM32M031RCT 支持 BEMF）引脚布局 
+
+TOP VIEW
+
+AFE_PGA1N 1 48 AFE_PGA2N
+AFE_VC0O 2 47 PD7
+
+VCAP 3 46 AFE_PGA3P
+AFE_VC1O 4 45 PA13 (SWDIO)
+AFE_VC2O 5 44 PA12
+
+PC13 6 43 PA11
+VCAP2 7 42 PA10
+
+PD0-OSC_IN 8 41 AFE_PGA3O
+PD1-OSC_OUT 9 40 PA9
+
+NRST 10 39 PA8
+VSSA 11 38 PB15
+VDDA 12 37 BEMF  
+
+AFE_VC0P 13 36 PB14
+PA0 14 35 PB13
+PA1 15 34 OC/PB12
+PA2 16 33 AFE_PGA3N
+
+Device Info:
+A4_M030_LQFP64W_V3A3
+
+    SLM32M031 LQFP64(with BEMF)
+
+ 
+
+4.3.2 LQFP64（SLM32M031RCT 支持 BEMF）引脚分配和描述 
+
+表4.4 LQFP64（SLM32M031RCT 支持 BEMF）引脚定义 
+
+LQFP 
+引脚名称 类型 描述 模拟功能 数字功能 
+
+64 
+
+1 AFE_PGA1N AI  AFE_PGA1_INN  
+
+2 AFE_VC0O DO  AFE_VC0_OUT  
+
+外连 1~4.7uF 的电容
+3 VCAP S   
+
+接地 
+
+4 AFE_VC1O DO  AFE_VC1_OUT  
+
+5 AFE_VC2O DO  AFE_VC2_OUT  
+
+上海朔集半导体科技有限公司 第 17 页 / 共 73 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+
+AFE_PGA0O/PA3 17 64 AFE_PGA1P
+AFE_VC1P 18 63 AFE_DAC1O
+
+AFE_PGA1O /PA4 19 62 AFE_VC3P
+AFE_VC2P 20 61 AFE_VC4P
+
+AFE_PGA2O/PA5 21 60 AFE_VC5P
+HALL0(AFE_VC3O/PA6) 22 59 VDD
+HALL1(AFE_VC4O/PA7) 23 58 AFE_VC3N
+HALL2(AFE_VC5O/PB0) 24 57 VSS
+
+PB1 25 56 AFE_VC4N
+VSS 26 55 PB8
+VDD 27 54 BOOT0
+
+AFE_PGA0P 28 53 PB7
+AFE_PGA0N 29 52 AFE_VC5N
+
+AFE_VC0N 30 51 PB6
+AFE_VC1N 31 50 PA14 (SWCLK)
+AFE_VC2N 32 49 AFE_PGA2P
+
+
+
+SLM32M030 数据手册 
+ 
+
+4 引脚和定义 
+ 
+
+ 
+
+LQFP 
+引脚名称 类型 描述 模拟功能 数字功能 
+
+64 
+
+RTC_TAMP1,RTC_OUT, 
+6 PC13 DIO   
+
+WKUP2,TIM1_BKIN 
+外连 1~4.7uF 的电容
+
+7 VCAP2 S   
+接地 
+
+I2C2_SCL 
+USART2_TXD 
+LPUART_TXD 
+
+8 PD0-OSC_IN ADIO  OSC_IN 
+I2C1_SCL 
+TIM14_CH1 
+LPTIM_TOG 
+I2C2_SDA 
+USART2_RXD 
+LPUART_RXD 
+
+9 PD1-OSC_OUT ADIO  OSC_OUT 
+I2C1_SDA 
+TIM15_CH1N 
+LPTIM_TOGN 
+
+10 NRST S    
+
+11 VSSA PG Analog ground   
+
+12 VDDA PG Analog power supply   
+
+13 AFE_VC0P AI  AFE_VC0_INN  
+
+ADC_IN0 WKUP1 
+VC0_INP0 SPI2_NSS 
+
+14 PA0 ADIO  
+VC0_INN0 USART1_CTS 
+VC1_INP0 USART2_CTS 
+
+SPI2_SCK 
+ADC_IN1 
+
+USART1_RTS 
+VC0_INP1 
+
+15 PA1 ADIO  USART2_RTS 
+VC0_INN1 
+
+TIM15_CH1N 
+VC1_INP1 
+
+EVENTOUT 
+WKUP4 
+
+ADC_IN2 
+SPI2_MISO 
+
+VC0_INP2 
+16 PA2 ADIO  USART1_TXD 
+
+VC0_INN2 
+USART2_TXD 
+
+VC1_INP2 
+TIM15_CH1 
+
+AFE_PGA0_OUT SPI2_MOSI (by PA3) 
+AFE_PGA0O/PA3 内 ADC_IN3（by USART1_RXD (by PA3) 
+
+17 AFE_PGA0O/PA3 ADIO 
+部互连 PA3） USART2_RXD (by PA3) 
+
+AFE_VC0_INP(*1)  TIM15_CH2 (by PA3) 
+
+18 AFE_VC1P AI  AFE_VC1_INN  
+
+SPI1_NSS (by PA4) 
+AFE_PGA1_OUT USART1_CK (by PA4) 
+
+AFE_PGA1O /PA4 内 ADC_IN4（by USART2_CK (by PA4) 
+19 AFE_PGA1O/PA4 ADIO 
+
+部互连 PA4） TIM14_CH1 (by PA4) 
+AFE_VC1_INP(*1) LPTIM_EXT (by PA4) 
+
+VC1_OUT (by PA4) 
+
+20 AFE_VC2P AI    
+
+21 AFE_PGA2O/PA5 ADIO    
+
+ADC_IN6 (by PA6) 
+VC0_INP6 (by AFE_VC3_OUT 
+
+PA6/AFE_VC3O 内部 PA6) SPI1_MISO (by PA6) 
+VC0_INN6 (by TIM16_CH1 (by PA6) 
+
+互连，通过 PA6 复用
+22 HALL0(AFE_VC3O/PA6) ADIO PA6) TIM1_BKIN (by PA6) 
+
+为 TIM3_CH1 实现
+VC1_INP6 (by TIM3_CH1 (by PA6) 
+
+HALL0 功能 PA6) VC1_OUT (by PA6) 
+VC1_INN1 (by EVENTOUT (by PA6) 
+PA6) 
+
+上海朔集半导体科技有限公司 第 18 页 / 共 73 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+
+
+
+SLM32M030 数据手册 
+ 
+
+4 引脚和定义 
+ 
+
+ 
+
+LQFP 
+引脚名称 类型 描述 模拟功能 数字功能 
+
+64 
+
+ADC_IN7 (by PA7) 
+VC0_INP7 (by AFE_VC4_OUT 
+
+PA7/AFE_VC4O 内部 PA7) SPI1_MOSI (by PA7) 
+VC0_INN7 (by TIM17_CH1 (by PA7) 
+
+互连，通过 PA7 复用
+23 HALL1(AFE_VC4O/PA7) ADIO PA7) TIM1_CH1N (by PA7) 
+
+为 TIM3_CH2 实现
+VC1_INP7 (by TIM3_CH2 (by PA7) 
+
+HALL1 功能 PA7) TIM14_CH1 (by PA7) 
+VC1_INN2 (by EVENTOUT (by PA7) 
+PA7) 
+ADC_IN8 (by PB0) 
+ADC_VRef (by 
+PB0) 
+
+PB0/AFE_VC5O 内部 VC0_INP8 (by AFE_VC5_OUT 
+PB0) LPUART_TXD (by PB0) 
+
+互连，通过 PB0 复用
+24 HALL2(AFE_VC5O/PB0) ADIO VC0_INN8 (by TIM1_CH2N (by PB0) 
+
+为 TIM3_CH3 实现
+PB0) TIM3_CH3 (by PB0) 
+
+HALL2 功能 VC1_INP8 (by EVENTOUT (by PB0) 
+PB0) 
+VC1_INN3 (by 
+PB0) 
+ADC_IN9 LPUART_RXD 
+VC0_INP9 TIM14_CH1 
+
+25 PB1 ADIO  VC0_INN9 TIM1_CH3N 
+VC1_INP9 TIM3_CH4 
+VC1_INN4 LPTIM_GATE 
+
+26 VSS PG    
+
+27 VDD PG    
+
+28 AFE_PGA0P AI  AFE_PGA0_INP  
+
+29 AFE_PGA0N AI  AFE_PGA0_INN  
+
+30 AFE_VC0N AI  AFE_VC0_INP  
+
+31 AFE_VC1N AI  AFE_VC1_INP  
+
+32 AFE_VC2N AI  AFE_VC2_INP  
+
+33 AFE_PGA3N AI    
+
+OC 
+SPI2_NSS (by PB12) 
+SPI1_NSS (by PB12) 
+
+34 OC/PB12 DIO OC/PB12 内部互连  
+TIM1_BKIN (by PB12) 
+TIM15_CH1 (by PB12) 
+EVENTOUT (by PB12) 
+SPI2_SCK 
+SPI1_SCK 
+
+35 PB13 DIO   
+I2C2_SCL 
+TIM1_CH1N 
+SPI2_MISO 
+SPI1_MISO 
+
+36 PB14 DIO   I2C2_SDA 
+TIM1_CH2N 
+TIM15_CH1 
+
+37 BEMF AO    
+WKUP7 
+SPI2_MOSI 
+SPI1_MOSI 
+
+38 PB15 DIO   
+TIM1_CH3N 
+TIM15_CH2 
+TIM15_CH1N 
+
+上海朔集半导体科技有限公司 第 19 页 / 共 73 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+
+
+
+SLM32M030 数据手册 
+ 
+
+4 引脚和定义 
+ 
+
+ 
+
+LQFP 
+引脚名称 类型 描述 模拟功能 数字功能 
+
+64 
+
+ADC_IN10 USART1_CK 
+VC0_INP10 TIM1_CH1 
+
+39 PA8 ADIO  VC0_INN10 MCO 
+VC1_INP10 EVENTOUT 
+VC1_INN5 VC0_OUT 
+
+LPUART_TXD 
+ADC_IN11 USART1_TXD 
+VC0_INP11 I2C1_SCL 
+
+40 PA9 ADIO  
+VC1_INP11 TIM1_CH2 
+VC1_INN6 TIM15_BKIN 
+
+MCO 
+
+41 AFE_PGA3O AO  AFE_PGA3_OUT  
+
+LPUART_RXD 
+ADC_IN12 
+
+USART1_RXD 
+VC0_INP12 
+
+42 PA10 ADIO  I2C1_SDA 
+VC1_INP12 
+
+TIM1_CH3 
+VC1_INN7 
+
+TIM17_BKIN 
+I2C1_SCL 
+
+ADC_IN13 USART1_CTS 
+VC0_INP13 I2C2_SCL 
+
+43 PA11 ADIO  
+VC1_INP13 TIM1_CH4 
+VC1_INN8 TIM15_CH1 
+
+EVENTOUT 
+I2C1_SDA 
+
+ADC_IN14 USART1_RTS 
+VC0_INP14 I2C2_SDA 
+
+44 PA12 ADIO  
+VC1_INP14 TIM1_ETR 
+VC1_INN9 TIM15_CH2 
+
+EVENTOUT 
+SWDIO 
+
+ADC_IN15 IR_OUT 
+VC0_INP15 VC1_OUT 
+
+45 PA13(SWDIO) ADIO  
+VC1_INP15 TIM3_ETR 
+VC1_INN10 BEEP 
+
+VC0_OUT 
+
+46 AFE_PGA3P AI  AFE_PGA3_INP  
+
+I2C2_SDA 
+47 PD7 DIO   
+
+I2C1_SDA 
+
+48 AFE_PGA2N AI  AFE_PGA2_INN  
+
+49 AFE_PGA2P AI  AFE_PGA2_INP  
+
+SWCLK 
+USART1_TXD 
+
+50 PA14(SWCLK) DIO   
+USART2_TXD 
+LVD_OUT 
+USART1_TXD 
+LPUART_TXD 
+
+51 PB6 DIO   I2C1_SCL 
+TIM16_CH1N 
+LVD_OUT 
+
+52 AFE_VC5N AI    
+
+USART1_RXD 
+LPUART_RXD 
+
+53 PB7 DIO   I2C1_SDA 
+TIM17_CH1N 
+BEEP 
+
+54 BOOT0 S    
+
+上海朔集半导体科技有限公司 第 20 页 / 共 73 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+
+
+
+SLM32M030 数据手册 
+ 
+
+4 引脚和定义 
+ 
+
+ 
+
+LQFP 
+引脚名称 类型 描述 模拟功能 数字功能 
+
+64 
+
+USART1_TXD 
+USART2_TXD 
+
+55 PB8 DIO   I2C1_SCL 
+TIM16_CH1 
+VC1_OUT 
+
+AFE_VC4_INN/ 
+56 AFE_VC4N AI AFE_BEMF_OUT (内   
+
+部互连) 
+
+57 VSS PG    
+
+AFE_VC3_INN/ 
+58 AFE_VC3N AI AFE_BEMF_OUT (内   
+
+部互连) 
+59 VDD PG    
+
+AFE_VC5_INP/  
+60 AFE_VC5P AI AFE_BEMF_IN2(内部   
+
+互连) 
+AFE_VC4_INP/  
+
+61 AFE_VC4P AI AFE_BEMF_IN1(内部   
+互连) 
+AFE_VC3_INP/  
+
+62 AFE_VC3P AI AFE_BEMF_IN0(内部   
+互连) 
+
+63 AFE_DAC1O AO  AFE_DAC_OUT  
+
+64 AFE_PGA1P AI  AFE_PGA1_INP  
+
+DAC1_CLK(by PB10) 
+AFE_DAC_CLK/ 
+
+    SPI2_SCK (by PB10) 
+PB10(内部互连) 
+
+LPTIM_TOG (by PB10) 
+AFE_SPI_NSS/ 
+
+    SPI1_NSS (by PA15) 
+PA15(内部互连) 
+AFE_SPI_SCK/ 
+
+    SPI1_SCK (by PB3) 
+PB3(内部互连) 
+AFE_SPI_MISO/ 
+
+    SPI1_MISO (by PB4) 
+PB4(内部互连) 
+AFE_SPI_MOSI/ 
+
+    SPI1_MOSI (by PB5) 
+PB5(内部互连) 
+
+表4.5 LQFP64（SLM32M031RCT 支持 BEMF）HALL 引脚的使用说明 
+
+HALL Pins 支持 BEMF 时 支持 HALL 时 标准 GPIO 或其他复用功能 
+
+引脚浮空，内部 AFE_V3O → 引脚外接 HALL0，HALL0 → 
+HALL0 引脚外接，使用 PA6 功能 
+
+PA6 → TIM3_CH1 PA6 → TIM3_CH1 
+引脚浮空，内部 AFE_V4O → 引脚外接 HALL1，HALL1 → 
+
+HALL1 引脚外接，使用 PA7 功能 
+PA7 → TIM3_CH2 PA7 → TIM3_CH2 
+引脚浮空，内部 AFE_V5O → 引脚外接 HALL2，HALL2 → 
+
+HALL2 引脚外接，使用 PB0 功能 
+PB0 → TIM3_CH3 PB0 → TIM3_CH3 
+
+ 
+  
+
+上海朔集半导体科技有限公司 第 21 页 / 共 73 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+
+
+
+SLM32M030 数据手册 
+ 
+
+4 引脚和定义 
+ 
+
+ 
+
+4.4 LQFP48（SLM32M030CCT 不支持 BEMF） 
+
+4.4.1 LQFP48（SLM32M030CCT 不支持 BEMF）布局 
+
+图4.3 LQFP48（SLM32M030CCT 不支持 BEMF）布局示意图 
+
+TOP VIEW
+
+AFE_PGA1P 1 36 AFE_PGA3P
+AFE_PGA1N 2 35 PA13
+
+VCAP 3 34 AFE_PGA3O
+VCAP2 4 33 PA11
+
+PD0 5 32 PA10
+PD1 6 31 PA9
+
+NRST 7 30 PA8
+VSSA 8 29 PB15  
+VDDA 9 28 PB14
+
+PA0 10 27 PB13
+PA1 11 26 OC
+PA2 12 25 AFE_PGA3N
+
+Device Info:
+A4_M030_LQFP48_V2A3
+
+    SLM32M030 LQFP48
+
+ 
+
+  
+
+上海朔集半导体科技有限公司 第 22 页 / 共 73 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+
+AFE_PGA0O 13 48 AFE_DAC1O
+AFE_PGA1O 14 47 AFE_VC3P
+AFE_PGA2O 15 46 AFE_VC4P
+
+HALL0 16 45 AFE_VC5P
+HALL1 17 44 VDD
+HALL2 18 43 VSS
+
+PB1 19 42 BOOT0
+VSS 20 41 PB7
+VDD 21 40 PB6
+
+AFE_PGA0P 22 39 PA14
+AFE_PGA0N 23 38 AFE_PGA2P
+
+AFE_VC012N 24 37 AFE_PGA2N
+
+
+
+SLM32M030 数据手册 
+ 
+
+4 引脚和定义 
+ 
+
+ 
+
+4.4.2 LQFP48（SLM32M030CCT 不支持 BEMF）引脚分配和描述 
+
+表4.6 LQFP48（SLM32M030CCT 不支持 BEMF）引脚定义 
+
+LQF
+引脚名称 ABCD 描述 模拟功能 数字功能 
+
+P48 
+
+1 AFE_PGA1P AI  AFE_PGA1P  
+2 AFE_PGA1N AI  AFE_PGA1N  
+
+外连 1~4.7uF 的电容
+3 VCAP S   
+
+接地 
+外连 1~4.7uF 的电容
+
+4 VCAP2 S AFE_CAP  
+接地 
+
+I2C2_SCL 
+USART2_TXD 
+LPUART_TXD 
+
+5 PD0-OSC_IN ADIO  OSC_IN 
+I2C1_SCL 
+TIM14_CH1 
+LPTIM_TOG 
+I2C2_SDA 
+USART2_RXD 
+LPUART_RXD 
+
+6 PD1-OSC_OUT ADIO  OSC_OUT 
+I2C1_SDA 
+TIM15_CH1N 
+LPTIM_TOGN 
+
+7 NRST S 复位加唤醒   
+8 VSSA PG Analog ground   
+9 VDDA PG Analog power supply   
+
+ADC_IN0 WKUP1 
+VC0_INP0 SPI2_NSS 
+
+10 PA0 ADIO  
+VC0_INN0 USART1_CTS 
+VC1_INP0 USART2_CTS 
+
+SPI2_SCK 
+ADC_IN1 
+
+USART1_RTS 
+VC0_INP1 
+
+11 PA1 ADIO  USART2_RTS 
+VC0_INN1 
+
+TIM15_CH1N 
+VC1_INP1 
+
+EVENTOUT 
+WKUP4 
+
+ADC_IN2 
+SPI2_MISO 
+
+VC0_INP2 
+12 PA2 ADIO  USART1_TXD 
+
+VC0_INN2 
+USART2_TXD 
+
+VC1_INP2 
+TIM15_CH1 
+SPI2_MOSI (by PA3) 
+
+AFE_PGA0O 
+AFE_PGA0O/AFE_V AFE_PGA0O/AFE_V USART1_RXD (by PA3) 
+
+13 ADIO AFE_VC0P 
+C0P/PA3 C0P/PA3 内部互连 USART2_RXD (by PA3) 
+
+ADC_IN3（by PA3）  
+TIM15_CH2 (by PA3) 
+SPI1_NSS 
+USART1_CK 
+
+AFE_PGA1O 
+AFE_PGA1O/AFE_V AFE_PGA1O/AFE_V USART2_CK 
+
+14 ADIO AFE_VC1P 
+C1P/PA4 C1P/PA4 内部互连 TIM14_CH1 
+
+ADC_IN4（by PA4） 
+LPTIM_EXT 
+VC1_OUT 
+
+AFE_PGA2O SPI1_SCK (by PA5) 
+AFE_PGA2O/AFE_V AFE_PGA2O/AFE_V
+
+15 ADIO AFE_VC2P TIM3_ETR (by PA5) 
+C2P/PA5 C2P/PA5 内部互连 
+
+ADC_IN5（by PA5） LVD_OUT (by PA5) 
+AFE_VC3O SPI1_MISO 
+
+AFE_VC3O/PA6 内部 ADC_IN6 TIM16_CH1 
+HALL0 互连，通过 PA6 复用 VC0_INP6 TIM1_BKIN 
+
+16 ADIO 
+(AFE_VC3O/PA6) 为 TIM3_CH1 实现 VC0_INN6 TIM3_CH1 
+
+HALL0 功能 VC1_INP6 VC1_OUT 
+VC1_INN1 EVENTOUT 
+
+上海朔集半导体科技有限公司 第 23 页 / 共 73 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+
+
+
+SLM32M030 数据手册 
+ 
+
+4 引脚和定义 
+ 
+
+ 
+
+LQF
+引脚名称 ABCD 描述 模拟功能 数字功能 
+
+P48 
+
+AFE_VC4O SPI1_MOSI 
+AFE_VC4O/PA7 内部 ADC_IN7 TIM17_CH1 
+
+HALL1 互连通过 PA7 复用为 VC0_INP7 TIM1_CH1N 
+17 ADIO 
+
+(AFE_VC4O/PA7) TIM3_CH2 实现 VC0_INN7 TIM3_CH2 
+HALL1 功能 VC1_INP7 TIM14_CH1 
+
+VC1_INN2 EVENTOUT 
+AFE_VC5O 
+
+AFE_VC5O/PB0 内部 ADC_IN8 
+LPUART_TXD 
+
+ADC_VRef 
+HALL2 互连，通过 PB0 复用 TIM1_CH2N 
+
+18 ADIO VC0_INP8 
+(AFE_VC5O/PB0) 为 TIM3_CH3 实现 TIM3_CH3 
+
+VC0_INN8 
+HALL2 功能 EVENTOUT 
+
+VC1_INP8 
+VC1_INN3 
+ADC_IN9 (by PB1) LPUART_RXD (by PB1) 
+VC0_INP9 (by PB1) TIM14_CH1 (by PB1) 
+
+19 PB1 ADIO  VC0_INN9 (by PB1) TIM1_CH3N (by PB1) 
+VC1_INP9 (by PB1) TIM3_CH4 (by PB1) 
+VC1_INN4 (by PB1)  LPTIM_GATE (by PB1) 
+
+20 VSS PG    
+21 VDD PG    
+22 AFE_PGA0P AI  AFE_PGA0P  
+23 AFE_PGA0N AI  AFE_PGA0N  
+
+AFE_VC0N/AFE_VC AFE_VC0N 
+AFE_VC0N/AFE_VC
+
+24 AI 1N/AFE_VC2N 内部 AFE_VC1N  
+1N/AFE_VC2N 
+
+互连 AFE_VC2N 
+25 AFE_PGA3N AI  AFE_PGA3N  
+
+SPI2_NSS 
+SPI1_NSS 
+
+26 OC/PB12 DIO OC/PB12 内部互连 AFE_OC TIM1_BKIN 
+TIM15_CH1 
+EVENTOUT 
+SPI2_SCK 
+SPI1_SCK 
+
+27 PB13 DIO   
+I2C2_SCL 
+TIM1_CH1N 
+SPI2_MISO 
+SPI1_MISO 
+
+28 PB14 DIO   I2C2_SDA 
+TIM1_CH2N 
+TIM15_CH1 
+WKUP7 
+SPI2_MOSI 
+SPI1_MOSI 
+
+29 PB15 DIO   
+TIM1_CH3N 
+TIM15_CH2 
+TIM15_CH1N 
+
+ADC_IN10 USART1_CK 
+VC0_INP10 TIM1_CH1 
+
+30 PA8 ADIO  VC0_INN10 MCO 
+VC1_INP10 EVENTOUT 
+VC1_INN5 VC0_OUT 
+
+LPUART_TXD 
+ADC_IN11 USART1_TXD 
+VC0_INP11 I2C1_SCL 
+
+31 PA9 ADIO  
+VC1_INP11 TIM1_CH2 
+VC1_INN6 TIM15_BKIN 
+
+MCO 
+LPUART_RXD 
+
+ADC_IN12 
+USART1_RXD 
+
+VC0_INP12 
+32 PA10 ADIO  I2C1_SDA 
+
+VC1_INP12 
+TIM1_CH3 
+
+VC1_INN7 
+TIM17_BKIN 
+
+上海朔集半导体科技有限公司 第 24 页 / 共 73 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+
+
+
+SLM32M030 数据手册 
+ 
+
+4 引脚和定义 
+ 
+
+ 
+
+LQF
+引脚名称 ABCD 描述 模拟功能 数字功能 
+
+P48 
+
+I2C1_SCL 
+ADC_IN13 USART1_CTS 
+VC0_INP13 I2C2_SCL 
+
+33 PA11 ADIO  
+VC1_INP13 TIM1_CH4 
+VC1_INN8 TIM15_CH1 
+
+EVENTOUT 
+I2C1_SDA 
+
+AFE_PGA3O 
+USART1_RTS 
+
+ADC_IN14 
+PGA3O/PA12 内部互 I2C2_SDA 
+
+34 AFE_PGA3O/PA12 ADIO VC0_INP14 
+连 TIM1_ETR 
+
+VC1_INP14 
+TIM15_CH2 
+
+VC1_INN9 
+EVENTOUT 
+SWDIO 
+
+ADC_IN15 IR_OUT 
+VC0_INP15 VC1_OUT 
+
+35 PA13 (SWDIO) ADIO  
+VC1_INP15 TIM3_ETR 
+VC1_INN10 BEEP 
+
+VC0_OUT 
+36 AFE_PGA3P AI  AFE_PGA3P  
+37 AFE_PGA2N AI  AFE_PGA2N  
+38 AFE_PGA2P AI  AFE_PGA2P  
+
+SWCLK 
+USART1_TXD 
+
+39 PA14 (SWCLK) DIO   
+USART2_TXD 
+LVD_OUT 
+USART1_TXD 
+LPUART_TXD 
+
+40 PB6 DIO   I2C1_SCL 
+TIM16_CH1N 
+LVD_OUT 
+USART1_RXD 
+LPUART_RXD 
+
+41 PB7 DIO   I2C1_SDA 
+TIM17_CH1N 
+BEEP 
+
+42 BOOT0 S 启动模式选择   
+43 VSS PG    
+44 VDD PG    
+45 AFE_VC5P AI  AFE_VC5P  
+46 AFE_VC4P AI  AFE_VC4P  
+47 AFE_VC3P AI  AFE_VC3P  
+48 AFE_DAC1O AO  AFE_DAC1O  
+
+DAC1_CLK 
+AFE_DAC1_CLK/ 
+
+    SPI2_SCK (by PB10) 
+PB10(内部互连) 
+
+LPTIM_TOG (by PB10) 
+AFE_SPI_NSS(内部
+
+   互连)  SPI1_NSS (by PA15) 
+PA15(内部互连) 
+AFE_SPI_SCK(内部
+
+   互连)  SPI1_SCK (by PB3) 
+PB3(内部互连) 
+AFE_SPI_MISO(内部
+
+   互连)  SPI1_MISO (by PB4) 
+PB4 
+AFE_SPI_MOSI(内部
+
+   互连)  SPI1_MOSI (by PB5) 
+PB5 
+
+  
+
+上海朔集半导体科技有限公司 第 25 页 / 共 73 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+
+
+
+SLM32M030 数据手册 
+ 
+
+4 引脚和定义 
+ 
+
+ 
+
+表4.7 LQFP48（SLM32M030CCT 不支持 BEMF）HALL 引脚的使用说明 
+
+HALL Pins 支持 HALL 时 标准 GPIO 或其他复用功能 
+
+引 脚 外 接 HALL0 ， HALL0 → PA6 → 
+HALL0 引脚外接，使用 PA6 功能 
+
+TIM3_CH1 
+引 脚 外 接 HALL1 ， HALL1 → PA7 → 
+
+HALL1 引脚外接，使用 PA7 功能 
+TIM3_CH2 
+引 脚 外 接 HALL2 ， HALL2 → PB0 → 
+
+HALL2 引脚外接，使用 PB0 功能 
+TIM3_CH3 
+
+ 
+
+4.5 GPIO 复用功能列表 
+
+表4.8 GPIO 复用功能列表 
+
+Name AF0 AF1 AF2 AF3 AF4 AF5 AF6 AF7 
+PA0 SPI2_NSS USART1_CTS USART2_CTS      
+
+PA1 SPI2_SCK USART1_RTS USART2_RTS  TIM15_CH1N   EVENTOUT 
+PA2 SPI2_MISO USART1_TXD USART2_TXD  TIM15_CH1    
+
+PA3 SPI2_MOSI USART1_RXD USART2_RXD  TIM15_CH2    
+
+PA4 SPI1_NSS USART1_CK USART2_CK  TIM14_CH1 LPTIM_EXT VC1_OUT  
+
+PA5 SPI1_SCK     TIM3_ETR LVD_OUT  
+
+PA6 SPI1_MISO   TIM16_CH1 TIM1_BKIN TIM3_CH1 VC1_OUT EVENTOUT 
+PA7 SPI1_MOSI   TIM17_CH1 TIM1_CH1N TIM3_CH2 TIM14_CH1 EVENTOUT 
+PA8 VC0_OUT  USART1_CK  TIM1_CH1  MCO EVENTOUT 
+PA9  LPUART_TXD USART1_TXD I2C1_SCL TIM1_CH2 TIM15_BKIN MCO  
+
+PA10  LPUART_RXD USART1_RXD I2C1_SDA TIM1_CH3 TIM17_BKIN   
+
+PA11  I2C1_SCL USART1_CTS I2C2_SCL TIM1_CH4 TIM15_CH1  EVENTOUT 
+PA12  I2C1_SDA USART1_RTS I2C2_SDA TIM1_ETR TIM15_CH2  EVENTOUT 
+PA13 SWDIO IR_OUT  VC1_OUT TIM3_ETR BEEP VC0_OUT  
+
+PA14 SWCLK USART1_TXD USART2_TXD    LVD_OUT  
+
+PB0  LPUART_TXD   TIM1_CH2N TIM3_CH3  EVENTOUT 
+PB1  LPUART_RXD  TIM14_CH1 TIM1_CH3N TIM3_CH4 LPTIM_GATE  
+
+PB2    TIM15_CH1 TIM1_BKIN BEEP LVD_OUT  
+
+PB6  USART1_TXD LPUART_TXD I2C1_SCL TIM16_CH1N  LVD_OUT  
+
+PB7  USART1_RXD LPUART_RXD I2C1_SDA TIM17_CH1N  BEEP  
+
+PB8  USART1_TXD USART2_TXD I2C1_SCL TIM16_CH1  VC1_OUT  
+
+PB9 SPI2_NSS USART1_RXD USART2_RXD I2C1_SDA TIM17_CH1  IR_OUT EVENTOUT 
+PB10 SPI2_SCK  I2C2_SCL I2C1_SCL  LPTIM_TOG   
+
+PB11 I2S_MCLK  I2C2_SDA I2C1_SDA  LPTIM_TOGN  EVENTOUT 
+PB12 SPI2_NSS SPI1_NSS   TIM1_BKIN TIM15_CH1  EVENTOUT 
+PB13 SPI2_SCK SPI1_SCK  I2C2_SCL TIM1_CH1N    
+
+PB14 SPI2_MISO SPI1_MISO  I2C2_SDA TIM1_CH2N TIM15_CH1   
+
+PB15 SPI2_MOSI SPI1_MOSI   TIM1_CH3N TIM15_CH2 TIM15_CH1N  
+
+PC13     TIM1_BKIN    
+
+PC14      BEEP   
+
+PC15     TIM15_BKIN BEEP   
+
+PD0 I2C2_SCL USART2_TXD LPUART_TXD I2C1_SCL TIM14_CH1 LPTIM_TOG   
+
+PD1 I2C2_SDA USART2_RXD LPUART_RXD I2C1_SDA TIM15_CH1N LPTIM_TOGN   
+
+PD6   I2C2_SCL I2C1_SCL     
+
+PD7   I2C2_SDA I2C1_SDA     
+
+  
+
+上海朔集半导体科技有限公司 第 26 页 / 共 73 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+
+
+
+SLM32M030 数据手册 
+ 
+
+5 规格说明 
+ 
+
+ 
+
+5 
+5 
+
+5 规格说明 
+
+5.1 Cortex-M0+内核与嵌入式闪存和 SRAM 
+
+Cortex-M0+是 ARM 公司的新一代处理器，它为 MCU 实现高性能，低功耗提供了可靠的平台，同
+时集成了丰富的 IO 和先进的中断控制系统。 
+
+SLM32M030 内嵌了 256KB 的 Flash 存储器，用于存储用户的应用代码和数据。内核运行在
+32MHz 及以下 Flash 不需要等待周期，32MHz 以上一个等待周期。 
+
+SLM32M030 内嵌了 32KB 的 SRAM 存储器，不需要等待周期。 
+
+5.2 启动模式 
+
+可以用 boot0 引脚来选择启动方式： 
+
+⚫ 从闪存用户区启动 
+
+⚫ 从闪存系统区启动，启动后可以通过 USRAT1 对闪存用户区进行编程 
+
+⚫ 从 SRAM 启动 
+
+5.3 CRC 计算单元 
+
+支持 ISO/IEC13239 的 CRC-32 多项式：X32 + X26 + X23 + X22 + X16 + X12 + X11 + X10+X8 + 
+X7 + X5+ X4 + X2+ X +1。 
+
+5.4 嵌套的向量式中断控制器（NVIC） 
+
+内置 NVIC 最多可以处理 32 个可屏蔽的中断线（不包括 16 个 M0+的中断）和 4 个可编程优先
+级。 
+
+⚫ 可以提供低延时的中断处理 
+
+⚫ 中断向量的入口地址直接通向内核 
+
+⚫ 紧密耦合的 NVIC 接口 
+
+⚫ 中断的快速响应 
+
+⚫ 处理优先级较高级别的中断 
+
+⚫ 支持 Tail-chaining 
+
+⚫ 处理器状态自动保存 
+
+⚫ 中断返回自动恢复，无需额外指令 
+
+此模块以最小的中断延迟提供灵活的中断管理功能。 
+
+5.5 外部中断/事件控制器（EXTI） 
+
+外部中断/事件控制器包括 24 个边缘检测线用于产生中断/事件请求，每条线都可以被单独地配置
+触发事件（上升沿，下降沿或者两者），并且能够独立的被屏蔽。一个挂起的寄存器维持所有的中
+断请求状态。EXTI 可以检测到小于内部 APB2 时钟周期的脉冲，所有的 GPIO 都可以连接到 16
+个外部中断线。 
+
+5.6 时钟和启动 
+
+系统时钟有 5 个时钟源：HSI（内部 8MHz）、HSE（外部 4~32MHz）、PLL（内部 4~64MHz）、
+LSE 和 LSI。系统在启动和复位时会选择 HSI 8MHz 为默认时钟，之后软件可以任意配置系统时钟
+在 HSI、HSE、PLL、LSE、LSI 之间切换。 
+
+多个预分频器用于配置 AHB 频率， APB 域。AHB 和 APB 域的最高频率是 64MHz。 
+
+上海朔集半导体科技有限公司 第 27 页 / 共 73 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+
+
+
+SLM32M030 数据手册 
+ 
+
+5 规格说明 
+ 
+
+ 
+
+5.7 供电方案 
+
+VDD=2.5~5.5V, 外部电源通过 VDD 引脚给所有 IO 供电。 
+
+VDDA=VDD, 外部模拟电源为 ADC，复位单元，内部调压器，振荡器和锁相环供电，VDDA 必须
+连接到 VDD。 
+
+5.8 供电检测 
+
+集成了上电复位（POR）和掉电复位（PDR）检测电路，并且一直工作，确保电源高于或低于
+1.8V 时的状态。如果电源低于阈值 VPOR/PDR，则系统一直处于复位状态，不需要外部的复位电
+路。 
+
+产品同时集成了可编程的电压检测器（LVD），用于监控 VDD/VDDA 的电压，并且同 LVD 做比
+较。当 VDD/VDDA 掉到 VPVD以下或者升到 VPVD 以上时就会产生一个中断。中断处理程序可以产
+生警告信息使产品进入安全模式。PVD 功能需要通过软件开启。 
+
+5.9 电压调节器 
+
+两个电压调节器：2.0V 电压调节器和 1.2V 电压调节器。 
+
+2.0V 电压调节器有 2 种工作模式：主模式（MR）和低功耗模式（LPR）。 
+
+⚫ 主模式用在常规的调节模式。调节器为 2.0V 的域提供电源（RTC、IWDG、备份寄存
+
+器）。 
+
+⚫ 低功耗模式用在待机模式下。调节器为 2.0V 的域提供低功耗电源。 
+
+1.2V 电压调节器有 3 种模式：主模式（MR）低功耗模式（LPR）和关闭模式。 
+
+⚫ 主模式用在常规的调节模式。调节器为 1.2V 的域提供电源（内核，存储和数字周边）。 
+
+⚫ 低功耗模式用在停止模式下。调节器为 1.2V 的域提供低功耗电源，保留了寄存器和
+
+SRAM 的数据。 
+
+⚫ 关闭模式用在待机模式下。调节器输出在高阻状态，核心电路被关闭（寄存器和 SRAM
+
+的内容丢失）。 
+
+5.10 低功耗模式 
+
+3 种低功耗模式以达到低功耗，短启动时间和有效的启动时间。 
+
+⚫ 睡眠模式 
+
+睡眠模式下，内核时钟被关闭，所有的外设仍处在工作状态。 
+
+⚫ 停止模式 
+
+停止模式在保留寄存器和 SRAM 数据的情况下达到最低的功耗。1.2V 域的高速时钟
+被关闭，锁相环，内部高速振荡器和外部高速振荡器被关闭。1.2v 电压调节器可以处
+在主要和低功耗模式。通过任一 EXTI 线可以唤醒产品。EXTI 信号源可以是任一 16
+个外部中断，LVD 输出，RTC 警告，AWK 中断。 
+
+⚫ 待机模式 
+
+待机模式可以实现最低的功耗。内部的电压调节器被关闭，整个 1.2V 的域也被关
+闭。锁相环，内部高速振荡器和外部高速振荡器被断开。进入待机模式之后，SRAM
+和寄存器的数据丢失，只有备份区的寄存器和待机电路保持供电状态。 
+
+5.11 DMA 
+
+灵活的 6 路通用 DMA 可以管理存储器到存储器，外设到存储器和存储器到外设的数据传输。DMA
+控制器支持环形缓冲区的管理，避免了控制器到达缓冲区结尾时产生的中断。 
+
+每个通道都连接到独立的硬件 DMA 请求，并且由软件触发每个独立通道。通过软件来配置传输源
+和传输目标的转换大小。 
+
+上海朔集半导体科技有限公司 第 28 页 / 共 73 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+
+
+
+SLM32M030 数据手册 
+ 
+
+5 规格说明 
+ 
+
+ 
+
+DMA 可以用于主要的外设：、SPI、I2C、USART、通用/基本/高级定时器 TIMx、ADC 和 AES。  
+
+5.12 实时时钟（RTC） 
+
+实时时钟是一个独立的 BCD 定时器、计数器，可以通过软件配置来提供时钟日历功能，也可以提
+供闹钟中断和周期性的中断。它的时钟可由外部 32.768kHz 振荡器、内部低速振荡器或者 128 分
+频的外部高速振荡器提供。内部低速振荡器的典型频率是 32.768kHz。RTC 通过每隔一个固定的
+时间周期屏蔽指定的 RTC 时钟周期，以补偿自然的频率偏差。16 位预分频器用于时基时钟，默认
+情况下配置为从 32.768 kHz 的时钟生成 1 秒的时基。 
+
+5.13 定时器和看门狗 
+
+1 个高级定时器，5 个通用定时器，2 个基本定时器，2 个看门狗定时器、一个系统定时器、一个
+低功耗定时器、一个自唤醒定时器。 
+
+下表给出了这些定时器的特性。 
+
+表5.1 定时器功能 
+
+DMA 请 捕获/比较通
+类型 定时器 分辨率 计数类型 预分频 互补输出 
+
+求生成 道 
+
+递增、 递减、
+高级 TIM1 32-bit 1 和 65535 之间的任一整数 是 4 3 
+
+递增/递减  
+
+递增、 递减、
+TIM3 32-bit 1 和 65535 之间的任一整数 是 4 0 
+
+递增/递减  
+
+通用 TIM14 32-bit 递增 1 和 65535 之间的任一整数 是 1 0 
+
+TIM15 32-bit 递增 1 和 65535 之间的任一整数 是 2 1 
+
+TIM16 
+32-bit 递增 1 和 65535 之间的任一整数 是 1 1 
+
+TIM17 
+TIM6 
+
+基本 32-bit 递增 1 和 65535 之间的任一整数 是 0 0 
+TIM7 
+
+高级控制定时器（TIM1） 
+
+高级控制定时器可以看作 6 个通道上复用的 3 相 PWM，具有可编程插入死区的互补输出。同样可
+被用作通用定时器，4 个独立的通道可用来： 
+
+⚫ 输入捕获 
+
+⚫ 输出比较 
+
+⚫ 产生 PWM(边缘或中心对齐模式) 
+
+⚫ 单脉冲输出 
+
+调试模式下，定时器可被冻结，PWM 输出被禁止，切断这些输出所控制的电源开关。 
+
+高级定时器的很多功能和通用定时器相同，相同的内部结构，因此可以通过定时器链接功能与 TIM
+定时器共同工作，提供同步或者事件链接。 
+
+通用定时器（TIMx） 
+
+5 个可同步的通用定时器（TIM3, TIM14, TIM15, TIM16, TIM17）。这些计数器基于 1 个 32 位的自
+动加载增/减计数器，1 个 16 比特的预分频器和 1 个或 2 个或 4 个独立的通道，每个通道可以用作
+捕获，输出比较，PWM 或者单脉冲模式输出。 
+这些定时器能够处理正交（增量）编码器信号和 1 至 3 个霍尔效应传感器的数字输出。 
+
+ 
+
+基本定时器（TIM6/7） 
+
+基本定时器主做通用的 32 位时间基准。 
+
+上海朔集半导体科技有限公司 第 29 页 / 共 73 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+
+
+
+SLM32M030 数据手册 
+ 
+
+5 规格说明 
+ 
+
+ 
+
+ 
+
+低功耗定时器（LPTIM） 
+
+低功耗定时器为 1 个异步的 16 位可选定时器。在系统时钟关闭后仍然可以通过 LSI 或者 LSE 计
+时，通过中断可以在低功耗模式下唤醒系统。 
+
+ 
+
+自唤醒定时器（AWK） 
+
+AWK 是用于当 MCU 进入低功耗模式时提供一个内部唤醒时间基准。改时间基准的时钟是有内部
+的低速 RC 振荡器时钟（LSI）、外部高速晶振时钟（HSE）或外部低速晶振时钟（LSE）来提供。 
+
+ 
+
+独立的看门狗 
+
+独立的看门狗基于 1 个 12 比特的递减计数器和 1 个 8 比特的预分频器。它的时钟由内部的 40KHz
+振荡器提供，由于独立于主时钟，所以可以运行在停机和待机模式。看门狗可以在系统出现问题时
+复位系统，也可以作为自由定时器为应用进行超时管理。字节选项可以配置是通过软件或者硬件来
+启动看门狗。调试模式下，看门狗被关闭。 
+
+窗口的看门狗 
+
+窗口看门狗基于 1 个 7 比特的递减计数器，可以自由运行。它可以被当成看门狗，在系统发生问
+题的时候复位系统，由主时钟驱动，具有早期预警中断能力，在调试模式下被关闭。 
+
+ 
+
+系统定时器 
+
+系统定时器专门用于实时操作系统，同时也可以被用作标准的递减计数器： 
+
+⚫ 24 位的递减计数器 
+
+⚫ 自动重加载功能 
+
+⚫ 当计数器为 0 时能产生一个可屏蔽系统中断 
+
+⚫ 可编程时钟源(HCLK or HCLK/8) 
+
+5.14 I2C 总线 
+
+2 路 I2C 总线接口可以工作在多主和从模式下，支持标准，快速模式。 
+
+总线接口支持 7/10 比特寻址模式，和从模式 7 比特双地址寻址。 
+
+总线接口可以由 DMA 提供服务，并且支持 SMBus 2.0/PMBus。 
+
+5.15 通用同步/异步收发器（USARTs） 
+
+2 个通用同步/异步收发器（USART1/2）。 
+
+这 2 个接口提供异步通讯，支持 IrDA SIR ENDEC，多处理器通讯模式，单线半双工通信模式，并
+具有 LIN 主/从功能。 
+
+USART1/2 接口最高通讯速度可达 4.5Mb/s。 
+
+USART1/2 同时提供 CTS 和 RTS 信号管理，智能卡模式（符合 ISO7816 标准）和类似 SPI 的通
+讯功能。USART1/2 都支持 DMA 功能。 
+
+ 
+
+上海朔集半导体科技有限公司 第 30 页 / 共 73 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+
+
+
+SLM32M030 数据手册 
+ 
+
+5 规格说明 
+ 
+
+ 
+
+5.16 低功耗通用异步收发器（LPUART） 
+
+当系统进入低功耗模式后，关闭高频时钟，打开低频时钟，LPUART 可以进行正常的数据收发。
+低频时钟可以是 LSI 和 LSE。 
+
+5.17 串行外设接口（SPI） 
+
+在全双工和单工通讯模式下，主机和从机模式下，2 个 SPI 能以高达 24Mb/s 的速率进行通讯。3
+比特预分频器提供 8 个主模式频率，并且每帧可被配置成 8/16 比特。硬件 CRC 生成/验证支持基
+本的 SD 卡/ MMC 模式。DMA 可以为 SPI 提供服务。 
+
+5.18 内置音频总线（I2S） 
+
+1 路标准的音频总线（和 SPI2 复用），工作在主或从模式下。这些接口可以被配置成 16/32 比特分
+辨率输入或输出，音频采样频率从 8kHz 到 192kHz。当任一或者全部音频接口被配置为主模式，
+主时钟可以 256 倍采样频率输出到外部 DAC/CODEC。 
+
+5.19 真随机发生器（TRNG） 
+
+TRNG 是一个真随机数发生器，可以连续提供 32 位真随机数。 
+
+5.20 通用输入输出接口（GPIO） 
+
+每一个通用输入输出接口可被软件配置为推挽或漏极开路输出，带或者不带上拉/下拉的输入，或
+者复用的外设功能。大多数 GPIO 引脚与数字或者模拟功能复用。所有的 GPIO 都可以通过大电
+流。如果需要，可以按照特定的顺序锁 I/O 复用功能，以避免对 I/O 寄存器进行错误的写入。 
+
+5.21 模拟数字转换（ADC） 
+
+12 比特的模拟数字转换器，每个转换器有多达 16 个外部通道和 2 个内部源，完成单次，扫描模式
+转换。在扫描模式下，选定的一组模拟输入会自动转换。 
+
+ADC 接口还带有以下数字功能： 
+
+⚫ 同时采样并保持 
+
+⚫ 交错采样并保持 
+
+⚫ 单分流 
+
+DMA 控制器可以服务 ADC 模块。 
+
+模拟看门狗可以非常精确地监视部分或全部选定通道的转换电压，当转换后的电压超出设定的阈值
+时，将产生中断。 
+
+5.22 温度传感器（TS） 
+
+温度传感器产生随温度线性变化的电压。转换范围 2.0V<VDDA<5.5V。温度传感器内部连接 ADC
+输入通道，该通道用于将传感器输出电压转换为数字。 
+
+5.23 蜂鸣器（BEEP） 
+
+可以在 BEEP 引脚上产生一个 1/2/4KHz 的蜂鸣信号，用来驱动外部的蜂鸣器。 
+
+5.24 MCU 电压比较器（MCU_VC） 
+
+MCU 内置 2 个电压比较器，每个比较器可选择 2 个模拟信号进行电压对比，输出比较结果。有迟
+滞和滤波功能。 
+
+  
+
+上海朔集半导体科技有限公司 第 31 页 / 共 73 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+
+
+
+SLM32M030 数据手册 
+ 
+
+5 规格说明 
+ 
+
+ 
+
+图5.1 电压比较示意框图 
+
+CR[17:14]
+
+VC0_INN0
+...
+
+VC0_INN10
+
+VCAP引脚电压
+
+温度传感器
+
+ADC参考电压
+
+CR[7] CR[13:10] CR[9:8]
+
+CR[6:0]
+-
+
+Vref0(ADC参考电压)
+VC0_INP0
+
+..
+电阻分压 . +
+
+Vref1(电源电压) VC0_INP15
+
+VC0
+
+CR[27:24]
+
+VC1_INN0
+...
+
+VC1_INN10
+
+VCAP引脚电压 CR[19:18]
+
+温度传感器
+
+ADC参考电压 -
+
+CR[23:20] +
+
+VC1
+
+VC1_INP0
+...
+
+VC1_INP15
+
+A4_DS_MCUVC_V1_C3
+
+ 
+
+5.25 模拟前端（AFE） 
+
+模拟前端（AFE）内部包含：4 个运算放大器（PGA），6 个电压比较器（VC），1 个数模转换器
+（DAC），1 个 BEMF（用 3 个 BEMF IN 生成一个 BEMF MID OUT）。 
+
+  
+
+上海朔集半导体科技有限公司 第 32 页 / 共 73 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+
+
+
+SLM32M030 数据手册 
+ 
+
+6 电气特性 
+ 
+
+ 
+
+6 
+6 
+
+6 电气特性 
+
+6.1 测试条件 
+
+除非特别说明，所有电压都以 Vss 为基准。 
+
+6.1.1 最小和最大值 
+
+除非特别说明，最小和最大值是在 25℃的环境温度和 VDD=3.3V 的条件下。 
+
+表格中的特性值基于设计仿真，工艺特征，未在量产中测试。 
+
+6.1.2 典型值 
+
+除非特别说明，典型值基于 25℃的环境温度和 VDD=3.3V 的条件。 
+
+6.1.3 典型曲线 
+
+除非特别说明，典型曲线是为了提供设计知道，并没有被测试。 
+
+6.1.4 负载电容 
+
+引脚参数测量的负载电容如下所示。 
+
+6.1.5 引脚输入电压 
+
+引脚上输入电压的测量方式如下所示。 
+
+图6.1 引脚电容 
+
+ 
+C=50pF
+
+A4_DS_PCAP_V1_C3
+
+图6.2 引脚电压测量 
+
+ 
+VIN
+
+A4_DS_PVM_V1_C3
+
+  
+
+上海朔集半导体科技有限公司 第 33 页 / 共 73 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+
+
+
+SLM32M030 数据手册 
+ 
+
+6 电气特性 
+ 
+
+ 
+
+6.1.6 供电方案 
+
+图6.3 电源供电方案 
+
+OUT
+
+GP I/Os IO
+Logic Kernel logic
+
+IN (CPU,Digital 
+& Memories)
+
+Regulator
+1.2v
+
+VDD
+ 
+
+VDD Regulator IWDG，RTC,
+11 × 100nF 2.0v Wake-up logic
++ 1 × 4.7μF Backup registers
+
+VSS
+
+VDD
+
+VDDA
+
+VREF VREF
+
+10nF + 1μF +
+Analog:
+
+10nF ADC/DA
++ 1μF V RCs,PLL,
+
+REF C
+ 
+
+-
+
+VSSA
+
+A4_DS_PSS_V1_C3
+
+6.1.7 电流测量 
+
+图6.4 电流测量 
+
+IDD
+
+VDD
+
+V  
+DDA
+
+A4_DS_CM_V1_C3
+
+ 
+
+上海朔集半导体科技有限公司 第 34 页 / 共 73 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+
+Level shifter
+
+
+
+SLM32M030 数据手册 
+ 
+
+6 电气特性 
+ 
+
+ 
+
+6.1.8 典型应用框图 
+
+图6.5 电机应用 
+
+ VIN
+
+SLM32M030 TIM1_CH1
+PA8
+
+PRE U
+DRV
+
+TIM1_CH1N
+PB13
+
+PGA0P R
++
+
+ADC_in3
+PA3 PGA0 R
+
+- PGA0N R
+PGND
+
+PGA0O R
+VIN
+
+TIM1_CH2
+PA9
+
+V
+PRE
+DRV
+
+TIM1_CH2N
+PB14
+
+PGA1P R
++
+
+ADC_in5
+PA5 PGA1 R
+
+- PGA1N R
+PGND
+
+PGA1O R
+VIN
+
+TIM1_CH3
+PA10
+
+PRE W
+
+TIM1_CH3N DRV
+PB15
+
+PGA2P R
++
+
+ADC_in9
+PB1 PGA2 R  
+
+- PGA2N R
+PGND
+
+PGA2O R
+
+PGND
+
+PGA3P R
++
+
+PGA3 GND
+- PGA3N R
+
+PGA3O R
+
+ADC_in14 BUS_AV RC 
+PA12
+
+FILTER
+
+AFE_ BUS_PEAK
+
+AFE_VC5O + VC5P
+AFE_
+VC5
+
+- AFE_
+VC5N
+
+v_set
+DAC DAC
+
+OC
+AFE_
+VC5O
+
+TIM1_BRK
+PB12
+
+A4_DS_AFEAPP_V1_C3
+
+  
+
+上海朔集半导体科技有限公司 第 35 页 / 共 73 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+
+
+
+SLM32M030 数据手册 
+ 
+
+6 电气特性 
+ 
+
+ 
+
+6.2 最大绝对值 
+
+加在产品上的载荷如果超过绝对最大值，可能会导致产品永久性地损坏。这里给出能承受的最大载
+荷，并不等于在此条件下产品的功能性操作无误，产品长期工作在最大值条件下会影响可靠性。 
+
+表6.1 电压特性 
+
+符号 描述 最小值 最大值 单位 
+
+VDD–VSS 外部主供电电压(包含 VDDA 和 VSSA) –0.3 5.5 V 
+
+VIN 引脚上的输入电压 VSS –0.3 VDD+0.3 V 
+
+|VDDx| 不同供电引脚之间的电压差  50 mV 
+
+|VSSX –VSS| 不同接地引脚之间的电压差  50 mV 
+
+表6.2 电流特性 
+
+符号 描述 最大值 单位 
+
+IVDD 流经 VDD/VDDA 的总电流 120 
+
+IVSS 流经 VSS 的总电流 120 
+
+I/O 和输出引脚上的输出灌电流 25 
+IIO mA 
+
+I/O 和输出引脚上的输出电流 –25 
+
+IINJ(PIN) 引脚上的注入电流 ± 5 
+
+∑IINJ(PIN) 全部 I/O 和控制引脚上的总注入电流 ± 25 
+
+表6.3 温度特性 
+
+符号 描述 值 单位 
+
+TSTG 存储温度范围 –65 to +150 °C 
+
+TJ 最大结温度 150 °C 
+
+ 
+  
+
+上海朔集半导体科技有限公司 第 36 页 / 共 73 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+
+
+
+SLM32M030 数据手册 
+ 
+
+6 电气特性 
+ 
+
+ 
+
+6.3 通用工作条件 
+
+表6.4 通用工作条件 
+
+符号 参数 条件 最小值 最大值 单位 
+
+fHCLK 内部 AHP 时钟频率  0 64 
+MHz 
+
+fPCLK 内部 APB 时钟频率  0 64 
+
+VDD 标准工作电压  2.5 5.5 V 
+
+必须与 VDD 电压相同或
+VDDA 模拟工作电压(ADC 使用) 2.5 5.5  
+
+者更高 
+
+Ta 温度范围 扩展性 -40 105 °C 
+
+6.4 上电/掉电时的工作条件 
+
+表6.5 上电/掉电时的工作条件 
+
+符号 参数 条件 最小值 最大值 单位 
+
+VDD 上升速率 0 ∞ 
+tVDD  µs/V 
+
+VDD 下降速率 20 ∞ 
+
+6.5 内嵌复位和电源控制模块特性 
+
+表6.6 内嵌复位和电源控制模块特性 
+
+符号 参数 条件 最小值 典型值 最大值 单位 
+
+VPVDhyst PVD 延迟   100  mV 
+
+上升沿  1.6  
+VPOR/PDR 上电/掉电阈值 V 
+
+下降沿  1.7  
+
+VPDRhyst PDR 延迟   90.9  mV 
+
+TRSTTEMPO 复位持续时间   20  ms 
+
+  
+
+上海朔集半导体科技有限公司 第 37 页 / 共 73 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+
+
+
+SLM32M030 数据手册 
+ 
+
+6 电气特性 
+ 
+
+ 
+
+6.6 内嵌参考电压 
+
+表6.7 内嵌参考电压 
+
+符号 参数 条件 最小值 典型值 最大值 单位 
+
+VREFINT 内部参考电压 –40 °C < TA < +105 °C  2.0  V 
+
+读内部参考电压 ADC 采样
+TS_vrefint   10  µs 
+
+时间 
+
+TCoeff 温度系数    100 ppm/°C 
+
+6.7 供电电流特性 
+
+电流消耗是多种参数和因素的组合结果，例如工作电压，环境温度，I/O 引脚负载，产品软件配
+置，工作频率，I/O 引脚转换速率，程序在存储器中的位置以及执行的代码等。 
+
+所有的运行模式下的电流消耗都是在执行一套精简的代码。 
+
+最大电流消耗 
+
+产品被置于如下条件： 
+
+⚫ 所有的 I/O 引脚处于输入模式，连接到稳态值 VDD 或者 VSS（不带负载） 
+
+⚫ 所有的外设被关闭除非特别说明 
+
+◼ 闪存的读取速度被设置成 fHCLK频率 
+
+⚫ 外设使能时，fPCLK = fHCLK 
+ 
+  
+
+上海朔集半导体科技有限公司 第 38 页 / 共 73 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+
+
+
+SLM32M030 数据手册 
+ 
+
+6 电气特性 
+ 
+
+ 
+
+表6.8 运行模式下最大电流消耗，从闪存中执行代码 
+
+最大值 最大值 
+符号 参数 条件 fHCLK 单位 
+
+TA = 25 °C TA = 85 °C 
+
+64 MHz 30 20.5 
+
+48 MHz 29 29.5 
+
+36 MHz 27 28 
+
+外部时钟，所有外设使能 24 MHz 20 20.5 
+
+16 MHz 11 11.5 
+
+8 MHz 8 8.5 
+
+4 MHz 6 6.5 
+IDD 运行模式下的功耗 mA 
+
+64 MHz 24 24.5 
+
+48 MHz 22 22.5 
+
+36 MHz 16.5 17 
+
+外部时钟，所有外设关闭 24 MHz 12.5 13 
+
+16 MHz 8 8 
+
+8 MHz 6 6 
+
+4 MHz 4 4 
+
+表6.9 运行模式下最大电流消耗，从 SRAM 中执行代码 
+
+最大值 最大值 
+符号 参数 条件 fHCLK 单位 
+
+TA = 25 °C TA = 85 °C 
+
+64 MHz 25 27 
+
+48 MHz 23 25 
+
+36 MHz 18 19 
+
+外部时钟，所有外设式能 24 MHz 16 18 
+
+16 MHz 9 10.5 
+
+8 MHz 7 7 
+
+4 MHz 5 5 
+IDD 运行模式下的电流 mA 
+
+64 MHz 20 20.5 
+
+48 MHz 18 18.5 
+
+36 MHz 13 13.5 
+
+外部时钟，所有外设关闭 24 MHz 10 10.5 
+
+16 MHz 6 6.5 
+
+8 MHz 4 4.5 
+
+4 MHz 2 2.5 
+
+  
+
+上海朔集半导体科技有限公司 第 39 页 / 共 73 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+
+
+
+SLM32M030 数据手册 
+ 
+
+6 电气特性 
+ 
+
+ 
+
+表6.10 睡眠模式下的最大电流，代码从闪存或 SRAM 中执行 
+
+最大值 最大值 
+符号 参数 条件 fHCLK 单位 
+
+TA = 25 °C TA = 85 °C 
+
+64 MHz 27 28 
+
+48 MHz 24 25 
+
+36 MHz 17 17.5 
+
+外部时钟，所有外设式能 24 MHz 12.5 13 
+
+16 MHz 8 8 
+
+8 MHz 5.5 6 
+
+睡眠模式下的电 4 MHz 4.5 5 
+IDD mA 
+
+流 64 MHz 7 7.5 
+
+48 MHz 6 6.5 
+
+36 MHz 5 5.5 
+
+外部时钟，所有外设关闭 24 MHz 4.5 5 
+
+16 MHz 4 4 
+
+8 MHz 3 3 
+
+4 MHz 2 2 
+
+表6.11 停止和待机模式下的典型/最大电流 
+
+符号 参数 条件 典型值 最大值 单位 
+
+调节器运行模式，低速和高速内
+部振荡器关闭，高速晶振关闭 90 230 
+
+（没有独立的看门狗） 
+
+睡眠模式下
+的电流 
+
+调节器低功耗模式，低速和高速
+内部振荡器关闭，高速晶振关闭 80 160 
+
+（没有独立的看门狗） 
+IDD µA 
+
+低速内部振荡器和独立看门狗开
+2.3  
+
+启 
+
+低速内部振荡器开启和独立看门
+2.1  
+
+待机模式下 狗关闭 
+的电流 
+
+低速内部振荡器和独立看门狗关
+1.5 3.6 
+
+闭，低速晶振和实时时钟关闭 
+
+  
+
+上海朔集半导体科技有限公司 第 40 页 / 共 73 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+
+
+
+SLM32M030 数据手册 
+ 
+
+6 电气特性 
+ 
+
+ 
+
+典型电流消耗 
+
+产品被置于如下条件： 
+
+⚫ 所有的 I/O 引脚处于输入模式，连接到稳态值 VDD 或者 VSS（不带负载） 
+
+⚫ 所有的外设被关闭除非特别说明 
+
+◼ 闪存的读取速度被设置成 fHCLK频率 
+
+⚫ 外设使能时，fPCLK1 = fHCLK 
+
+6.8 外部时钟源特性 
+
+高速外部用户时钟由外部时钟源产生 
+
+表6.12 高速外部时钟特性 
+
+符号 参数 条件 最小值 典型值 最大值 单位 
+
+fHSE_ext 用户外部时钟源频率 4 8 32 MHz 
+
+VHSEH OSC_IN 输入引脚高电平电压 0.7VDD  VDD 
+V 
+
+VHSEL OSC_IN 输入引脚低电平电压 VSS  0.3VDD 
+ 
+
+tw(HSE) tw(HSE) OSC_IN 高电平或低电平时间 16   
+
+ns 
+
+tr(HSE) tf(HSE) OSC_IN 上升或下降时间   20 
+
+Cin(HSE) OSC_IN 输入电容   10  pF 
+
+DuCy(HSE) 占空比  45  55 % 
+
+IL OSC_IN 输入漏电流 VSS ≤VIN ≤VDD   ±1 µA 
+
+表6.13 低速外部时钟特性 
+
+符号 参数 条件 最小值 典型值 最大值 单位 
+
+fLSE_ext 用户外部时钟源频率 16 32.768 200 kHz 
+
+VLSEH OSC32_IN 输入引脚高电平电压 0.7VDD  VDD 
+
+V 
+
+VLSEL OSC32_IN 输入引脚低电平电压  VSS  0.3VDD 
+
+tw(LSE) tw(LSE) OSC32_IN 高电平或低电平时间  15259  
+
+ns 
+
+tr(LSE) tf(LSE) OSC32_IN 上升或下降时间  1  
+
+Cin(LSE) OSC32_IN 输入电容   10  pF 
+
+DuCy(LSE) 占空比  40 50 55 % 
+
+IL OSC32_IN 输入漏电流 VSS ≤VIN ≤VDD   ±1 µA 
+
+  
+
+上海朔集半导体科技有限公司 第 41 页 / 共 73 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+
+
+
+SLM32M030 数据手册 
+ 
+
+6 电气特性 
+ 
+
+ 
+
+图6.6 高速外部时钟时序图 
+
+tf(HSE) tW(HSE) tW(HSE)
+
+ 
+
+THSE
+
+External
+clock source fHSE_ext OSC_IN IL
+
+A4_DS_HSECT_V1_C3
+
+图6.7 低速外部时钟时序图 
+
+tf(LSE) tW(LSE) tW(LSE)
+
+ 
+
+TLSE
+
+External
+clock source fLSE_ext OSC32_IN IL
+
+A4_DS_LSECT_V1_C3
+
+  
+
+上海朔集半导体科技有限公司 第 42 页 / 共 73 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+
+
+
+SLM32M030 数据手册 
+ 
+
+6 电气特性 
+ 
+
+ 
+
+ 
+高速外部用户时钟由晶振或者陶瓷谐振器产生 
+
+表6.14 外部高速时钟特性 
+
+符号 参数 条件 最小值 典型值 最大值 单位 
+
+fOSC_IN 振荡器频率  4 8 32 MHz 
+
+RF 反馈电阻   200  Ω 
+
+C 晶振外部负载电容   12  pF 
+
+VDD= 3.3 V, VIN = VSS 
+Idd HSE 驱动电流  0.3  mA 
+
+12pF 负载 
+
+DCfclk 占空比 启动 40 50 60 % 
+
+tSU(HSE) 启动时间 3M~32MHZ  250  uS 
+
+高速低速用户时钟由晶振或者陶瓷谐振器产生 
+
+表6.15 外部低速时钟特性 
+
+符号 参数 条件 最小值 典型值 最大值 单位 
+
+RF 反馈电阻  40 65 85 kΩ 
+
+C 晶振外部负载电容   12  pF 
+
+ESR=65kOhm 
+I LSE 驱动电流  250  nA 
+
+CSCLK=12pF 
+
+DCfclk 占空比 启动 40 50 60 % 
+
+ESR=65kOhm 
+tSU(LSE) 启动时间  2 4 s 
+
+CSCLK=12pF 
+
+6.9 内部时钟源特性 
+
+表6.16 HSI 振荡器特性 
+
+符号 参数 条件 最小值 典型值 最大值 单位 
+
+fHSI 频率   8  MHz 
+
+TA = –40 to 105 °C –2.5  2.5 ACCHSI 
+
+TA = –10 to 85 °C –1.5  1.5 % 
+ACCHSI 内部振荡器精准度 生产调整 
+
+TA = 0 to 70 °C –1  1 % 
+
+TA = 25 °C –0.5  0.5 % 
+
+tsu(HSI) 内部振荡器启动时间   2  µs 
+
+IDD(HSI) 内部振荡器功耗   70  µA 
+
+  
+
+上海朔集半导体科技有限公司 第 43 页 / 共 73 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+
+
+
+SLM32M030 数据手册 
+ 
+
+6 电气特性 
+ 
+
+ 
+
+表6.17 LSI 振荡器特性 
+
+符号 参数 最小值 典型值 最大值 单位 
+
+fLSI 频率 38 40 42 kHz 
+
+tsu(LSI) LSI 启动时间  70  µs 
+
+IDD(LSI) LSI 功耗 0.2 0.25 0.35 µA 
+
+6.10 低功耗模式启动时间 
+
+启动时间是在使用 HSI 启动阶段量测。 
+
+表6.18 低功耗模式启动时间 
+
+符号 参数 最小值 典型值 最大值 单位 
+
+tWUSLEEP 睡眠模式启动时间  0.5  µs 
+
+tWUSTOP 停止模式启动时间 (调节器在运行模式)  16  µs 
+
+tWUSTDBY 待机模式启动时间  65  µs 
+
+6.11 锁相环特性 
+
+表6.19 锁相环特性 
+
+符号 参数 最小值 典型值 最大值 单位 
+
+锁相环输入时钟 4  32 MHz 
+fPLL_IN 
+
+锁相环输入时钟占空比 40  60 % 
+
+fPLL_OUT 锁相环倍频输出 4  64 MHz 
+
+tLOCK 锁相环锁相时间   100 µs 
+
+6.12 存储器特性 
+
+表6.20 闪存特性 
+
+符号 参数 条件 最小值 典型值 最大值 单位 
+
+tprog 32 比特编程时间 TA = –40 to +105 °C  20  µs 
+
+tERASE 页（1K 字节）擦除时间 TA = –40 to +105 °C  20  ms 
+
+tME 整片擦除时间 TA = –40 to +105 °C 20 37.5 40 ms 
+
+读模式，fHCLK = 32MHz  3.5 4.5 mA 
+
+编程模式，fHCLK = 32MHz   2 mA 
+IDD 电流消耗 
+
+擦模式，fHCLK = 32MHz   1 mA 
+
+待机  50/25C 70/25C µA 
+
+Vprog 编程电压  2  3.6 V 
+
+I 深睡眠   0.5/25C 2/25C uA 
+
+  
+
+上海朔集半导体科技有限公司 第 44 页 / 共 73 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+
+
+
+SLM32M030 数据手册 
+ 
+
+6 电气特性 
+ 
+
+ 
+
+表6.21 闪存寿命和数据保持 
+
+符号 参数 条件 最小值 单位 
+NEND 擦写次数 TA = -40 to +105 °C 100 千次 
+
+1 k cycle at TA = 85 °C 30 
+tRET 数据保持 1 k cycle at TA = 105 °C 10 年 
+
+10 k cycles at TA = 55 °C 20 
+
+6.13 EMC 特性 
+
+敏感性测试是在产品的特性评估时抽样进行测试的。 
+
+功能性 EMS(电磁敏感性) 
+
+当产品运行一个简单应用程序时（通过 IO 口闪烁 2 个 LED）被施加 2 种电磁干扰直至错误产生，
+LED 指示错误的发生。 
+
+⚫ 静电放电（ESD）(正向和反向)被施加到产品所有的引脚直至功能发生错误，这个测试符
+
+合 IEC 61000-4-2 标准。 
+
+⚫ FTB：VDD 和 VSS 通过 1 一个 100pF 的电容施加一个瞬变电压的脉冲群（正向和反
+
+向）直到功能发生错误，这个测试符合 IEC 61000-4-4 标准。 
+
+复位可以使产品继续正常工作。 
+
+表6.22 EMS 特性 
+
+符号 参数 条件 等级/类型 
+VDD=3.3V,LQFP100,TA=25°C, fHCLK=64 
+
+VFESD 在任何引脚上施加的导致功能混乱的电压极限 2B 
+MHz，符合 IEC 61000-4-2 标准。 
+
+在 VDD 和 VSS 上通过 100pF 的电容施加的、 VDD=3.3V,LQFP100,TA=25°C, fHCLK=64 
+VEFTB 4A 
+
+导致功能出现错误的瞬变脉冲群极限。 MHz，符合 IEC 61000-4-4 标准。 
+
+避免噪声问题的软件设计 
+
+通过典型的应用环境和简化的 MCU 软件在组件级别执行 EMC 特性和优化。应该注意的是，良好
+的 EMC 性能在很大程度上取决于用户应用程序，尤其是软件。 
+
+因此，建议用户根据其应用程序要求的 EMC 等级应用 EMC 软件优化和认证前的实验。 
+
+软件建议： 
+
+软件流程必须包括失控条件的管理，例如： 
+
+⚫ 程序计数器损坏 
+
+⚫ 未预期的复位 
+
+⚫ 关键数据损坏（控制寄存器等） 
+
+认证前的实验 
+
+大多数常见故障（未预期的复位和程序计数器损坏）可以通过在 NRST 引脚或振荡器引脚上强制
+施加低电平状态 1 秒钟来重现。 
+
+为了完成这些试验，可以把超出规范值范围内的 ESD 条件直接施加在产品上。当检测到意外行为
+时，可以对软件进行加固，以防止发生不可恢复的错误。 
+
+电磁干扰（EMI） 
+
+在执行简单的应用程序时（通过 IO 口切换 2 个 LED），可以监视设备发出的电磁场。该测试符合 
+IEC 61967-2 标准，指定了测试板和引脚负载。 
+
+  
+
+上海朔集半导体科技有限公司 第 45 页 / 共 73 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+
+
+
+SLM32M030 数据手册 
+ 
+
+6 电气特性 
+ 
+
+ 
+
+表6.23 EMI 特性 
+
+最大对比[fHSE/fHCLK] 
+符号 参数 条件 监控频率 单位 
+
+8/32 MHz 8/64 MHz 
+0.1 to 30 MHz 12 12 
+
+VDD = 3.3 V, TA = 25 °C, 
+30 to 130 MHz 22 19 dBµV 
+
+SEMI 峰值级别 LQFP48 封装，符合 IEC 
+130 MHz to 1GHz 23 29 
+
+61967-2 
+SAE EMI 级别 4 4 - 
+
+6.14 绝对最大值（电气敏感性） 
+
+根据使用特定测量方法的三种不同测试（ESD，LU），对该产品施加压力，以便根据电气敏感性确
+定其性能。 
+
+静电放电（ESD） 
+
+将静电放电（相隔 1 秒的正脉负脉冲）施加到每个样品的引脚。样本量取决于产品中电源引脚的数
+量（3 个×（n + 1）个电源引脚），该测试符合 JESD22-A114 / C101 标准。 
+
+表6.24 ESD 绝对最大值 
+
+符号 参数 条件 最大值 单位 
+
+VESD(HBM) 静电放电（人体模型） TA = +25 °C, 符 JESD22-A114 8000 
+
+V 
+
+VESD(CDM) 静电放电 (充电装置型号) TA = +25 °C, 符合 JESD22-C101 2000 
+
+静态闩锁（LATCH-UP） 
+
+2 个互补的静态测试需要在 6 个样品上进行，以评估闩锁性能： 
+
+⚫ 为每个电源引脚提供超出极限的电压 
+
+⚫ 为每个输入，输出和可配置 IO 引脚注入电流 
+
+这些测试符合 EIA/JESD 78A IC 静态闩锁标准。 
+
+符号 参数 条件 等级 
+
+LU 静态闩锁等级 TA = 85 °C 符合 JESD78A II level A 
+
+  
+
+上海朔集半导体科技有限公司 第 46 页 / 共 73 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+
+
+
+SLM32M030 数据手册 
+ 
+
+6 电气特性 
+ 
+
+ 
+
+6.15 电流注入特性 
+
+通常，在正常产品操作期间，应避免由于外部电压低于 VSS 或高于 VDD（对于标准的 3 V 功能
+IO 引脚）而向 IO 引脚注入电流。但是，为了在意外发生的异常注入情况下指示产品的坚固性，在
+产品特性测试期间以样品为基础进行了敏感性测试。 
+
+IO 电流注入的功能敏感性 
+
+在产品上执行简单的应用程序时，通过将电流注入被设置为浮动输入模式的 IO 引脚，每次只注入
+一个 IO 引脚，检查该产品是否存在功能故障。 
+
+故障由超出范围的参数指示：ADC 误差超过某个限制（> 5 LSB TUE），相邻引脚上的注入电流超
+出规格或其他功能故障（例如，复位，振荡器频率偏差）。 
+
+表6.25 IO 引脚的电流注入特性 
+
+功能敏感性 
+
+符号 描述 单位 
+反向注入 正向注入 
+
+IINJ 引脚注入电流 -5 +5 mA 
+
+6.16 IO 引脚电气特性 
+
+表6.26 IO 引脚电气特性 
+
+符号 参数 条件 最小值 最大值 单位 
+
+VIL 标准 IO 口输入低电平  –0.5 0.8 V V 
+
+VIH 标准 IO 口输入高电平  2 VDD+0.5 V 
+
+Vhys 标准 IO 口施密特触发迟滞(2)  200  mV 
+
+Ilkg 输入漏电电流 (4) VSS≤VIN≤VDD 标准 IO 口  ±1 µA 
+
+RPU 弱上拉等效电阻(5) VIN = VSS 30 50 kΩ 
+
+RPD 弱下拉等效电阻(5) VIN = VDD 30 50 kΩ 
+
+CIO IO 电容   5 pF 
+
+ 
+
+[1] 为了维持高于 VDD + 0.3 的电压，必须禁用内部上拉/下拉电阻。 
+[2] 施密特转换电平之间的迟滞由特性测试保证。 
+[3] 最小值 100 mV。 
+[4] 如果反向电流注入相邻引脚，漏电流可能高于最大值。 
+[5] 上拉和下拉电阻被设计为与可切换的 PMOS/NMOS 串联的真电阻。这个 MOS/NMOS 对串联
+
+电阻的影响最小（约 10%）。 
+
+输出驱动电流 
+
+GPIO（通用输入/输出）可以输入输出电流。 
+
+在用户应用中，必须限制可驱动电流的引脚数，以满足最大额定电流值。 
+
+上海朔集半导体科技有限公司 第 47 页 / 共 73 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+
+
+
+SLM32M030 数据手册 
+ 
+
+6 电气特性 
+ 
+
+ 
+
+⚫ VDD 域所有 IO 提供的电流之和，加上 VDD 域产品最大的电流消耗，不能超过 IVDD 的
+
+最大值。 
+
+⚫ VSS 域所有 IO 提供的电流之和，加上 VSS 域产品最大的电流消耗，不能超过 IVSS 的
+
+最大值。 
+
+输出电压电平 
+
+表6.27 输出电压特性 
+
+符号 参数 条件 最小值 最大值 单位 
+
+源 4 mA, VDD = 3.3 V VDD-0.2  
+
+VOH 高电平输出源电流 V 
+
+源 6 mA, VDD = 3.3 V VDD-0.3  
+
+灌 4 mA, VDD = 3.3 V  VSS+0.2 
+
+VOL 低电平输出灌电流 V 
+
+灌 6 mA, VDD = 3.3 V  VSS+0.3 
+
+源 8 mA, VDD = 3.3 V VDD-0.2  
+
+VOHD 高电平输出双源电流 V 
+
+源 12 mA, VDD = 3.3 V VDD-0.3  
+
+灌 8 mA, VDD = 3.3 V  VSS+0.2 
+
+VOLD 低电平输出双灌电流 V 
+
+灌 12 mA, VDD = 3.3 V  VSS+0.3 
+
+⚫ 引脚吸收电流的最大值必须始终不能超过最大绝对值，IO 端口和控制引脚的电流和不能
+
+超过 IVSS.  
+
+⚫ 引脚提供电流的最大值必须始终不能超过最大绝对值，IO 端口和控制引脚的电流和不能
+
+超过 IVDD.  
+
+⚫ TTL 和 CMOS 输出符合 JEDEC 标准 JESD36 和 JESD52. 
+
+⚫ 结果由特性测试保证 
+
+输入输出 AC 特性 
+
+表6.28 IO AC 特性（1） 
+
+符号 参数 条件 最小值 典型值 最大值 单位 
+
+VDD=2.0 1.58   V 
+
+VIT+ 正向输入阈值电压 VDD=3.3 1.79   V 
+
+VDD=5.5 3.0   V 
+
+VDD=2.0   0.91 V 
+
+VIT- 反向输入阈值电压 VDD=3.3   1.32 V 
+
+VDD=5.5   2.41 V 
+
+输入电压迟滞 VDD=2.0  0.51  V 
+Vhys 
+
+(VIT+ - VIT-) VDD=3.3  0.51  V 
+
+上海朔集半导体科技有限公司 第 48 页 / 共 73 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+
+
+
+SLM32M030 数据手册 
+ 
+
+6 电气特性 
+ 
+
+ 
+
+符号 参数 条件 最小值 典型值 最大值 单位 
+
+VDD=5.5  0.62  V 
+
+Rpullhigh 上拉电阻 上拉使能 40 50 60 Kohm 
+
+Cinput 输入电容   5  pf 
+
+表6.29 IO AC 特性（1） 
+
+符号 参数 条件 VDD 最大值 单位 
+
+Ilkg 漏电电流 V 2.0V / 3.6V ±50 nA 
+
+6.17 定时器特性 
+
+表6.30 定时器特性 
+
+符号 参数 条件 最小值 最大值 单位 
+
+ 1  tTIMxCLK 
+tres(TIM) 定时器分辨率时间 
+
+fTIMxCLK = 64 MHz 15.6  ns 
+
+定时器通道 1 到 4 外部时钟  0 f /2
+TIMxCLK  MHz 
+
+fEXT 
+频率 fTIMxCLK = 64 MHz 0 32 MHz 
+
+ResTIM 定时器分辨率   16 bit 
+
+ 1 65535 tTIMxCLK 
+选用内部时钟时 16 位计时
+
+tCOUNTER 
+器时钟周期 fTIMxCLK = 64 MHz 15.6 1022346 ns 
+
+65535 x 
+-  tTIMxCLK 
+
+tMAX_COUNT 最大可能输出计数周期 65535 
+
+fTIMxCLK = 64 MHz  67.11 s 
+
+6.18 通讯接口 
+
+6.18.1 I2C 接口特性 
+
+表6.31 I2C 特性 
+
+标准模式 I2C(1)(2) 快速模式 I2C(1)(2) 
+符号 参数 单位 
+
+最小值 最大值 最小值 最大值 
+
+tw(SCLL) SCL 时钟低时间 4.7  1.3  
+µs 
+
+tw(SCLH) SCL 时钟高时间 4.0  0.6  
+
+tsu(SDA) SDA 建立时间 250  100  
+
+th(SDA) SDA 数据保持时间  3450(3)  900(3) 
+
+t ns 
+r(SDA) tr(SCL) SDA/SCL 上升时间  1000  300 
+
+tf(SDA) tf(SCL) SDA/SCL 下降时间  300  300 
+
+th(STA) 开始条件建立时间 4.0  0.6  
+
+µs 
+tsu(STA) 重复开始条件建立时间 4.7  0.6  
+
+tsu(STO) 停止条件建立时间 4.0  0.6  µs 
+
+上海朔集半导体科技有限公司 第 49 页 / 共 73 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+
+
+
+SLM32M030 数据手册 
+ 
+
+6 电气特性 
+ 
+
+ 
+
+标准模式 I2C(1)(2) 快速模式 I2C(1)(2) 
+符号 参数 单位 
+
+最小值 最大值 最小值 最大值 
+
+tw(STO:STA) 停止到开始条件时间（总线自由） 4.7  1.3  µs 
+
+Cb 每个总线的电容负载  400  400 pF 
+
+标准和快速模式的模拟滤波器抑制
+tSP 0 50(4) 0 50(4) µs 
+
+的尖峰脉冲宽度 
+
+[1] 设计上保证 
+[2] fPCLK1 必须至少 2MHz 以满足标准 I2C 频率要求，至少 4MHz 以满足快速 I2C 频率要求，
+
+必须时 10MHz 的倍数以满足快速 I2C 模式最大时钟速度 400KHz 
+[3] 产品内部必须为 SDA 信号提供至少 300ns 的保持时间，以连接 SCL 下降沿的未定义区域 
+[4] 由模拟滤波器滤波的尖峰的最小宽度大于 tSP 最大值 
+
+图6.8 I2C AC 波形和量测电路 
+
+VDD_I2C VDD_I2C
+
+RP RP
+
+RS
+
+SDA
+
+2
+I C bus
+
+RS
+SCL
+
+START REPEATED
+
+ 
+
+START
+
+tSU(ST A)
+
+START
+SDA
+
+tf(SDA) tr(SDA) tSU(SDA)
+
+STOP tW(STO:STA)
+
+t th(SDA)
+h(ST A) tW(SCLL)
+
+SCL
+
+tW(SCLH) tr(SCL) t tSU(ST O)
+f(SCL)
+
+A4_DS_I2CAC&MC_V1_C3
+
+⚫ 量测点在 CMOS 电平：0.3VDD 和 0.7VDD 
+
+⚫ Rs：串行保护电阻 
+
+⚫ Rp：上拉电阻 
+
+⚫ VDD I2C：I2C 总线电源 
+
+上海朔集半导体科技有限公司 第 50 页 / 共 73 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+
+
+
+SLM32M030 数据手册 
+ 
+
+6 电气特性 
+ 
+
+ 
+
+6.18.2 SPI 特性 
+
+表6.32 SPI 特性 
+
+符号 参数 条件 最小值 最大值 单位 
+
+主模式  36 
+fSCK1/tc(SCK) SPI 时钟频率 MHz 
+
+从模式  18 
+
+tr(SCK) tf(SCK) SPI 时钟上升和下降时间 负载电容: C = 30 pF  8 ns 
+
+DuCy(SCK) SPI 从输入占空比 从模式 30 70 % 
+
+t (1)
+su(NSS)  NSS 建立时间 从模式 4tPCLK  
+
+t (1)
+h(NSS)  NSS 保持时间 从模式 2tPCLK  
+
+t (1) (1)
+w(SCKH) tw(SCKL)  SCK 高和低时间 主模式, fPCLK = 48 MHz, presc = 4 50 60 
+
+主模式 5  
+tsu(MI) (1)t  (1)
+
+su(SI)  数据输入建立时间 
+从模式 5  
+
+t  (1)
+h(MI)  主模式 5  
+
+数据输入保持时间 ns 
+th(SI) (1) 从模式 4  
+
+t (1)(2)
+a(SO)  输出读取时间 从模式, fPCLK = 20 MHz 0 3tPCLK 
+
+t (1)(3)
+dis(SO)  输入失能时间 从模式 2 10 
+
+t  (1)
+v(SO)  数据输出有效时间 从模式 (使能沿之后)  25 
+
+t (1)
+v(MO)  数据输出有效时间 从模式 (使能沿之后)  5 
+
+t  (1)
+n(SO)  Slave mode (after enable edge) 15  
+
+数据输出保持时间 
+t (1)
+h(MO)  主模式 (使能沿之后) 2  
+
+[1] 特性测试保证 
+[2] 最小时间是驱动输出的最小时间，最大时间是验证数据的最大时间 
+[3] 最小时间是输出无效的最小时间，最大时间是数据高阻的最大时间 
+
+  
+
+上海朔集半导体科技有限公司 第 51 页 / 共 73 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+
+
+
+SLM32M030 数据手册 
+ 
+
+6 电气特性 
+ 
+
+ 
+
+图6.9 SPI 波形/从模式/CPHA=0 
+
+NSS input
+
+tc(SCK)
+
+th(NSS)
+
+tSU(NSS)
+
+CPHA=0
+CPOL=0
+
+tw(SCKH)
+
+t
+CPHA=0 w(SCKL)
+
+ 
+CPOL=1
+
+ta(SO) t t
+v(SO) r(SCK) tdis(SO)
+
+th(SO) tf(SCK)
+
+MISO
+MSB OUT BIT6 OUT LSB OUT
+
+OUTPUT
+
+tsu(SI )
+
+MOSI
+MSB IN BIT1 IN LSB IN
+
+INPUT
+
+th(SI )
+
+A4_DS_SPISMC0_V1_C3
+
+图6.10 SPI 波形/从模式/CPHA=1 
+
+NSS input
+
+tSU(NSS)
+
+t th(NSS)
+c(SCK)
+
+CPHA=1
+CPOL=0
+
+tw(SCKH)
+
+tw(SCKL)
+CPHA=1  
+CPOL=1
+
+tdis(SO)
+
+t t
+a(SO) v(SO) tr(SCK)
+
+th(SO) tf(SCK)
+
+MISO
+MSB OUT BIT6 OUT LSB OUT
+
+OUTPUT
+
+t t
+su(SI ) h(SI )
+
+MOSI
+MSB IN BIT1 IN LSB IN
+
+INPUT
+
+A4_DS_APISMC1_V1_C3
+
+ 
+  
+
+上海朔集半导体科技有限公司 第 52 页 / 共 73 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+
+SCK Input
+SCK Input
+
+
+
+SLM32M030 数据手册 
+ 
+
+6 电气特性 
+ 
+
+ 
+
+图6.11 SPI 波形/主模式 
+
+High
+
+NSS input
+
+tc(SCK)
+
+CPHA=0
+CPOL=0
+
+CPHA=0
+CPOL=1
+
+CPHA=1
+CPOL=0
+
+ 
+
+CPHA=1
+CPOL=1
+
+t t
+w(SCKH) r(SCK)
+
+tsu(MI) t t
+w(SCKL) f(SCK)
+
+MISO
+MSB IN BIT6 IN LSB IN
+
+INPUT
+
+th(MI)
+
+MOSI
+MSB OUT BIT1 OUT LSB OUT
+
+OUTPUT
+
+tv(MO) th(MO)
+
+A4_DS_SPIMM_V1_C3
+
+  
+
+上海朔集半导体科技有限公司 第 53 页 / 共 73 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+
+SCK Output SCK Output
+
+
+
+SLM32M030 数据手册 
+ 
+
+6 电气特性 
+ 
+
+ 
+
+6.18.3 I2S 特性 
+
+表6.33 I2S 特性 
+
+符号 参数 条件 最小值 最大值 单位 
+
+DuCy(SCK) I2S 从输入时钟占空比 从模式 30 70 % 
+
+主模式 (data: 16 bits, Audio 
+1.522 1.525 
+
+f frequency = 48 kHz) 
+CK 1/tc(CK) I2S 时钟频率 MHz 
+
+从模式 0 6.5 
+
+tr(CK)tf(CK) I2S 时钟上升下降时间 Capacitive load CL = 50 pF  8 
+
+t  (1)
+v(WS)  WS 有效时间 主模式 3  
+
+I2S2 2  
+t  (1)
+h(WS)  WS 保持时间 主模式 
+
+I2S3 0  
+
+t  (1)
+su(WS)  WS 建立时间 从模式 4  
+
+t  (1)
+h(WS)  WS 保持时间 从模式 0  
+
+t  (1)
+w(CKH)  Master fPCLK= 16 MHz, audio 312.5  
+
+CK 高低时间 
+t  (1) frequency = 48 kHz 
+w(CKL)  345  
+
+I2S2 2  
+t  (1)
+su(SD_MR)  Data input 建立时间 主接受 
+
+I2S3 6.5  ns 
+
+t  (1)
+su(SD_SR)  Data input 建立时间 从接受 1.5  
+
+t (1)(2)
+h(SD_MR)  主接受 0  
+
+Data input 保持 
+t  (1)(2)
+h(SD_SR)  从接受 0.5  
+
+t (1)(2)
+v(SD_ST)  Data output 有效时间 从传输 (after enable edge)  18 
+
+t  (1)
+h(SD_ST)  Data output 保持时间 从传输 (after enable edge) 11  
+
+t  (1)(2)
+v(SD_MT)  Data output 有效时间 主传输 (after enable edge)  3 
+
+t  (1)
+h(SD_MT)  Data output 保持时间 主传输 (after enable edge) 0  
+
+[1] 特性测试或设计保证 
+[2] 取决于 fPCLK. 例如，如果 fPCLK=8MHz，Tpclk=1/fPCLK=125ns 
+
+  
+
+上海朔集半导体科技有限公司 第 54 页 / 共 73 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+
+
+
+SLM32M030 数据手册 
+ 
+
+6 电气特性 
+ 
+
+ 
+
+图6.12 I2S 从模式波形 
+
+tc(CK)
+
+CPOL=0
+
+CPOL=1
+
+tw(CKH) tw(CKL) th(WS)
+
+ 
+WS Input
+
+tsu(WS)
+t t
+v(SD_ST) h(SD_ST )
+
+(2)
+SD LSB transmit MSB transmit Bitn transmit LSB transmit
+
+transmit
+
+tsu(SD_SR) th(SD_SR)
+
+(2)
+SDreceive LSB receive MSB receive Bitn receive LSB receive
+
+A4_DS_I2SSM_V1_C3
+
+图6.13 I2S 主模式波形 
+
+tf(CK) tr(CK)
+
+tc(CK)
+
+CPOL=0
+
+ 
+CPOL=1
+
+tw(CKH) tw(CKL) th(WS)
+
+WS Output
+
+tv(WS)
+tv(SD_MT) th(SD_MT )
+
+(2)
+SD LSB transmit MSB transmit Bitn transmit LSB transmit
+
+transmit
+
+tsu(SD_MR) th(SD_MR)
+
+(2)
+SDreceive LSB receive MSB receive Bitn receive LSB receive
+
+A4_DS_I2SMM_V1_C3
+
+  
+
+上海朔集半导体科技有限公司 第 55 页 / 共 73 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+
+CK Output CK Input
+
+
+
+SLM32M030 数据手册 
+ 
+
+6 电气特性 
+ 
+
+ 
+
+6.19 ADC 特性 
+
+表6.34 12 比特 ADC 特性 
+
+符号 参数 测试条件 最小值 典型值 最大值 单位 
+
+VDDA 电源  2.4  5.5 V 
+
+VREF+ 正参考电压  2.4  VDDA V 
+
+VREF- 负参考电压   0  V 
+
+IADC 工作电流  0.65 0.9 1.23 mA 
+
+fADC ADC 时钟频率    16 MHz 
+
+fS 采样速率  0.05  1 MHz 
+
+fADC = 16 MHz   1 MHz 
+fTRIG 外部触发频率 
+
+   16 1/fADC 
+
+0 (VSSA or 
+VAIN 转换电压范围  VREF-tied to  VREF+ V 
+
+ground) 
+
+CADC 内部采样和保持电容   12  pF 
+
+fADC = 16 MHz   0.5 µs 
+tlat 注入触发转换延迟 
+
+   8 1/fADC 
+
+fADC = 16 MHz   0.44 µs 
+tlatr 常规触发转换延迟 
+
+   7 1/fADC 
+
+fADC = 16 MHz 0.28  15 µs 
+tS 采样时间 
+
+ 4.5  239.5 1/fADC 
+
+tSTAB 上电时间  0 1  µs 
+
+fADC = 16 MHz 1.0625  15.75 µs 
+
+tCONV 总共转换时间(包括采样时间) 
+ 17 to 252 (采样 tS +12.5 逐次逼近) 1/fADC 
+
+表6.35 ADC 准确度 
+
+符号 参数 测试条件 典型值 最大值(4) 单位 
+
+ET 为校准误差 ±1.3 ±2 
+
+EO 位移偏差 ±1 ±1.5 
+fPCLK2 = 48 MHz, 
+
+EG 增益偏差 fADC = 16 MHz, RAIN < 10 KΩ, ±0.5 ±1.5 LSB 
+VDDA = 2.4 V ~5.5 V 
+
+ED 差分线形偏差 ±0.7 ±1 
+
+EL 积分线性偏差 ±0.8 ±1.5 
+
+  
+
+上海朔集半导体科技有限公司 第 56 页 / 共 73 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+
+
+
+SLM32M030 数据手册 
+ 
+
+6 电气特性 
+ 
+
+ 
+
+图6.14 ADC 准确度特性 
+
+EG
+
+(2)
+
+ET
+
+(3) (1)
+
+ 
+
+EL
+
+EO
+
+ED
+
+1L SBIDEAL
+
+0
+1 2 3 4 5 6 7 4093 4094 4095 4096
+
+VSSA VDDA
+
+A4_DS_ADCAC_V1_C3
+
+[1] 实际转换曲线 
+[2] 理想转换曲线 
+[3] 终点关联线 
+[4] ET=总未调整误差，实际和理想转换曲线的最大偏差 
+[5] EO=偏移误差，第一个实际转换和第一个理想转换的偏差 
+[6] EG=增益偏差，最后一个实际转换和最后一个理想转换的偏差 
+[7] EL=积分线性偏差，任一实际转换和终点关联线的最大偏差 
+
+  
+
+上海朔集半导体科技有限公司 第 57 页 / 共 73 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+
+
+
+SLM32M030 数据手册 
+ 
+
+6 电气特性 
+ 
+
+ 
+
+6.20 温度传感器特性 
+
+表6.36 温度传感器特性 
+
+符号 参数 最小值 典型值 最大值 单位 
+
+TL VSENSE 随温度线性  ±2  °C 
+
+Avg_Slope 平均斜率  4.3  mV/°C 
+
+V25 25°C 下的电压  1.40  V 
+
+t (1)
+START  启动时间 4 6 10 µs 
+
+T (1)(2)
+S_temp  ADC 读温度时的采样时间   17.1 µs 
+
+[1] 设计保证 
+[2] 最短采样时间可以在应用中通过多次迭代来确定 
+
+6.21 MCU 内置电压比较器(MCU_VC) 
+
+表6.37 MCU 电压比较器(MCU_VC)参数 
+
+符号 参数 条件 最小值 典型值 最大值 单位 
+
+VRes 分辨率 Resolution  -20  20 mV 
+
+模拟输入电压范围 
+VAIN  0  5 V 
+
+Analog input voltage range 
+模拟输入失调电压 
+
+VAIO  -20 10 20 mV 
+Analog input offset voltage 
+使能后输出不稳定时间 
+
+tOUTE   2 4 us 
+Output uncertain time after enable 
+
+hys_sel=00 0 
+模拟比较器迟滞 hys_sel=01 10 
+
+VHYST   mV 
+Analog comparator hysteresis hys_sel=10 20 
+
+hys_sel=11 40 
+
+6.22 AFE 电压比较器(AFE_VC) 
+
+表6.38 AFE 电压比较器(AFE_VC)参数 
+
+ 符号 参数 最小值 典型值 最大值 单位 
+
+VRes 分辨率 Resolution  -20  20 mV 
+
+模拟输入电压范围 
+VAIN  0  5 V 
+
+Analog input voltage range 
+模拟输入失调电压 
+
+VAIO  -20 10 20 mV 
+Analog input offset voltage 
+使能后输出不稳定时间 
+
+tOUTE   1 2 us 
+Output uncertain time after enable 
+
+-2*Vhyst to 
+tDLY0 +2*Vhyst input  300  ns 
+
+输入到输出的传播延迟 step @ DLY=0 
+Output delay of inputs -2*Vhyst to 
+
+tDLY1 +2*Vhyst input  150  ns 
+step @ DLY=1 
+hys_sel=00 20 
+
+模拟比较器迟滞 hys_sel=01 40 
+VHYST   mV 
+
+Analog comparator hysteresis hys_sel=10 80 
+hys_sel=11 100 
+
+  
+
+上海朔集半导体科技有限公司 第 58 页 / 共 73 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+
+
+
+SLM32M030 数据手册 
+ 
+
+6 电气特性 
+ 
+
+ 
+
+6.23 AFE 可编程运算放大器(AFE_PGA) 
+
+表6.39 可编程运算放大器（AFE_PGA）参数 
+
+Conditions: Supply voltage 3V ≤ VDDA ≤ 5.5 V 
+符号 参数 最小值 典型值 最大值 单位 
+
+tPGA_settling 稳定时间  5 10 us 
+VCM 共模电压输入范围 0.2  VDDA - 0.2 V 
+EA 直流增益误差对于 增益 APGA  2  % 
+
+Vinitial_offset 初始输入偏移 -10  15 mV 
+输入偏移量与室温下偏移量之差 
+
+Vvar_offset (Input offset difference to offset at  -4 - +4 mV 
+room temperature) 
+
+VDDA 模拟供电电压 3 5 6 V 
+VOUT 输出信号电压范围 0.2  VDDA-0.2 V 
+SR 压摆率（负载电容 = 50pF）  20  V/us 
+
+GBW 增益带宽（负载电容 = 100pF）  10  MHz 
+
+6.24 AFE BandGap(AFE_BG) 
+
+表6.40 AFE BandGap(AFE_BG)参数 
+
+符号 参数 最小值 典型值 最大值 单位 
+
+带隙输出电压  1.2  V 
+VBG 带隙电压温度漂移 
+
+ 61  PPM/°C 
+Temperature drift(-40 ~ 105°C) 
+
+6.25 AFE 数模转换器（AFE_DAC） 
+
+表6.41 AFE 数模转换器（AFE_DAC）参数 
+
+符号 参数 条件 最小值 典型值 最大值 单位 
+分辨率 
+
+RES   8  Bit 
+Resolution 
+在 AMP 端测得
+的相对精度
+
+INL (Relative  -0.5  +0.5 LSB 
+Accuracy 
+measured at 
+AMP) 
+在 AMP 端测得
+的微分非线性误
+
+DNL 差(Differential  -0.1  +0.1 LSB 
+Nonlinearity 
+measured at 
+AMP) 
+输出电压范围 A FVR bit = 1 VO=Vi[7:0]*(VRH-VRL)/256 +VRL V 
+
+VO=Vi[7:0]*((VRH-VRL)*0.8)/256) 
+输出电压范围 B FVR bit = 0 V 
+
++0.1*(VRH-VRL) + VRL 
+Buffered FVR=1 
+
+0.03 Full range A -
+(RL>100k to VSSA or  V 
+
+ 0.02 
+输出电压 RL>100K to VDDA) 
+
+VOUT (DRIVE=0) Buffered FVR=0 
+Full range B -
+
+(RL>100k to VSSA or 0.01   
+0.02 
+
+RL>100K to VDDA) 
+Buffered FVR=0 
+(with 6.4K load into 
+
+输出电压 Full range B -
+resistor divider of 0.01  V 
+
+(DRIVE=1) 0.003 
+800/6.56K between 
+VDDA and VSSA) 
+
+上海朔集半导体科技有限公司 第 59 页 / 共 73 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+
+
+
+SLM32M030 数据手册 
+ 
+
+6 电气特性 
+ 
+
+ 
+
+符号 参数 条件 最小值 典型值 最大值 单位 
+缓冲器输出容性
+
+CLOAD    100 pF 
+负载 
+缓冲器输出失调
+
+Voffset   4.5  mV 
+电压 
+
+SR 采样时钟频率    1 MS/s 
+Vrefh 参考电压高电平   AVDD50  V 
+
+Tdel_DACI DACI 建立时间   15 30 ns 
+Buffered DAC; 
+
+Tdel_AMP AMP 建立时间  8 13 μs 
+Cload=100p 
+
+  
+
+上海朔集半导体科技有限公司 第 60 页 / 共 73 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+
+
+
+SLM32M030 数据手册 
+ 
+
+7 封装信息 
+ 
+
+ 
+
+7 
+7 
+
+7 封装信息 
+
+7.1 LQFP64 package information 
+
+图7.1 LQFP64, pitch 0.5mm package outline 
+
+SEATING PLANE
+
+C
+
+0.25mm
+
+GAUGE PLANE
+
+L
+
+D L1
+
+D1
+
+ 
+48 33
+
+49 32
+
+64 17
+
+PIN 1 1 16
+
+IDENTIFICATION e
+A4_DS_LQFP64_V1_C3
+
+  
+
+上海朔集半导体科技有限公司 第 61 页 / 共 73 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+
+A
+
+A2
+b
+
+A1
+
+E3
+A1
+
+E1
+
+E
+
+
+
+SLM32M030 数据手册 
+ 
+
+7 封装信息 
+ 
+
+ 
+
+表7.1 LQFP64, pitch 0.5mm - package mechanical data 
+
+ SYMBOL MIN NOM MAX 
+
+OVER HEIGHT A --- --- 1.60 
+
+STAND OFF A1 0.05 0.10 0.15 
+
+MOLD THICKNESS A2 1.35 1.40 1.45 
+
+LEAD WIDTH b 0.17 0.22 0.27 
+
+LEAD THICKNESS c 0.09 --- 0.27 
+
+LEAD PITCH e 0.50 BSC 
+
+FOOT LENGTH L 0.45 0.60 0.75 
+
+LEAD LENGTH L1 1.0 REF 
+
+X D 12 BSC 
+LEAD TIP TO TIP 
+
+Y E 12 BSC 
+
+X D1 10 BSC 
+BODY SIZE 
+
+Y E1 10 BSC 
+
+图7.2 LQFP64 封装丝印示意图 
+
+TOP VIEW
+
+49 32
+
+Comapny Logo
+
+Part No.(Series)
+
+Part No.(Sub Info)
+SLM32XXXX  
+
+Date Code XXXX
+
+XXXXXXX
+
+64 17
+
+Pin 1 ldentifier
+
+A4_DS_LP64MK_V1_C3
+
+[1] 未按比例绘制。 
+
+  
+
+上海朔集半导体科技有限公司 第 62 页 / 共 73 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+
+1 48
+
+16 33
+
+
+
+SLM32M030 数据手册 
+ 
+
+7 封装信息 
+ 
+
+ 
+
+7.2 LQFP48 package information 
+
+图7.3 LQFP48, pitch 0.5mm package outline 
+
+              
+
+A4_DS_LQFP48_V1_C3
+
+  
+
+上海朔集半导体科技有限公司 第 63 页 / 共 73 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+
+
+
+SLM32M030 数据手册 
+ 
+
+7 封装信息 
+ 
+
+ 
+
+表7.2 LQFP48, pitch 0.5mm - package mechanical data 
+
+ SYMBOL MIN NOM MAX 
+
+OVER HEIGHT A --- --- 1.6 
+
+STAND OFF A1 0.05 0.1 0.15 
+
+MOLD THICKNESS A2 1.35 1.4 1.45 
+
+LEAD WIDTH b 0.17 0.22 0.27 
+
+LEAD THICKNESS T 0.09 --- 0.27 
+
+LEAD PITCH e 0.5 BSC 
+
+FOOT LENGTH L 0.45 0.6 0.75 
+
+LEAD LENGTH L1 1.0 REF 
+
+X D 9 BSC 
+LEAD TIP TO TIP 
+
+Y E 9 BSC 
+
+X D1 7 BSC 
+BODY SIZE 
+
+Y E1 7 BSC 
+
+ 
+
+图7.4 LQFP48 封装丝印示意图 
+
+TOP VIEW
+
+37 24
+Comapny Logo
+
+Part No.(Series)
+
+Part No.(Sub Info)
+SLM32XXXX  
+
+Date Code XXXX
+
+XXXXXXX
+
+48 13
+
+Pin 1 ldentifier
+
+A4_DS_LP48MK_V1_C3
+
+[1] 未按比例绘制。 
+
+  
+
+上海朔集半导体科技有限公司 第 64 页 / 共 73 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+
+1 36
+
+12 25
+
+
+
+SLM32M030 数据手册 
+ 
+
+8 命名规则 
+ 
+
+ 
+
+ 
+8 
+8 
+
+8 命名规则 
+
+图8.1 产品命名规则 
+
+ SLM32 M 030 C C T 6
+
+Device Family
+
+SLM32 = SoulSemi 32bit MCU
+
+Product Type
+
+M = Motor
+
+Device Subfamily
+
+030 = 030 Series
+031 = 031 Series
+
+ 
+Pin Count
+
+C = 48 pin
+R = 64 pin
+
+Flash Size
+
+C = 256KB Flash
+
+Package Type
+
+T  = LQFP
+
+Temperature Range
+
+6 = - 40 ~ 85°C
+7 = - 40 ~ 105°C
+
+A4_DS_NR_V1_C3
+
+  
+
+上海朔集半导体科技有限公司 第 65 页 / 共 73 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+
+
+
+SLM32M030 数据手册 
+ 
+
+9 缩略语 
+ 
+
+ 
+
+9 
+9 
+
+9 缩略语 
+
+本文件中使用以下缩略语和术语。 
+
+表9.1 缩略语 
+
+缩略语 英文名称 中文名称 
+
+AHB Advanced High-performance Bus 高级高性能总线 
+
+APB Advanced Peripheral Bus 高级外设总线 
+
+GPIO General-purpose input/output 通用输入/输出 
+
+IEN Interrupt enable 中断使能 
+
+LDO Low-dropout voltage regulator 低压差稳压器 
+
+LIN Local interconnect network 局部互连网络 
+
+LSB Least significant bit 最低有效位 
+
+MCU Microcontroller unit 微控制单元 
+
+MPU Memory protection unit 内存保护单元 
+
+MSB Most significant bit 最高有效位 
+
+NMI Non-maskable interrupt 不可屏蔽中断 
+
+NVIC Nested vector interrupt controller 嵌套向量中断控制器 
+
+NVM Non-volatile memory 非易失性存储器 
+
+OSC Oscillator 振荡器 
+
+PMU Power management unit 电源管理单元 
+
+PD Pull-down 下拉 
+
+PLL Phase-locked loop 相位锁定环 
+
+PU Pull-up 上拉 
+
+PWM Pulse-width modulation 脉宽调制 
+
+RAM Random-access memory 随机存取存储器 
+
+RCMU Reset and clock management unit 复位和时钟控制单元 
+
+ROM Read-only memory 只读存储器 
+
+SFR Special function register 特殊功能寄存器 
+
+SPI Serial Peripheral Interface 串行外设接口 
+
+SWD Arm® Serial Wire Debug Arm® 串行线调试 
+
+USART Universal synchronous asynchronous receiver transmitter 通用异步接收发送器 
+
+WDG Watchdog 看门狗定时器 
+
+ 
+  
+
+上海朔集半导体科技有限公司 第 66 页 / 共 73 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+
+
+
+SLM32M030 数据手册 
+ 
+
+10 版本记录 
+ 
+
+ 
+
+10 
+10 
+
+10 版本记录 
+
+表10.1 版本记录 
+
+版本 修订日期 修订内容摘要 
+
+0.0 2024/7/1 初版 
+
+0.1 2025/4/1 仅保留不带 BEMF 封装的 Pinout 描述和引脚复用描述 
+
+0.2 2025/4/8 更新定时器位数描述 
+
+0.3 2025/4/10 更新产品系列表格 
+
+0.4 2025/4/15 更新使用温度范围 
+
+1.0 2025/5/16 更新排版，修改时钟树 HSI 输入时钟范围 
+
+1.1 2025/5/29 修改 AFE_VC，AFE_PGA，AFE_DAC 相关描述，并添加 MCU_VC 参数 
+
+1.2 2025/6/9 修改封装图片 
+
+1.3 2025/8/5 重新添加支持 BEMF 封装的 Pinout 描述并同步修改产品框图应用框图 
+
+修改芯片特性和外设配置、修改 Pinout 图与引脚说明，添加封装丝印
+1.4 2025/9/8 
+
+示意图 
+1.5 2025/10/9 修改支持 BEMF LQFP64 的 Part Number 为 SLM32M031RCT 
+1.6 2025/10/28 修改 AFE_VC、AFE_PGA、AFE_DAC 的电气特性参数 
+
+ 
+
+上海朔集半导体科技有限公司 第 67 页 / 共 73 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+
+
+
+SLM32M030 数据手册 
+ 
+
+11 文档目录 
+ 
+
+ 
+
+11 
+11 
+
+11 文档目录 
+
+1 产品概述 ........................................................................................................................................... 2 
+1.1 产品系列 ................................................................................................................................... 4 
+
+2 产品框图与应用框图 ......................................................................................................................... 5 
+2.1 产品框图 ................................................................................................................................... 5 
+2.2 典型应用框图 ............................................................................................................................ 6 
+
+2.2.1 电机应用（有 BEMF 封装） ............................................................................................. 6 
+2.2.2 电机应用（无 BEMF 封装） ............................................................................................. 7 
+
+3 时钟树与存储架构 ............................................................................................................................ 8 
+3.1 系统时钟树 ............................................................................................................................... 8 
+3.2 存储架构 ................................................................................................................................... 9 
+
+3.2.1 存储地址映射 ................................................................................................................... 9 
+4 引脚和定义 ..................................................................................................................................... 12 
+
+4.1 引脚分配表中使用的术语和符号 ............................................................................................. 12 
+4.2 LQFP64（SLM32M030RCT 不支持 BEMF） ........................................................................ 12 
+
+4.2.1 LQFP64（SLM32M030RCT 不支持 BEMF）引脚布局 .................................................. 12 
+4.2.2 LQFP64（SLM32M030RCT 不支持 BEMF）引脚分配和描述 ........................................ 13 
+
+4.3 LQFP64（SLM32M031RCT 支持 BEMF） ........................................................................... 17 
+4.3.1 LQFP64（SLM32M031RCT 支持 BEMF）引脚布局 ...................................................... 17 
+4.3.2 LQFP64（SLM32M031RCT 支持 BEMF）引脚分配和描述 ........................................... 17 
+
+4.4 LQFP48（SLM32M030CCT 不支持 BEMF） ........................................................................ 22 
+4.4.1 LQFP48（SLM32M030CCT 不支持 BEMF）布局 ......................................................... 22 
+4.4.2 LQFP48（SLM32M030CCT 不支持 BEMF）引脚分配和描述 ........................................ 23 
+
+4.5 GPIO 复用功能列表 ................................................................................................................ 26 
+5 规格说明 ......................................................................................................................................... 27 
+
+5.1 Cortex-M0+内核与嵌入式闪存和 SRAM ................................................................................. 27 
+5.2 启动模式 ................................................................................................................................. 27 
+5.3 CRC 计算单元 ........................................................................................................................ 27 
+5.4 嵌套的向量式中断控制器（NVIC） ........................................................................................ 27 
+5.5 外部中断/事件控制器（EXTI） ............................................................................................... 27 
+5.6 时钟和启动 ............................................................................................................................. 27 
+5.7 供电方案 ................................................................................................................................. 28 
+5.8 供电检测 ................................................................................................................................. 28 
+5.9 电压调节器 ............................................................................................................................. 28 
+5.10 低功耗模式 ............................................................................................................................. 28 
+5.11 DMA ....................................................................................................................................... 28 
+5.12 实时时钟（RTC） .................................................................................................................. 29 
+5.13 定时器和看门狗 ...................................................................................................................... 29 
+5.14 I2C 总线 ................................................................................................................................. 30 
+5.15 通用同步/异步收发器（USARTs） ......................................................................................... 30 
+5.16 低功耗通用异步收发器（LPUART） ...................................................................................... 31 
+5.17 串行外设接口（SPI） ............................................................................................................. 31 
+5.18 内置音频总线（I2S） ............................................................................................................. 31 
+5.19 真随机发生器（TRNG） ........................................................................................................ 31 
+5.20 通用输入输出接口（GPIO） .................................................................................................. 31 
+5.21 模拟数字转换（ADC） ........................................................................................................... 31 
+5.22 温度传感器（TS）.................................................................................................................. 31 
+5.23 蜂鸣器（BEEP） .................................................................................................................... 31 
+5.24 MCU 电压比较器（MCU_VC） .............................................................................................. 31 
+5.25 模拟前端（AFE） ................................................................................................................... 32 
+
+6 电气特性 ......................................................................................................................................... 33 
+6.1 测试条件 ................................................................................................................................. 33 
+
+6.1.1 最小和最大值 ................................................................................................................. 33 
+6.1.2 典型值 ............................................................................................................................ 33 
+6.1.3 典型曲线 ........................................................................................................................ 33 
+6.1.4 负载电容 ........................................................................................................................ 33 
+6.1.5 引脚输入电压 ................................................................................................................. 33 
+6.1.6 供电方案 ........................................................................................................................ 34 
+
+上海朔集半导体科技有限公司 第 68 页 / 共 73 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+
+
+
+SLM32M030 数据手册 
+ 
+
+11 文档目录 
+ 
+
+ 
+
+6.1.7 电流测量 ........................................................................................................................ 34 
+6.1.8 典型应用框图 ................................................................................................................. 35 
+
+6.2 最大绝对值 ............................................................................................................................. 36 
+6.3 通用工作条件 .......................................................................................................................... 37 
+6.4 上电/掉电时的工作条件 .......................................................................................................... 37 
+6.5 内嵌复位和电源控制模块特性 ................................................................................................. 37 
+6.6 内嵌参考电压 .......................................................................................................................... 38 
+6.7 供电电流特性 .......................................................................................................................... 38 
+6.8 外部时钟源特性 ...................................................................................................................... 41 
+6.9 内部时钟源特性 ...................................................................................................................... 43 
+6.10 低功耗模式启动时间 ............................................................................................................... 44 
+6.11 锁相环特性 ............................................................................................................................. 44 
+6.12 存储器特性 ............................................................................................................................. 44 
+6.13 EMC 特性 ............................................................................................................................... 45 
+6.14 绝对最大值（电气敏感性） .................................................................................................... 46 
+6.15 电流注入特性 .......................................................................................................................... 47 
+6.16 IO 引脚电气特性 ..................................................................................................................... 47 
+6.17 定时器特性 ............................................................................................................................. 49 
+6.18 通讯接口 ................................................................................................................................. 49 
+
+6.18.1 I2C 接口特性 .................................................................................................................. 49 
+6.18.2 SPI 特性 ......................................................................................................................... 51 
+6.18.3 I2S 特性 ......................................................................................................................... 54 
+
+6.19 ADC 特性................................................................................................................................ 56 
+6.20 温度传感器特性 ...................................................................................................................... 58 
+6.21 MCU 内置电压比较器(MCU_VC) ............................................................................................ 58 
+6.22 AFE 电压比较器(AFE_VC) ..................................................................................................... 58 
+6.23 AFE 可编程运算放大器(AFE_PGA) ........................................................................................ 59 
+6.24 AFE BandGap(AFE_BG) ........................................................................................................ 59 
+6.25 AFE 数模转换器（AFE_DAC） ............................................................................................. 59 
+
+7 封装信息 ......................................................................................................................................... 61 
+7.1 LQFP64 package information ................................................................................................. 61 
+7.2 LQFP48 package information ................................................................................................. 63 
+
+8 命名规则 ......................................................................................................................................... 65 
+9 缩略语 ............................................................................................................................................. 66 
+10 版本记录 ......................................................................................................................................... 67 
+11 文档目录 ......................................................................................................................................... 68 
+12 表索引 ............................................................................................................................................. 70 
+13 图索引 ............................................................................................................................................. 72 
+14 重要声明 ......................................................................................................................................... 73 
+ 
+
+ 
+
+上海朔集半导体科技有限公司 第 69 页 / 共 73 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+
+
+
+SLM32M030 数据手册 
+ 
+
+12 表索引 
+ 
+
+ 
+
+12 
+12 
+
+12 表索引 
+
+ 
+
+表 1.1 产品选型列表 .................................................................................................................................... 3 
+表 1.2 SLM32M030 特性和外设配置 ........................................................................................................... 4 
+表 3.1 外设寄存器地址 .............................................................................................................................. 10 
+表 4.1 引脚分配表中使用的术语和符号 ..................................................................................................... 12 
+表 4.2 LQFP64（SLM32M030RCT 不支持 BEMF）引脚定义 ................................................................. 13 
+表 4.3 LQFP64（SLM32M030RCT 不支持 BEMF）HALL 引脚的使用说明 ............................................ 16 
+表 4.4 LQFP64（SLM32M031RCT 支持 BEMF）引脚定义 .................................................................... 17 
+表 4.5 LQFP64（SLM32M031RCT 支持 BEMF）HALL 引脚的使用说明 ............................................... 21 
+表 4.6 LQFP48（SLM32M030CCT 不支持 BEMF）引脚定义 ................................................................. 23 
+表 4.7 LQFP48（SLM32M030CCT 不支持 BEMF）HALL 引脚的使用说明 ............................................ 26 
+表 4.8 GPIO 复用功能列表 ........................................................................................................................ 26 
+表 5.1 定时器功能 ..................................................................................................................................... 29 
+表 6.1 电压特性 ......................................................................................................................................... 36 
+表 6.2 电流特性 ......................................................................................................................................... 36 
+表 6.3 温度特性 ......................................................................................................................................... 36 
+表 6.4 通用工作条件 .................................................................................................................................. 37 
+表 6.5 上电/掉电时的工作条件 .................................................................................................................. 37 
+表 6.6 内嵌复位和电源控制模块特性 ........................................................................................................ 37 
+表 6.7 内嵌参考电压 .................................................................................................................................. 38 
+表 6.8 运行模式下最大电流消耗，从闪存中执行代码 ............................................................................... 39 
+表 6.9 运行模式下最大电流消耗，从 SRAM 中执行代码 .......................................................................... 39 
+表 6.10 睡眠模式下的最大电流，代码从闪存或 SRAM 中执行 ................................................................... 40 
+表 6.11 停止和待机模式下的典型/最大电流 ................................................................................................ 40 
+表 6.12 高速外部时钟特性 .......................................................................................................................... 41 
+表 6.13 低速外部时钟特性 .......................................................................................................................... 41 
+表 6.14 外部高速时钟特性 .......................................................................................................................... 43 
+表 6.15 外部低速时钟特性 .......................................................................................................................... 43 
+表 6.16 HSI 振荡器特性 .............................................................................................................................. 43 
+表 6.17 LSI 振荡器特性 ............................................................................................................................... 44 
+表 6.18 低功耗模式启动时间 ....................................................................................................................... 44 
+表 6.19 锁相环特性 ..................................................................................................................................... 44 
+表 6.20 闪存特性 ......................................................................................................................................... 44 
+表 6.21 闪存寿命和数据保持 ....................................................................................................................... 45 
+表 6.22 EMS 特性 ....................................................................................................................................... 45 
+表 6.23 EMI 特性 ......................................................................................................................................... 46 
+表 6.24 ESD 绝对最大值 ............................................................................................................................. 46 
+表 6.25 IO 引脚的电流注入特性 .................................................................................................................. 47 
+表 6.26 IO 引脚电气特性 ............................................................................................................................. 47 
+表 6.27 输出电压特性 .................................................................................................................................. 48 
+表 6.28 IO AC 特性（1） ............................................................................................................................ 48 
+表 6.29 IO AC 特性（1） ............................................................................................................................ 49 
+表 6.30 定时器特性 ..................................................................................................................................... 49 
+表 6.31 I2C 特性 .......................................................................................................................................... 49 
+表 6.32 SPI 特性 ......................................................................................................................................... 51 
+表 6.33 I2S 特性 ......................................................................................................................................... 54 
+表 6.34 12 比特 ADC 特性........................................................................................................................... 56 
+表 6.35 ADC 准确度 .................................................................................................................................... 56 
+表 6.36 温度传感器特性 .............................................................................................................................. 58 
+
+上海朔集半导体科技有限公司 第 70 页 / 共 73 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+
+
+
+SLM32M030 数据手册 
+ 
+
+12 表索引 
+ 
+
+ 
+
+表 6.37 MCU 电压比较器(MCU_VC)参数 ................................................................................................... 58 
+表 6.38 AFE 电压比较器(AFE_VC)参数 ...................................................................................................... 58 
+表 6.39 可编程运算放大器（AFE_PGA）参数 ........................................................................................... 59 
+表 6.40 AFE BandGap(AFE_BG)参数 ........................................................................................................ 59 
+表 6.41 AFE 数模转换器（AFE_DAC）参数 ............................................................................................. 59 
+表 7.1 LQFP64, pitch 0.5mm - package mechanical data ........................................................................ 62 
+表 7.2 LQFP48, pitch 0.5mm - package mechanical data ........................................................................ 64 
+表 9.1 缩略语 ............................................................................................................................................. 66 
+表 10.1 版本记录 ......................................................................................................................................... 67 
+ 
+
+上海朔集半导体科技有限公司 第 71 页 / 共 73 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+
+
+
+SLM32M030 数据手册 
+ 
+
+13 图索引 
+ 
+
+ 
+
+13 
+13 
+
+13 图索引 
+
+图 2.1 产品框图 ........................................................................................................................................... 5 
+图 2.2 电机应用（有 BEMF 封装） ............................................................................................................. 6 
+图 2.3 电机应用（无 BEMF 封装） ............................................................................................................. 7 
+图 3.1 时钟树 ............................................................................................................................................... 8 
+图 3.2 存储地址映射 .................................................................................................................................... 9 
+图 4.1 LQFP64（SLM32M030RCT 不支持 BEMF）引脚布局示意图 ...................................................... 12 
+图 4.2 LQFP64（SLM32M031RCT 支持 BEMF）引脚布局 .................................................................... 17 
+图 4.3 LQFP48（SLM32M030CCT 不支持 BEMF）布局示意图 ............................................................. 22 
+图 5.1 电压比较示意框图 .......................................................................................................................... 32 
+图 6.1 引脚电容 ......................................................................................................................................... 33 
+图 6.2 引脚电压测量 .................................................................................................................................. 33 
+图 6.3 电源供电方案 .................................................................................................................................. 34 
+图 6.4 电流测量 ......................................................................................................................................... 34 
+图 6.5 电机应用 ......................................................................................................................................... 35 
+图 6.6 高速外部时钟时序图 ....................................................................................................................... 42 
+图 6.7 低速外部时钟时序图 ....................................................................................................................... 42 
+图 6.8 I2C AC 波形和量测电路 .................................................................................................................. 50 
+图 6.9 SPI 波形/从模式/CPHA=0 .............................................................................................................. 52 
+图 6.10 SPI 波形/从模式/CPHA=1 .............................................................................................................. 52 
+图 6.11 SPI 波形/主模式 .............................................................................................................................. 53 
+图 6.12 I2S 从模式波形 ............................................................................................................................... 55 
+图 6.13 I2S 主模式波形 ............................................................................................................................... 55 
+图 6.14 ADC 准确度特性 ............................................................................................................................. 57 
+图 7.1 LQFP64, pitch 0.5mm package outline .......................................................................................... 61 
+图 7.2 LQFP64 封装丝印示意图 ............................................................................................................... 62 
+图 7.3 LQFP48, pitch 0.5mm package outline .......................................................................................... 63 
+图 7.4 LQFP48 封装丝印示意图 ............................................................................................................... 64 
+图 8.1 产品命名规则 .................................................................................................................................. 65 
+ 
+
+上海朔集半导体科技有限公司 第 72 页 / 共 73 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+
+
+
+SLM32M030 数据手册 
+ 
+
+14 重要声明 
+ 
+
+ 
+
+14 
+14 
+
+14 重要声明 
+
+ 
+上海朔集半导体科技有限公司（“朔集半导体”）保留随时对 朔集半导体 产品和/或本文件进行更
+改、更正、增强、修改和改进的权利，恕不另行通知。购买者在下单前应获取有关 朔集半导体 产
+品的最新相关信息。朔集半导体 产品的销售依据订单确认时 朔集半导体 的销售条款和条件。 
+
+购买者全权负责 朔集半导体 产品的选择、挑选和使用，朔集半导体 对购买者产品的应用和产品
+设计不承担任何责任。 
+
+朔集半导体 在此未授予任何知识产权（无论是明示还是暗示）的许可。 
+
+以与本文件所述信息不同的条款转售 朔集半导体 产品，将使 朔集半导体 对该产品的任何担保失
+效。 
+
+朔集半导体 和 朔集半导体 徽标是 朔集半导体 的商标。有关 朔集半导体 的更多信息，请参阅 
+www.SoulSemi.com。所有其他产品或服务名称均为其各自所有者的财产。 
+
+本文件中的信息取代并替换之前任何版本文件中提供的信息。 
+
+ 
+© 2025 上海朔集半导体科技有限公司 – 保留所有权利 
+
+上海朔集半导体科技有限公司 第 73 页 / 共 73 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接

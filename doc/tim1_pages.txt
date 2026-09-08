@@ -1,0 +1,2313 @@
+===== PAGE 128 =====
+ 
+上海朔集半导体科技有限公司 第 128 页 / 共 343 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+SLM32M030 用户手册 
+16 定时器（TIMX） 
+ 
+图16.12 ETR 输入模块 
+TI2F       or
+TI1F       or
+TRGI
+ETRF
+CK_INT
+or
+(internal clock)
+Encoder
+mode
+External clock
+mode 1
+External clock
+mode 2
+Internal clock
+mode
+TIMx_SMCR
+ECE SMS[2:0]
+CK_PSC
+Filter
+downcounter
+Divider
+/1, /2, /4, /8
+ETRP0
+1
+ETR
+TIMx_SMCR
+ETP
+ETR pin
+TIMx_SMCR
+ETPS[1:0]
+TIMx_SMCR
+ETF[3:0]
+fDTS
+ 
+16.1.7.4 捕获/比较通道 
+每个捕获/比较通道均围绕捕获/比较寄存器（包括影子寄存器） ，捕获的输入级（具有数字滤波器，
+复用和预分频器）和输出级（具有比较器和输出控制）构建。 
+输入级对相应的 TIx 输入进行采样以生成滤波信号 TIxF，然后，具有极性选择的边缘检测器生成
+信号（TIxFPx）可用作从机模式控制器的触发输入或用作捕获命令。它在捕捉寄存器（ ICxPS）之
+前被预先缩放。输出级生成一个中间波形，该波形随后用作参考：OCxRef（高电平有效） ，极性作
+用于链的末端。 
+捕获/比较模块由一个预加载寄存器和一个影子寄存器组成，写和读总是访问预加载寄存器。在捕
+获模式下，捕获实际上是在影子寄存器中完成的，然后将其复制到预加载寄存器中。在比较模式
+下，预加载寄存器的内容被复制到影子寄存器中，并与计数器进行比较。 
+图16.13 捕获通道（通道 1 输入级） 
+Filter
+downcounter
+TI1
+TIMx_CCMR1
+ICF[3:0]
+fDTS
+TI1F_Rising
+TI1F_Falling
+Edge
+detector
+TI1F 0
+1
+0
+1
+TI2F_Rising
+TI2F_Falling
+(from channel 2)
+(from channel 2)
+TIMx_CCER
+CC1P/CC1NP
+TI1F_ED
+TI1FP1
+TI2FP1
+TRC
+01
+10
+11
+(from slave mode 
+controller)
+To the slave mode controller
+TIMx_CCMR1
+CC1S[1:0] ICPS[1:0]
+Divider
+/1, /2, /4, /8
+CC1E
+TIMx_CCER
+IC1 IC1PS
+ 
+  
+
+===== PAGE 129 =====
+ 
+上海朔集半导体科技有限公司 第 129 页 / 共 343 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+SLM32M030 用户手册 
+16 定时器（TIMX） 
+图16.14 捕获通道（通道 1~3 输出级） 
+TIM1_CCER
+CC1P
+0
+1
+TIM1_CCER
+CC1NP
+0
+1
+Output
+enable
+circuit
+Output
+enable
+circuit
+OC1
+OC1N
+CC1NE CC1E TIM1_CCER
+MOE OSSI OSSR
+11
+10
+0x
+CC1NE CC1E
+TIM1_CCER TIM1_BDTR
+x0
+01
+11
+Dead-time
+generator
+Output
+selector
+Output
+mode
+controller
+TIM1_BDTR
+DTG[7:0]OC1CE OC1M[3:0]
+TIM1_CCMR1
+OC1_DT
+OC1N_DT
+OC1REFC
+To the master mode
+controller
+ 0 
+ 0 
+OC1REF
+OCxREF(1)
+OC5REF
+ETRF
+CNT>CCR1
+CNT=CCR1
+ 
+ 
+图16.15 捕获通道（通道 4 输出级） 
+TIM1_CCER
+CC4P
+0
+1
+TIM1_CCERCC4E
+Output
+enable
+circuit
+OC4
+TIM1_BDTR
+OIS4 TIM1_CR2
+Output
+mode
+controller
+OC1M[3:0]
+TIM1_CCMR2
+To the master mode
+controller
+OC4REF
+ETR
+CNT>CCR4
+CNT>CCR4
+MOE OSSI
+ 
+ 
+16.1.8 输入捕获模式 
+16.1.8.1 正常模式 
+在输入捕获模式下，捕捉/比较寄存器（TIMx_CCRx）用于在相应 ICx 信号检测到转换后锁存计数
+器的值。发生捕捉时，将设置相应的 CCXIF 标志（TIMx_SR 寄存器） ，并且如果使能了中断或
+DMA 请求，则可以发送它们。如果在 CCxIF 标志已经为高电平时发生捕捉，则将设置捕捉标志
+CCxOF（TIMx_SR 寄存器） 。可以通过软件将CCxIF 写入“ 0”或读取存储在 TIMx_CCRx 寄存器中
+的捕获数据来清除 CCxIF。当写入“ 0”时，CCxOF 被清除。 
+发生输入捕获时： 
+TIMx_CCR1 寄存器在活动转换时获取计数器的值，CC1IF 标志置位（中断标志） 。如果至少两次
+连续捕获发生且未清除标志，则 CC1OF 也被置位。 
+根据 CC1IE 位产生一个中断。 
+根据 CC1DE 位产生 DMA 请求。 
+为了处理超量捕获，建议在超量捕获标志之前读取数据。这是为了避免丢失可能在读取标志之后和
+读取数据之前发生的过度捕获。 
+
+===== PAGE 130 =====
+ 
+上海朔集半导体科技有限公司 第 130 页 / 共 343 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+SLM32M030 用户手册 
+16 定时器（TIMX） 
+以下示例显示了 TI1 输入上升时如何在 TIMx_CCR1 中捕获计数器值。为此，请使用以下过程：选
+择活动输入：TIMx_CCR1 必须链接到 TI1 输入，因此将 CC1S 位写入 TIMx_CCMR1 寄存器中的
+01。 CC1S 不同于 00 时，将在输入中配置通道，并且 TIMx_CCR1 寄存器变为只读。 
+相对于连接到定时器的信号来编程所需的输入滤波器持续时间（如果输入是 TIx 输入，则通过编程
+TIMx_CCMRx 寄存器中的 ICxF 位） 。切换时，输入信号在至少五个内部时钟周期内不稳定。我们
+必须将过滤器持续时间编程为长于这五个时钟周期。当检测到连续 8 个具有新电平的采样（以
+fDTS 频率采样）时，我们可以验证 TI1 上的转换。然后将 IC1F 位写入 TIMx_CCMR1 寄存器中的
+0011。 
+通过将 TIMx_CCER 寄存器中的 CC1P 位写入 0，选择 TI1 通道上有效转换的边沿（在这种情况下
+为上升沿） 。 
+编程输入预分频器。在我们的示例中，我们希望在每次有效跳变时执行捕获，因此禁用了预分频器
+（将 TIMx_CCMR1 寄存器中的 IC1PS 位写入“ 00”）。 
+通过将 TIMx_CCER 寄存器中的 CC1E 位置 1，使能从计数器到捕获寄存器的捕获。 
+如果需要，可以通过将 TIMx_DIER 寄存器中的 CC1IE 位置 1 来启用相关的中断请求，和/或通过
+将 TIMx_DIER 寄存器中的 CC1DE 位置 1 来使 DMA 请求。 
+ 
+16.1.8.2 PWM 输入模式 
+此模式是输入捕获模式的特殊情况。除以下步骤外，过程相同： 
+两个 ICx 信号映射到同一 TIx 输入上。 
+这两个 ICx 信号在极性相反的边沿有效。 
+选择两个 TIxFP 信号之一作为触发输入，并将从模式控制器配置为复位模式。 
+例如，用户可以测量周期（在 TIMx_CCR1 寄存器中）和占空比（在使用以下步骤将 TI1 上的
+PWM 的 TIMx_CCR2 寄存器）在 TIMX_CLK 频率和预分频值上） ： 
+选择 TIMx_CCR1 的有效输入：将 CC1S 位写入 01 中的 TIMx_CCMR1 寄存器（选择了 TI1）。 
+选择 TI1FP1 的有效极性（用于 TIMx_CCR1 中的捕获和计数器清零） ：将CC1P 位写为 0（在上
+升沿有效） 。选择TIMx_CCR2 的有效输入：将 CC2S 位写入 TIMx_CCMR1 寄存器中的 10（选择
+TI1）。 
+选择 TI1FP2 的有效极性（用于 TIMx_CCR2 中的捕获） ：将CC2P 位写为 1（在下降沿有效） 。 
+选择有效的触发输入：将 TS 位写入 TIMx_SMCR 寄存器中的 101（已选择 TI1FP1）。 
+在复位模式下配置从模式控制器：将 TIMx_SMCR 寄存器中的 SMS 位写入 100。 
+启用捕获：将 TIMx_CCER 寄存器中的 CC1E 和 CC2E 位写为 1。 
+  
+
+===== PAGE 131 =====
+ 
+上海朔集半导体科技有限公司 第 131 页 / 共 343 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+SLM32M030 用户手册 
+16 定时器（TIMX） 
+图16.16 -PWM 输入模式 
+IC1 capture
+IC2 capture
+reset counter
+IC2 capture
+pulse width
+measurement
+IC1 capture
+period
+measurement
+TIMx_CNT 0004 0000 0001 0002 0003 0004 0000
+TIMx_CCR1 0004
+TIMx_CCR2 0002
+TI1
+ 
+16.1.8.3 强制输出模式 
+在输出模式下（TIMx_CCMRx 寄存器中的 CCxS 位= 00） ，可以直接通过软件直接将每个输出比
+较信号（OCxREF 然后是 OCx / OCxN）强制为有效或无效电平，而与输出比较寄存器和计数器之
+间的任何比较无关。 
+为了将输出比较信号（OCXREF / OCx）强制为有效电平，用户只需要在相应 TIMx_CCMRx 寄存
+器的 OCxM 位中写入 101。因此，OCXREF 被强制为高电平（OCxREF 始终为高电平有效） ，并
+且 OCx 获得与 CCxP 极性位相反的值。 
+ 
+16.1.9 输出捕获模式 
+16.1.9.1 正常模式 
+此功能用于控制输出波形或一段时间后过去提供指示。 
+当在捕获/比较寄存器和计数器之间找到匹配项时，输出比较功能： 
+将相应的输出引脚分配给由输出比较模式（TIMx_CCMRx 寄存器中的 OCxM 位）和输出极性
+（TIMx_CCER 寄存器中的 CCxP 位）定义的可编程值。输出引脚可以保持其电平（OCXM = 
+000） ，设置为有效（OCxM = 001） ，设置为无效（OCxM = 010）或在匹配时切换（OCxM = 
+011）。 
+设置中断状态寄存器中的标志（TIMx_SR 寄存器中的 CCxIF 位） 。如果设置了相应的中断屏蔽
+（TIMx_DIER 寄存器中的 CCXIE 位） ，则产生一个中断。 
+如果设置了相应的使能位（TIMx_DIER 寄存器中的 CCxDE 位，TIMx_CR2 寄存器中的 CCDS 位
+用于 DMA 请求选择） ，则发送DMA 请求。 
+可以使用 TIMx_CCMRx 寄存器中的 OCxPE 位对 TIMx_CCRx 寄存器进行预编程或不预编程。在
+输出比较模式下，更新事件 UEV 对 OCxREF 和 OCx 输出没有影响。 
+ 
+流程： 
+⚫ 选择计数器时钟（内部，外部，预分频器） 。 
+⚫ 将所需的数据写入 TIMx_ARR 和 TIMx_CCRx 寄存器。 
+⚫ 如果要产生中断请求，则将 CCxIE 位置 1。 
+⚫ 选择输出模式。例如： 
+◼ 当 CNT 与 CCRx 匹配时，写入 OCxM = 011 以切换 OCx 输出引脚 
+
+===== PAGE 132 =====
+ 
+上海朔集半导体科技有限公司 第 132 页 / 共 343 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+SLM32M030 用户手册 
+16 定时器（TIMX） 
+◼ 写 OCxPE = 0 以禁用预加载寄存器 
+◼ 写入 CCxP = 0 以选择有效的高极性 
+◼ 写入 CCxE = 1 以启用输出 
+⚫ 通过将 TIMx_CR1 寄存器中的 CEN 位置 1 来使能计数器。TIMx_CCRx 寄存器可由软件
+随时更新以控制输出波形，前提是未启用预加载寄存器（OCxPE =“ 0”，否则为
+TIMx_CCRx 影子寄存器仅在下一个更新事件 UEV 时更新。 
+图16.17 输出比较模式 
+TIM1_CNT
+TIM1_CCR1
+OC1REF=OC1
+0039 003A 003B B200 B201
+003A
+Match detected on CCR1
+Interrupt generated if enabled
+B201
+Write B201h in the CC1R register
+ 
+16.1.9.2 PWM 模式 
+脉冲宽度调制模式允许生成具有由 TIMx_ARR 寄存器的值确定的频率和由 TIMx_CCRx 寄存器的
+值确定的占空比的信号。 
+通过在 TIMx_CCMRx 寄存器的 OCxM 位中写入“ 110”（PWM 模式 1）或“ 111”（PWM 模式 2），
+可以在每个通道上独立选择 PWM 模式（每个 OCx 输出一个 PWM） 。必须通过将TIMx_CCMRx
+寄存器中的 OCxPE 位置 1 来使能相应的预加载寄存器，并最终通过将 TIMx_CR1 寄存器中的
+ARPE 位置 1 来自动重载预加载寄存器（在递增计数或中心对齐模式下） 。由于仅在发生更新事件
+时才将预加载寄存器转移到影子寄存器，因此在启动计数器之前，用户必须通过将 TIMx_EGR 寄
+存器中的 UG 位置 1 来初始化所有寄存器。OCx 极性可通过 TIMx_CCER 寄存器中的 CCxP 位进
+行软件编程。可以将其编程为高电平有效或低电平有效。 OCx 输出为通过 CCxE，CCxNE，
+MOE，OSSI 和 OSSR 位（TIMx_CCER 和 TIMx_BDTR 寄存器）的组合来使能。有关更多详细
+信息，请参见 TIMx_CCER 寄存器说明。 
+在 PWM 模式（1 或 2）下，始终将 TIMx_CNT 和 TIMx_CCRx 进行比较以确定
+TIMx_CCRx≤TIMx_CNT 还是 TIMx_CNT≤TIMx_CCRx（取决于计数器的方向） 。对齐模式取决于
+TIMx_CR1 寄存器中的 CMS 位。 
+16.1.9.3 边缘对齐模式 
+递增配置 
+当 TIMx_CR1 寄存器中的 DIR 位为低时，向上计数有效。在以下示例中，我们考虑 PWM 模式
+1。只要 TIMx_CNT <TIMx_CCRx，基准 PWM 信号 OCxREF 就会为高，否则它将变为低电平。
+如果 TIMx_CCRx 中的比较值大于自动重载值（TIMx_ARR 中） ，则OCxREF 保持为“ 1”。如果比
+较值为 0，则 OCxRef 保持为“ 0”。 
+递减配置 
+当 TIMx_CR1 寄存器中的 DIR 位为高时，递减计数有效。在 PWM 模式 1 中，只要 TIMx_CNT> 
+TIMx_CCRx，基准信号 OCxRef 就会为低电平，否则它将变为高电平。如果 TIMx_CCRx 中的比
+
+===== PAGE 133 =====
+ 
+上海朔集半导体科技有限公司 第 133 页 / 共 343 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+SLM32M030 用户手册 
+16 定时器（TIMX） 
+较值大于 TIMx_ARR 中的自动重载值，则 OCxREF 保持为“ 1”。在此模式下，无法使用 0％
+PWM。 
+图16.18 PWM 边缘对齐模式 
+Counter register
+OCXREF
+CCxIF
+OCXREF
+CCxIF
+OCXREF
+CCxIF
+OCXREF
+CCxIF
+CCRx=4
+CCRx=8
+CCRx>8
+CCRx=0
+ 1 
+ 0 
+0 1 2 3 4 5 6 7 8 0 1
+ 
+ 
+16.1.9.4 中央对齐模式 
+当 TIMx_CR1 寄存器中的 CMS 位不同于'00'（其余所有配置对 OCxRef / OCx 信号具有相同的影
+响）时，中心对齐模式有效。当计数器递增计数时，比较标志将置 1 向下计数，或者当它向上计数
+和向下计数时（取决于 CMS 位配置）同时计数。 TIMx_CR1 寄存器中的方向位（DIR）由硬件更
+新，并且不能由软件更改。 
+图16.19 PWM 中央对齐模式 
+0 1 2 3 4 5 6 7 8 7 6Counter register
+OCxREF
+CCxIF
+CCRx=4
+5 4 3 2 1 0 1
+OCxREF
+CCxIF
+OCxREF
+OCxREF
+OCxREF
+CCxIF
+CCxIF
+CCxIF
+CCRx=7
+CCRx=8
+CCRx>8
+CCRx=0
+CMS=01
+CMS=10
+CMS=11
+CMS=10 or 11
+CMS=01
+CMS=10
+CMS=11
+CMS=01
+CMS=10
+CMS=11
+CMS=01
+CMS=10
+CMS=11
+ 1 
+ 1 
+ 0 
+ 
+ 
+
+===== PAGE 134 =====
+ 
+上海朔集半导体科技有限公司 第 134 页 / 共 343 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+SLM32M030 用户手册 
+16 定时器（TIMX） 
+16.1.9.5 互补输出和死区插入（TIM1&TIM15 至 TIM17） 
+高级控制定时器（TIM1）和通用定时器（TIM15 至 TIM17）可以输出互补信号，并管理输出的关
+闭和打开瞬间。该时间通常称为停滞时间，必须根据连接到输出的设备及其特性（电平转换器的固
+有延迟，电源开关引起的延迟...）对其进行调整。用户可以为每个输出独立选择输出的极性（主输
+出 OCx 或互补 OCxN） 。这是通过写入TIMx_CCER 寄存器中的 CCxP 和 CCxNP 位来完成的。 
+互补信号 OCx 和 OCxN 由多个控制位组合激活：TIMx_CCER 寄存器中的 CCxE 和 CCxNE 位以
+及 TIMx_BDTR 和 TIMx_CR2 寄存器中的 MOE，OISx，OISxN，OSSI 和 OSSR 位。特别是当切
+换到 IDLE 状态（MOE 下降到 0）时，死区时间被激活。 
+通过将 CCxE 和 CCxNE 位以及 MOE 位（如果存在断路电路）置 1，可以启用死区时间插入。 
+TIMx_BDTR 寄存器的 DTG [7：0]位用于控制所有通道的死区时间。 
+它从参考波形 OCxREF 产生 2 个输出 OCx 和 OCxN。如果 OCx 和 OCxN 为高电平有效： 
+⚫ OCx 输出信号与参考信号相同，只是上升沿相对于参考上升沿有所延迟。 
+⚫ OCxN 输出信号与参考信号相反，但上升沿相对于参考下降沿有所延迟。 
+如果延迟大于有效输出（OCx 或 OCxN）的宽度，则不会生成相应的脉冲。每个通道的死区延迟
+都相同，并且可通过 TIMx_BDTR 寄存器中的 DTG 位进行编程。 
+ 
+图16.20 带死区插入的互补输出 
+delay delay
+OCxREF
+OCx
+OCxN
+ 
+ 
+图16.21 延迟大于负脉冲的死区时间波形 
+ 
+delay
+OCxREF
+OCx
+OCxN
+ 
+ 
+  
+
+===== PAGE 135 =====
+ 
+上海朔集半导体科技有限公司 第 135 页 / 共 343 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+SLM32M030 用户手册 
+16 定时器（TIMX） 
+表16.1 具有中断功能的互补 OCx 和 OCxN 通道的输出控制 
+Control bits Output states(1)
+OCx output state OCxN output stateOSSR
+bit
+CCxE
+bit
+CCxNE
+bit
+Output Disabled (not driven 
+by the timer)
+OCx=0, OCx_EN=0
+Output Disabled (not driven 
+by the timer)
+OCxN=0, OCxN_EN=0
+Output Disabled (not driven 
+by the timer)
+OCx=0, OCx_EN=0
+OCxREF + Polarity 
+OCx=OCxREF xor CCxP, 
+OCx_EN=1
+Complementary to OCREF 
+(not OCREF) + Polarity + 
+dead-time OCxN_EN=1
+Off-State (output enabled 
+with inactive state)
+OCx=CCxP, OCx_EN=1
+OCxREF + Polarity 
+OCxN=OCxREF xor CCxNP, 
+OCxN_EN=1
+Output Disabled (not driven 
+by the timer)
+OCxN=0, OCxN_EN=0
+OCREF + Polarity + dead-time 
+OCx_EN=1
+Output Disabled (not driven 
+by the timer)
+OCx=CCxP, OCx_EN=0
+Output Disabled (not driven 
+by the timer)
+OCxN=CCxNP, OCxN_EN=0
+OCxREF + Polarity 
+OCxN=OCxREF xor CCxNP, 
+OCxN_EN=1
+OCREF + Polarity + dead-time 
+OCx_EN=1
+OCxREF + Polarity
+OCx=OCxREF xor CCxP, 
+OCx_EN=1
+Off-State (output enabled 
+with inactive state)
+OCxN=CCxNP, OCxN_EN=1
+Complementary to OCREF 
+(not OCREF) + Polarity + 
+dead-time OCxN_EN=1
+0 0 0
+0 0 1
+0 1 0
+0 1 1
+1 0 0
+1 0 1
+1 1 0
+1 1 1
+1 X
+0 0 0
+0 0 1
+0 1 0
+0 1 1
+1 0 0
+1 0 1
+1 1 0
+1 1 1
+0 X
+Output Disabled (not driven by the timer)
+Asynchronously: OCx=CCxP, OCx_EN=0, OCxN=CCxNP, 
+OCxN_EN=0
+Then if the clock is present: OCx=OISx and OCxN=OISxN after 
+a dead-time, assuming that OISx and OISxN do not 
+correspond to OCx and OCxN both in active state.
+Off-State (output enabled with inactive state)
+Asynchronously: OCx=CCxP, OCx_EN=1, OCxN=CCxNP, 
+OCxN_EN=1
+Then if the clock is present: OCx=OISx and OCxN=OISxN after 
+a dead-time, assuming that OISx and OISxN do not 
+correspond to OCx and OCxN both in active state.
+MOE
+bit
+OSSI
+bit
+1. When both outputs of a channel are not used (CCxE = CCxNE = 0), the OISx, OISxN, CCxP and CCxNP bits must be kept 
+cleared.
+ 
+ 
+16.1.9.6 刹车功能 
+刹车源可以是刹车输入引脚，也可以是时钟安全系统（CSS）从复位时钟控制器产生的时钟故障事
+件。 
+从复位退出时，刹车电路被禁用，MOE 位为低。用户可以通过将 TIMx_BDTR 寄存器中的 BKE 位
+置 1 来使能刹车功能。刹车输入极性可以通过配置 BKP 位来选择相同的寄存器，可以同时修改
+
+===== PAGE 136 =====
+ 
+上海朔集半导体科技有限公司 第 136 页 / 共 343 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+SLM32M030 用户手册 
+16 定时器（TIMX） 
+BKE 和 BKP。当 BKE 和 BKP 位被写入时，在写入有效之前施加 1 个 APB 时钟周期的延迟。因
+此，必须等待 1 个 APB 时钟周期才能在写操作后正确读回该位。 
+由于 MOE 下降沿可以是异步的，因此已在实际信号（作用于输出）和同步控制位（在
+TIMx_BDTR 寄存器中访问）之间插入了重新同步电路。这会导致异步信号和同步信号之间的一些
+延迟。特别是，如果 MOE 被写为 1 而其为低，则在正确读取 MOE 之前必须插入一个延迟（虚拟
+指令） 。这是因为用户写入异步信号，但读取同步信号。 
+当发生刹车时（在刹车输入上选择的电平） ： 
+MOE 位异步清除，将输出置于无效状态，空闲状态或复位状态（由 OSSI 位选择） 。即使MCU 振
+荡器关闭，此功能也可以使用。 
+MOE = 0 时，将以 TIMx_CR2 寄存器的 OISx 位中编程的电平驱动每个输出通道。如果 OSSI = 
+0，则定时器释放使能输出，否则使能输出保持高电平。 
+使用互补输出时： 
+⚫ 首先将输出置于复位状态无效状态（取决于极性） 。此操作是异步完成的，因此即使未向
+计时器提供时钟也可以工作。 
+⚫ 如果定时器时钟仍然存在，则死区时间发生器将重新激活，以便在死区时间后以 OISx 和
+OISxN 位中编程的电平驱动输出。即使在这种情况下，也无法将 OCx 和 OCxN 一起驱
+动到活动电平。请注意，由于 MOE 上的重新同步，空载时间持续时间比平时更长（大
+约 2 ck_tim 时钟周期） 。 
+⚫ 如果 OSSI = 0，则定时器释放使能输出，否则，一旦 CCxE 或 CCxNE 位之一为高，使
+能输出将保持或变为高电平。 
+刹车状态标志（TIMx_SR 寄存器中的 BIF 位）被置 1。如果 TIMx_DIER 寄存器中的 BIE 位置 1，
+则可以产生刹车。如果 TIMx_DIER 寄存器中的 BDE 位置 1，则可以发送 DMA 请求。如果
+TIMx_BDTR 寄存器中的 AOE 位置 1，则在下一个更新事件 UEV 时，MOE 位置将自动重新设
+置。例如，这可用于执行调节。否则，MOE 保持低电平直到再次将其写入“ 1”。在这种情况下，它
+可以用于安全性，并且刹车输入可以连接到来自电源驱动器，热传感器或任何安全组件的警报。  
+注意：刹车输入在水平上起作用，因此，在刹车输入处于活动状态时（既不能自动也不可以通过软
+件）不能设置 MOE。同时，状态标志 BIF 无法清除。 
+可以通过具有可编程极性和 TIMx_BDTR 寄存器中的使能位 BKE 的 BRK 输入产生中断。 
+有两种产生刹车的解决方案： 
+通过使用具有可编程极性和使能位 BKE 的 BRK 输入 TIMx_BDTR 寄存器。 
+通过软件通过 TIMx_EGR 寄存器的 BG 位。 
+除了刹车输入和输出管理外，还提供了写保护。在断路内部实现保护应用程序。它允许冻结几个参
+数的配置（死区持续时间，OCx / OCxN 极性和状态禁用时，OCxM 配置，刹车使能和极性） 。用
+户可以选择由 TIMx_BDTR 寄存器中的 LOCK 位选择的三级保护。请参阅（TIMx_BDTR）。 MCU
+复位后，只能写入一次 LOCK 位。 
+  
+
+===== PAGE 137 =====
+ 
+上海朔集半导体科技有限公司 第 137 页 / 共 343 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+SLM32M030 用户手册 
+16 定时器（TIMX） 
+图16.22 响应刹车的输出行为 
+OCxREF
+OCx
+(OCxN not implemented, CCxP=0, OISx=1)
+OCx
+(OCxN not implemented, CCxP=0, OISx=0)
+OCx
+(OCxN not implemented, CCxP=1, OISx=1)
+OCx
+(OCxN not implemented, CCxP=1, OISx=0)
+OCx
+OCxN
+(CCxE=1,CCxP=0,OISx=0,CCxNE=1,CCxNP=0,OISxN=1)
+OCx
+OCxN
+(CCxE=1,CCxP=0,OISx=1,CCxNE=1,CCxNP=1,OISxN=1)
+OCxN
+(CCxE=1,CCxP=0,OISx=0,CCxNE=0,CCxNP=0,OISxN=1)
+OCx
+OCx
+OCxN
+(CCxE=1,CCxP=0,OISx=1,CCxNE=0,CCxNP=0,OISxN=0)
+OCx
+OCxN
+(CCxE=1,CCxP=0,CCxNE=0,CCxNP=0,OISx=OISxN=0 or OISx=OISxN=1)
+delay delay delay
+delay delay delay
+delay
+delay
+BREAK (MOE      )
+ 
+16.1.9.7 发生外部事件时清除 OCxREF 信号 
+通过将高电平施加到 ETRF 输入，可以将给定通道的 OCxREF 信号驱动为低电平（相应的
+TIMx_CCMRx 寄存器的 OCxCE 使能位设置为 1）。 OCxREF 信号保持低电平，直到发生下一个
+更新事件 UEV。此功能只能在输出比较和 PWM 模式下使用，而不能在强制模式下使用。 
+  
+
+===== PAGE 138 =====
+ 
+上海朔集半导体科技有限公司 第 138 页 / 共 343 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+SLM32M030 用户手册 
+16 定时器（TIMX） 
+图16.23 清除定时器 x OCxREF 
+(CCRx)
+Counter(CNT)
+ETRF
+OCxREF (OCxCE= 0 )
+OCxREF (OCxCE= 1 )
+ETRF becomes high ETRF still high
+ 
+16.1.9.8 6 步 PWM 生成 
+在通道上使用互补输出时，OCxM，CCxE 和 CCxNE 位上有预加载位。在 COM 换向事件时，预
+载位被传输到影子位。因此，用户可以预先为下一步编程配置，并同时更改所有通道的配置。可以
+通过将 TIMx_EGR 寄存器中的 COM 位置 1 或由硬件（在 TRGI 上升沿）来生成 COM。 
+当发生 COM 事件时（TIMx_SR 寄存器中的 COMIF 位） ，将设置一个标志，该标志会产生中断
+（如果 TIMx_DIER 寄存器中的 COMIE 位置 1）或 DMA 请求（如果 TIMx_DIER 寄存器中的
+COMDE 位置 1）。 
+  
+
+===== PAGE 139 =====
+ 
+上海朔集半导体科技有限公司 第 139 页 / 共 343 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+SLM32M030 用户手册 
+16 定时器（TIMX） 
+图16.24 步 PWM 生成 
+(CCRx)
+Counter (CNT)
+OCxREF
+COM event
+OCx
+OCxN
+Example 1
+OCx
+OCxN
+Example 2
+OCx
+OCxN
+Example 3
+Write COM to 1
+CCxE=1
+CCxNE=0
+OCxM=100 (forced inactive)
+CCxE=1
+CCxNE=0
+OCxM=100 (forced inactive)
+CCxE=1
+CCxNE=0
+OCxM=100 (forced inactive)
+CCxE=1
+CCxNE=0
+OCxM=100
+CCxE=0
+CCxNE=1
+OCxM=101
+CCxE=1
+CCxNE=0
+OCxM=100
+Write CCxNE to 1
+and OCxM to 101
+Write OCxM to 100
+Write CCxNE to 0
+and OCxM to 100
+ 
+ 
+16.1.9.9 单脉冲模式（OPM） 
+单脉冲模式（OPM）是之前模式的特殊情况。它允许计数器响应激励而启动，并在可编程延迟后
+生成具有可编程长度的脉冲。计数器的启动可以通过从模式控制器来控制，可以在输出比较模式或
+PWM 模式下生成波形。通过将 TIMx_CR1 寄存器中的 OPM 位置 1 选择单脉冲模式。这使计数器
+在下一个更新事件 UEV 处自动停止。 
+  
+
+===== PAGE 140 =====
+ 
+上海朔集半导体科技有限公司 第 140 页 / 共 343 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+SLM32M030 用户手册 
+16 定时器（TIMX） 
+图16.25 单脉冲模式 
+TI2
+OC1REF
+OC1
+TIM1_ARR
+TIM1_CCR1
+Counter
+tDELAY tPULSE t
+ 
+仅当比较值与计数器不同时，才能正确生成脉冲初始值。在启动之前（计时器等待触发时） ，配置
+必须是： 
+递增模式：CNT < CCRx ≤ ARR (0 < CCRx) 
+递减模式：CNT > CCRx 
+单脉冲模式波形是通过写入比较寄存器来定义的（考虑了时钟频率和计数器预分频器） 。tDELAY
+由写入 TIMx_CCR1 寄存器的值定义。tPULSE 由自动重载值和比较值（TIMx_ARR-
+TIMx_CCR1）之差定义。 
+假设用户想要建立一个从“ 0”到“ 1”过渡的波形比较匹配发生，并且当计数器达到自动加载值时，从
+“ 1”到“ 0”的转换。为此，通过在 TIMx_CCMR1 寄存器中写入 OC1M = 111 来启用 PWM 模式 2。
+用户可以选择通过在 TIMx_CCMR1 寄存器中写入 OC1PE =“ 1”和在 TIMx_CR1 寄存器中写入
+ARPE 来启用预加载寄存器。在这种情况下，必须将比较值写入 TIMx_CCR1 寄存器中，将自动重
+载值写入 TIMx_ARR 寄存器中，通过将 UG 位置 1 来生成更新并等待 TI2 上的外部触发事件。在
+此示例中，CC1P 被写入“ 0”。 
+在我们的示例中，TIMx_CR1 寄存器中的 DIR 和 CMS 位应为低。用户只需要一个脉冲（单模
+式） ，因此必须在OPM 位的 OPM 位中写入“ 1”。 
+TIMx_CR1 寄存器用于在下一个更新事件（计数器翻转时停止计数器）从自动加载值返回到 0）。
+当 TIMx_CR1 寄存器中的 OPM 位设置为 0 时，因此选择了重复模式。特殊情况：OCx 快速启
+用： 
+在单脉冲模式下，TIx 输入上的边沿检测将 CEN 位置 1。启用计数器。然后计数器与比较值之间的
+比较使输出切换。但是这些操作需要几个时钟周期，这限制了我们可以获得的最小延迟 tDELAY 
+min。 
+如果用户希望以最小的延迟输出波形，则必须设置 TIMx_CCMRx 寄存器。然后强制 OCxRef（和
+OCx）响应激励，而不考虑比较。它的新级别个就像比较已经匹配。仅当通道在 PWM1 或 PWM2
+中配置时 OCxFE 才起作用模式。 
+
+===== PAGE 141 =====
+ 
+上海朔集半导体科技有限公司 第 141 页 / 共 343 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+SLM32M030 用户手册 
+16 定时器（TIMX） 
+16.1.9.10 编码器接口模式 
+要选择编码器接口模式，如果计数器仅在 TI2 沿计数，则在 TIMx_SMCR 寄存器中写入 SMS 
+='001'，如果仅在 TI1 沿计数，则写入 SMS ='010'，如果在 TI2 沿仅计数，则写入 SMS ='011' TI1
+和 TI2 边缘。 
+通过对 TIMx_CCER 寄存器中的 CC1P 和 CC2P 位进行编程，选择 TI1 和 TI2 极性。当需要时，
+用户也可以对输入过滤器进行编程。两个输入 TI1 和 TI2 用于连接增量编码器。计数器由 TI1FP1
+或 TI2FP2 上的每个有效跳变提供时钟（输入滤波器和极性选择后为 TI1 和 TI2，如果未滤波且未
+反相，则 TI1FP1 = TI1，TI2FP2 = TI2） ，则假定它被使能（TIMx_CR1 寄存器中的 CEN 位写入
+'1'） 。评估两个输入的转换顺序，并生成计数脉冲以及方向信号。根据计数器递增或递减的顺序，
+硬件会相应地修改 TIMx_CR1 寄存器中的 DIR 位。 DIR 位是在任何输入（TI1 或 TI2）的每次转
+换时计算的，无论计数器仅对 TI1，仅对 TI2 还是对 TI1 和 TI2 都进行计数。 
+编码器接口模式仅用作带方向的外部时钟选择，这意味着计数器仅在 0 和 TIMx_ARR 寄存器中的
+自动重载值之间连续计数（0 到 ARR 或 ARR 降低到 0，具体取决于方向） 。因此，用户必须在启
+动之前配置 TIMx_ARR。以相同的方式，捕获，比较，预分频器，重复计数器，触发输出功能继
+续正常运行。编码器模式和外部时钟模式 2 不兼容，因此不能一起选择。在此模式下，计数器会根
+据速度和方向自动修改因此，增量编码器及其内容始终代表编码器的位置。计数方向对应于所连接
+传感器的旋转方向。 
+表16.2 计数方向和编码信号 
+Active edge  Level on opposite signal (T1iP1 for T1
+2, T12FP2 for T11)  
+T1iP1 signal  T12FP2 signal  
+Rising Falling Rising Falling 
+Counting on T11 only  High Down Up No Count  No Count  
+Counting on T11 only  Low Up Down No Count  No Count  
+Counting on T12 only  High No Count  No Count  Up Down 
+Counting on T12 only  Low No Count  No Count  Down Up 
+Counting on T11 and 
+T12 High Down Up Up Down 
+Counting on T11 and 
+T12 Low Up Down Down Up 
+ 
+外部增量编码器可以直接连接到 MCU，而无需外部接口逻辑。但是，通常使用比较器将编码器的
+差分输出转换为数字信号，这大大提高了抗噪能力。指示机械零位的第三个编码器输出可以连接到
+外部中断输入并触发计数器复位。 
+图16.26 编码器接口模式 
+Counter
+up down up
+TI2
+TI1
+forward jitter backward jitter forword
+ 
+
+===== PAGE 142 =====
+ 
+上海朔集半导体科技有限公司 第 142 页 / 共 343 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+SLM32M030 用户手册 
+16 定时器（TIMX） 
+16.1.9.11 霍尔传感器接口（仅 TIM1） 
+定时器输入 XOR 功能 
+TIMx_CR2 寄存器中的 TI1S 位允许将通道 1 的输入滤波器连接到 XOR 门的输出，并结合三个输
+入引脚 TIMx_CH1，TIMx_CH2 和 TIMx_CH3。XOR 输出可与所有定时器输入功能一起使用，例
+如触发或输入捕捉。 
+霍尔传感器 
+使用高级控制定时器（TIM1）生成 PWM 信号来驱动电机，以及另一个定时器 TIMx（TIM3）称为
+“接口定时器”。 “接口定时器”捕获通过 XOR 连接到 TI1 输入通道（通过将 TIMx_CR2 寄存器中的
+TI1S 位置 1 选择）的 3 个定时器输入引脚（TIMx_CH1，TIMx_CH2 和 TIMx_CH3）。 
+从模式控制器配置为复位模式，从机输入为 TI1F_ED。因此，每次 3 个输入之一切换时，计数器
+都会从 0 重新开始计数。这将创建一个由霍尔输入的任何变化触发的时基。  
+在“接口计时器”上，捕获/比较通道 1 配置为捕获模式，捕获信号为 TRC。所捕获的值（对应于输
+入两次变化之间所经过的时间）给出了有关电动机速度的信息。 
+可以在输出模式下使用“接口计时器”来生成一个脉冲，该脉冲通过触发 COM 事件来更改高级控制
+计时器（TIM1）的通道配置。 TIM1 定时器用于生成 PWM 信号以驱动电动机。为此，必须对接
+口定时器通道进行编程，以便在编程的延迟后（在输出比较或 PWM 模式下）产生正脉冲。该脉冲
+被发送到通过 TRGO 输出的高级控制定时器（TIM1）。 
+例如：每当连接到 TIMx 定时器之一的霍尔输入发生变化时，用户想要更改经过编程延迟的高级控
+制定时器 TIM1 的 PWM 配置， 
+⚫ 通过将 TIMx_CR2 寄存器中的 TI1S 位写为 1，将 3 个定时器输入与 TI1 输入通道进行或
+运算 
+⚫ 编程时基：将 TIMx_ARR 写入最大值（必须通过 TI1 更改清除计数器。设置预分频器以
+使最大计数器周期长于传感器两次更改之间的时间 
+⚫ 在捕获模式下编程通道 1（选择了 TRC） ：将TIMx_CCMR1 寄存器中的 CC1S 位写入
+11。用户还可以根据需要对数字滤波器进行编程 
+⚫ 以所需的延迟在 PWM 2 模式下对通道 2 进行编程：将 TIMx_CCMR1 寄存器中的
+OC2M 位写入“ 111”，将 CC2S 位写入“ 00” 
+⚫ 选择 OC2REF 作为 TRGO 上的触发输出：将 TIMx_CR2 寄存器中的 MMS 位写入“ 101” 
+在高级控制定时器 TIM1 中，必须选择正确的 ITR 输入作为触发输入，对定时器进行编程以生成
+PWM 信号，捕获/比较控制信号被预加载（TIMx_CR2 寄存器中的 CCPC = 1） ，并且COM 事件
+为由触发输入（TIMx_CR2 寄存器中的 CCUS = 1）控制。在发生 COM 事件后，可将 PWM 控制
+位（CCxE，OCxM）写入下一步（可在 OC2REF 的上升沿生成的中断子程序中完成） 。 
+  
+
+===== PAGE 143 =====
+ 
+上海朔集半导体科技有限公司 第 143 页 / 共 343 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+SLM32M030 用户手册 
+16 定时器（TIMX） 
+图16.27 霍尔传感器接口模式 
+TIH1
+TIH2
+TIH3
+Counter (CNT)
+(CCR2)
+CCR1
+TRGO=OC2REF
+COM
+OC1
+OC1N
+OC2
+OC2N
+OC3
+OC3N
+C7A3 C7A8 C794 C7A5 C7AB C796
+Interfacing timer
+Advanced-control timers
+Write CCxE, CCxNE and 
+OCxM for next step
+ 
+ 
+16.1.10 外部触发同步 
+TIMx 定时器可以在多种模式下与外部触发器同步：复位模式，门控模式和触发模式。  
+16.1.10.1 从模式：复位模式 
+计数器和其预分频器可以响应触发输入上的事件而重新初始化。此外，如果 TIMx_CR1 寄存器中
+的 URS 位为低，则会生成更新事件 UEV。然后，所有预加载的寄存器（TIMx_ARR，
+TIMx_CCRx）都将更新。计数器从内部时钟开始计数，然后正常工作直到 TI1 上升沿。当 TI1 上
+升时，计数器清零并从 0 重新开始。同时，触发标志置位（TIMx_SR 寄存器中的 TIF 位）并产生
+中断请求，或者如果允许则可以发送 DMA 请求（取决于 TIMx_DIER 寄存器中的 TIE 和 TDE
+位） 。 
+  
+
+===== PAGE 144 =====
+ 
+上海朔集半导体科技有限公司 第 144 页 / 共 343 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+SLM32M030 用户手册 
+16 定时器（TIMX） 
+图16.28 从模式下复位模式 
+Counter clock = CK_CNT = CK_PSC
+Counter register
+TI1
+31 32 33 34 35 36 00 01 02 03 00 01 02 03
+UG
+30
+TIF
+ 
+16.1.10.2 从模式下门控模式 
+可以根据所选输入的电平启用计数器。在以下示例中，仅当 TI1 输入为低电平时，递增计数器才会
+计数：将通道 1 配置为检测 TI1 上的低电平。配置输入过滤器的持续时间（在此示例中，我们不需
+要任何过滤器，因此我们将 IC1F = 0000 保留） 。捕获预分频器不用于触发，因此用户无需对其进
+行配置。 CC1S 位仅选择输入捕捉源，TIMx_CCMR1 寄存器中的 CC1S = 01。将 TIMx_CCER
+寄存器中的 CC1P = 1 写入以验证极性（仅检测低电平） 。 
+通过在 TIMx_SMCR 寄存器中写入 SMS = 101 将定时器配置为门控模式。通过在 TIMx_SMCR 寄
+存器中写入 TS = 101，选择 TI1 作为输入源。 
+通过在 TIMx_CR1 寄存器中写入 CEN = 1 来启用计数器（在门控模式下，如果 CEN = 0，则无论
+触发输入电平如何，计数器都不会启动） 。只要TI1 为低电平，计数器就开始对内部时钟进行计
+数，而当 TI1 变为高电平时，计数器就停止计数。计数器启动或停止时，TIMx_SR 寄存器中的
+TIF 标志都将置 1。TI1 的上升沿与计数器的实际停止之间的延迟是由于 TI1 输入上的重新同步电
+路引起的。 
+图16.29 从模式下门控模式 
+Counter clock ＝ CK_CNT=CK_PSC
+Counter register
+TI1
+31 32 33 34 35 36 37 38
+CNT_EN
+30
+TIF
+Write TIF=0
+ 
+ 
+16.1.10.3 从模式下触发模式 
+计数器可以响应所选输入上的事件而启动。在以下示例中，递增计数器根据 TI2 输入上的上升沿而
+启动：配置通道 2 以检测 TI2 上的上升沿。配置输入过滤器的持续时间（在此示例中，我们不需要
+任何过滤器，因此我们将 IC2F = 0000 保持不变） 。捕获预分频器不用于触发，因此无需对其进行
+配置。 CC2S 位配置为仅选择输入捕捉源，TIMx_CCMR1 寄存器中的 CC2S = 01。在
+TIMx_CCER 寄存器中写入 CC2P = 1 以验证极性（仅检测低电平） 。 
+通过在 TIMx_SMCR 寄存器中写入 SMS = 110 将定时器配置为触发模式。通过在 TIMx_SMCR 寄
+存器中写入 TS = 110，选择 TI2 作为输入源。当 TI2 出现上升沿时，计数器开始以内部时钟计
+数，并且 TIF 标志已设置。TI2 的上升沿与计数器的实际启动之间的延迟是由于 TI2 输入上的重新
+同步电路。 
+
+===== PAGE 145 =====
+ 
+上海朔集半导体科技有限公司 第 145 页 / 共 343 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+SLM32M030 用户手册 
+16 定时器（TIMX） 
+图16.30 -从模式下触发模式 
+Counter clock ＝ CK_CNT=CK_PSC
+ Counter register
+TI2
+34 35 36 37 38
+CNT_EN
+TIF
+ 
+16.1.10.4 从模式下外部时钟模式 2+触发模式 
+除了其他从模式外，还可以使用外部时钟模式 2（外部时钟模式 1 和编码器模式除外） 。在这种情
+况下，ETR 信号用作外部时钟输入，并且可以选择另一个输入作为触发输入（在复位模式，门控
+模式或触发模式下） 。建议不要通过TIMx_SMCR 寄存器的 TS 位选择 ETR 作为 TRGI。 
+在以下示例中，一旦出现 TI1 的上升沿，则在 ETR 信号的每个上升沿将递增计数： 
+⚫ 通过如下编程 TIMx_SMCR 寄存器来配置外部触发输入电路： 
+◼ ETF = 0000：无过滤器 
+◼ ETPS = 00：禁用预分频器 
+◼ ETP = 0：检测 ETR 的上升沿，并且 ECE = 1，以启用外部时钟模式 2。 
+⚫ 如下配置通道 1，以检测 TI 上的上升沿： 
+◼ IC1F = 0000：无过滤器。 
+◼ 捕获预分频器不用于触发，不需要进行配置。 
+◼ TIMx_CCMR1 寄存器中的 CC1S = 01 仅选择输入捕捉源 
+◼ TIMx_CCER 寄存器中的 CC1P = 0 以验证极性（仅检测上升沿） 。 
+⚫ 通过在 TIMx_SMCR 寄存器中写入 SMS = 110 将定时器配置为触发模式。选择通过在
+TIMx_SMCR 寄存器中写入 TS = 101，将 TI1 作为输入源。TI1 的上升沿使能计数器并
+设置 TIF 标志。然后，计数器在 ETR 上升沿计数。 ETR 信号的上升沿与计数器的实际
+复位之间的延迟是由于 ETRP 输入上的重新同步电路引起的。 
+16.1.11 定时器同步 
+TIM 定时器在内部链接在一起，用于计时器同步或链接。 
+注：不同定时器之间存在同步延迟，在功能实现上有延迟。例：使用一个定时器启动另外一个，
+TRGO 到真正使能 CEN 有 10 个 TIMER_CLK 延迟。 
+表16.3 ITR 连接 
+从定时器 ITR0(TS=000) ITR1(TS=001) ITR2(TS=010) ITR3(TS=011) 
+TIM1 TIM15_TRGO RESERVED TIM3_TRGO TIM17_CC1_EVENT 
+TIM3 TIM1_TRGO RESERVED TIM15_TRGO TIM14_CC1_EVENT 
+TIM15 RESERVED TIM3_TRGO TIM16_CC1_EVENT TIM17_CC1_EVENT 
+  
+
+===== PAGE 146 =====
+ 
+上海朔集半导体科技有限公司 第 146 页 / 共 343 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+SLM32M030 用户手册 
+16 定时器（TIMX） 
+图16.31 一个定时器作为另一个的预分频器 
+ITR0
+TS
+CK_PSC
+Input trigger 
+selection
+Prescaler Counter
+Slave
+mode
+control
+SMS
+Master
+mode
+control
+MMS
+TRGO1
+UEV
+CounterPrescaler
+Clock
+TIM1 TIM2
+ 
+图16.32 一个定时器使能另外一个 
+CK_INT
+TIMER1-OCIREF
+TIMER1-CNT
+TIMER2-TIF
+FC FD FE FF 00 01
+3048304730463045TIMER2-CNT
+Write TIF=0
+ 
+ 
+图16.33 一个定时器启动另外一个 
+Write TIF=0
+TIMER2-TIF
+TIMER2-CEN=CNT_EN
+TIMER2-CNT 45 46 47 48
+TIMER1-CNT FD FE FF 00 01 02
+TIMER1-UEV
+CK_INT
+ 
+  
+
+===== PAGE 147 =====
+ 
+上海朔集半导体科技有限公司 第 147 页 / 共 343 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+SLM32M030 用户手册 
+16 定时器（TIMX） 
+图16.34 针对外部触发同时启动 2 个定时器 
+CK_INT
+TIMER1-TI1
+TIMER1-CEN=CNT_EN
+01 02 03 04 05 06 07 08 0900
+01 02 03 04 05 06 07 08 0900
+TIMER1-CK_PSC
+TIMER1-CNT
+TIMER1-TIF
+TIMER2-CEN=CNT_EN
+TIMER2-CK_PSC
+TIMER2-CNT
+TIMER2-TIF
+ 
+16.1.12 调试模式 
+当微控制器进入调试模式（Cortex®-M0+内核停止）时，TIMx 计数器要么继续正常工作，要么停
+止，具体取决于 DBG 模块中的 DBG_TIMx_STOP 配置位。为了安全起见，当计数器停止运行
+（DBGMCU_APBx_FZ 寄存器中的 DBG_TIMx_STOP = 1）时，将禁用输出（就像 MOE 位被复
+位一样） 。可以将输出强制为无效状态（OSSI 位= 1） ，或将其控制权由GPIO 控制器（OSSI 位= 
+0）强制将其强制为高阻状态。 
+ 
+ 
+16.2 寄存器 
+16.2.1 寄存器（TIMx_CR1） 
+偏移地址：0x00，复位值：0x0000 0000。 
+31 30 29 28 27 26 25 24 23 22 21 20 19 18 17 16 
+Reserved 
+r 
+15 14 13 12 11 10 9 8 7 6 5 4 3 2 1 0 
+Reserved CKD ARPE CMS DIR OPM URS UDIS CEN 
+r rw rw rw rw rw rw rw rw 
+ 
+Bit Field Description Reset RW Remark 
+31:10 Reserved   r  
+9:8 CKD 
+时钟分频此位字段指示定时器时钟 (CK_INT) 频率与
+死区时间发生器和数字滤波器（ETR、TIx）使用的死
+区时间和采样时钟 (tDTS) 之间的分频比 
+00：tDTS=tCK_INT 
+01：tDTS=2*tCK_INT 
+10：tDTS=4*tCK_INT 
+11：保留，不编程该值 
+0x0 rw  
+7 ARPE 
+自动重新加载预加载启用 
+0：TIMx_ARR 寄存器未缓冲 
+1：TIMx_ARR 寄存器被缓冲 
+0x0 rw  
+
+===== PAGE 148 =====
+ 
+上海朔集半导体科技有限公司 第 148 页 / 共 343 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+SLM32M030 用户手册 
+16 定时器（TIMX） 
+Bit Field Description Reset RW Remark 
+6:5 CMS 
+居中模式选择 
+00：边缘对齐模式。 计数器根据方向位 (DIR) 向上
+或向下计数。 
+01：居中模式 1。计数器交替计数。 输出中配置的通
+道的输出比较中断标志（TIMx_CCMRx 寄存器中的 
+CCxS=00）仅在计数器向下计数时设置。 
+10：居中模式 2。计数器上下交替计数。 输出中配置
+的通道的输出比较中断标志（TIMx_CCMRx 寄存器
+中的 CCxS=00）仅在计数器向上计数时设置。 
+11：居中模式 3。计数器上下交替计数。 输出中配置
+的通道的输出比较中断标志（TIMx_CCMRx 寄存器
+中的 CCxS=00）在计数器递增或递减计数时均设
+置。 
+0x0 rw  
+4 DIR 
+方向 
+0：计数器用作向上计数器 
+1：计数器用作向下计数器 
+注意：仅当定时器配置为中心对齐模式或编码器模式
+时，该位才被读取。 
+0x0 rw  
+3 OPM 
+一脉冲模式 
+0：计数器在更新事件时不停止 
+1：计数器在下一次更新事件时停止计数（清除位 
+CEN） 
+0x0 rw  
+2 URS 
+更新请求源 该位由软件置位和清零以选择 UEV 事件
+源。 
+0：以下任何事件都会产生更新中断或 DMA 请求。 
+这些事件可以是： 计数器上溢/下溢 设置 UG 位 通
+过从模式控制器生成更新 
+1：只有计数器上溢/下溢才会产生更新中断或 DMA 
+请求。 
+0x0 rw  
+1 UDIS 
+更新禁用 该位由软件置位和清零以启用/禁用 UEV 
+事件生成。 
+0：UEV 使能。 更新 (UEV) 事件由以下事件之一生
+成： 计数器上溢/下溢 设置 UG 位 通过从模式控制
+器生成更新 然后缓冲寄存器加载其预加载值。 
+1：UEV 禁用。 不生成更新事件，影子寄存器保持
+其值（ARR、PSC、CCRx）。 但是，如果设置了 
+UG 位或从从模式控制器接收到硬件复位，则计数器
+和预分频器会重新初始化。 
+0x0 rw  
+0 CEN 
+计数器使能 
+0：计数器禁用 
+1：计数器使能 
+注意：外部时钟、门控模式和编码器模式只有在 
+CEN 位之前由软件设置后才能工作。 但是触发模式
+可以通过硬件自动设置 CEN 位。 
+0x0 rw  
+16.2.2 寄存器（TIMx_CR2） 
+偏移地址：0x04，复位值：0x0000 0000。 
+31 30 29 28 27 26 25 24 23 22 21 20 19 18 17 16 
+Reserved 
+r 
+15 14 13 12 11 10 9 8 7 6 5 4 3 2 1 0 
+Reserved OIS4 OIS3N OIS3 OIS2N OIS2 OIS1N OIS1 TI1S MIMS CCDS CCUS Reserved CCPC 
+r rw rw rw Rw rw rw rw rw rw rw rw r rw 
+ 
+
+===== PAGE 149 =====
+ 
+上海朔集半导体科技有限公司 第 149 页 / 共 343 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+SLM32M030 用户手册 
+16 定时器（TIMX） 
+Bit Field Description Reset 
+value 
+RW 
+attribute Remark 
+31:15 Reserved   r  
+14 OIS4 输出空闲状态 4（OC4 输出）参考 OIS1 位 0x0 rw  
+13 OIS3N 输出空闲状态 3（OC3N 输出）参考 OIS1N 位 0x0 rw  
+12 OIS3 输出空闲状态 3（OC3 输出）参考 OIS1 位 0x0 rw  
+11 OIS2N 输出空闲状态 2（OC2N 输出） 0x0 rw  
+10 OIS2 输出空闲状态 2（OC2 输出）参考 OIS1 位 0x0 rw  
+9 OIS1N 
+输出空闲状态 1（OC1N 输出） 
+0：当 MOE=0 时，死区时间后 OC1N=0 
+1：当 MOE=0 时，死区时间后 OC1N=1 
+注意：只要 LOCK 级别 1、2 或 3 已被编程
+（TIMx_BDTR 寄存器中的 LOCK 位），就不能修改该
+位。 
+0x0 rw  
+8 OIS1 
+输出空闲状态 1（OC1 输出） 
+0：当 MOE=0 时，OC1=0（如果实施 OC1N，则在死
+区时间之后） 
+1：当 MOE=0 时，OC1=1（如果实施 OC1N，则在死
+区时间之后） 
+注意：只要 LOCK 级别 1、2 或 3 已被编程
+（TIMx_BDTR 寄存器中的 LOCK 位），就不能修改该
+位。 
+0x0 rw  
+7 TI1S 
+TI1 选择 
+0：TIMx_CH1 引脚连接到 TI1 输入 
+1：TIMx_CH1、CH2 和 CH3 引脚连接到 TI1 输入
+（XOR 组合） 
+0x0 rw  
+6:4 MIMS 
+主模式选择 
+这些位允许选择要在主模式下发送到从定时器进行同步 
+(TRGO) 的信息。组合如下： 
+000：复位 - TIMx_EGR 寄存器中的 UG 位用作触发输
+出 (TRGO)。如果复位是由触发输入（从模式控制器配置
+为复位模式）产生的，那么 TRGO 上的信号与实际复位相
+比会延迟。 
+001：启用 - 计数器启用信号 CNT_EN 用作触发输出 
+(TRGO)。同时启动多个定时器或控制启用从属定时器的
+窗口很有用。当配置为门控模式时，计数器使能信号由 
+CEN 控制位和触发输入之间的逻辑或产生。当计数器使
+能信号由触发输入控制时，TRGO 上存在延迟，除非选择
+了主/从模式（参见 TIMx_SMCR 寄存器中的 MSM 位描
+述）。 
+010：更新 - 更新事件被选为触发输出 (TRGO)。例如，
+主定时器然后可以用作从属定时器的预分频器。 
+011：比较脉冲 - 一旦发生捕获或比较匹配（TRGO），
+当 CC1IF 标志被设置时（即使它已经是高电平），触发
+输出发送一个正脉冲。 
+100：比较 - OC1REF 信号用作触发输出（TRGO） 
+101：比较 - OC2REF 信号用作触发输出（TRGO） 
+110：比较 - OC3REF 信号用作触发输出（TRGO） 
+111：比较 - OC4REF 信号用作触发输出（TRGO） 
+注意：从定时器和 ADC 的时钟必须在从主定时器接收事
+件之前启用，并且在从主定时器接收触发时不得即时更
+改。 
+0x0 rw  
+3 CCDS 
+捕获/比较 DMA 选择 
+0：CCx 事件发生时发送 CCx DMA 请求 
+1：发生更新事件时发送 CCx DMA 请求 
+0x0 rw  
+
+===== PAGE 150 =====
+ 
+上海朔集半导体科技有限公司 第 150 页 / 共 343 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+SLM32M030 用户手册 
+16 定时器（TIMX） 
+Bit Field Description Reset 
+value 
+RW 
+attribute Remark 
+2 CCUS 
+捕获/比较控制更新选择 
+0：当捕捉/比较控制位被预加载（CCPC=1）时，它们仅
+通过设置 COMG 位来更新 
+1：当捕获/比较控制位被预加载时（CCPC=1），它们通
+过设置 COMG 位或当 TRGI 上出现上升沿来更新 
+0x0 rw  
+1 Reserved  0x0 rw  
+0 CCPC 
+捕获/比较预加载的控件 
+0：CCxE、CCxNE 和 OCxM 位未预加载 
+1：预加载 CCxE、CCxNE 和 OCxM 位，写入后，仅在
+发生换向事件（COM）时更新（COMG 位设置或在 
+TRGI 上检测到上升沿，取决于 CCUS 位） 
+注意：该位仅作用于具有互补输出的通道。 
+0x0 rw  
+16.2.3 寄存器（TIMx_SMCR） 
+偏移地址：0x08，复位值：0x0000。 
+31 30 29 28 27 26 25 24 23 22 21 20 19 18 17 16 
+Reserved 
+r 
+15 14 13 12 11 10 9 8 7 6 5 4 3 2 1 0 
+ETP ECE ETPS ETF MSM TS Reserved SMS 
+rw rw rw rw rw rw rw rw 
+ 
+Bit Field Description Reset RW Remark 
+31:16 Reserved  0x0 r  
+15 ETP 
+外部触发极性 
+该位选择是使用 ETR 还是 !ETR 进行触发操作 
+0：ETR 同相，高电平或上升沿有效。 
+1：ETR 反相，低电平或下降沿有效。 
+0x0 rw  
+14 ECE 
+外部时钟使能 
+该位使能外部时钟模式 2。 
+0：外部时钟模式 2 禁用 
+1：外部时钟模式 2 使能。 
+计数器由 ETRF 信号上的任何有效边沿计时。 
+0x0 rw  
+13:12 ETPS 
+外部触发预分频器 
+外部触发信号 ETRP 频率最多为 TIMxCLK 频率的 1/4。
+可以启用预分频器以降低 ETRP 频率。在输入快速外部时
+钟时很有用。 
+00：预分频器关闭 
+01：ETRP 频率除以 2 
+10：ETRP 频率除以 4 
+11：ETRP 频率除以 8 
+0x0 rw  
+
+===== PAGE 151 =====
+ 
+上海朔集半导体科技有限公司 第 151 页 / 共 343 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+SLM32M030 用户手册 
+16 定时器（TIMX） 
+Bit Field Description Reset RW Remark 
+11:8 ETF 
+外部触发滤波器 
+该位字段然后定义用于采样 ETRP 信号的频率和应用于 
+ETRP 的数字滤波器的长度。数字滤波器由事件计数器组
+成，其中需要 N 个连续事件来验证输出上的转换： 
+0000：无过滤器，采样在 fDTS 完成 
+0001：fSAMPLING=fCK_INT，N=2 
+0010：fSAMPLING=fCK_INT，N=4 
+0011：fSAMPLING=fCK_INT，N=8 
+0100：fSAMPLING=fDTS/2，N=6 
+0101：fSAMPLING=fDTS/2，N=8 
+0110：fSAMPLING=fDTS/4，N=6 
+0111：fSAMPLING=fDTS/4, N=8 
+1000：fSAMPLING=fDTS/8，N=6 
+1001：fSAMPLING=fDTS/8, N=8 
+1010：fSAMPLING=fDTS/16，N=5 
+1011：fSAMPLING=fDTS/16，N=6 
+1100：fSAMPLING=fDTS/16，N=8 
+1101：fSAMPLING=fDTS/32，N=5 
+1110：fSAMPLING=fDTS/32，N=6 
+1111：fSAMPLING=fDTS/32，N=8 
+0x0 rw  
+7 MSM 
+主/从模式 
+0：无动作 
+1：事件对触发输入 (TRGI) 的影响被延迟，以允许当前定
+时器与其从属定时器之间完美同步（通过 TRGO）。 如
+果我们想在单个外部事件上同步多个计时器，这很有用。 
+0x0 rw  
+6:4 TS 
+触发选择 
+该位域选择用于同步计数器的触发输入。 
+000：内部触发 0 (ITR0) 
+001：内部触发 1 (ITR1) 
+010：内部触发 2 (ITR2) 
+011：内部触发器 3 (ITR3) 
+100：TI1 边缘检测器 (TI1F_ED) 
+101：滤波定时器输入 1 (TI1FP1) 
+110：滤波定时器输入 2 (TI2FP2) 
+111：外部触发输入(ETRF)有关每个定时器的 ITRx 含义
+的更多详细信息，请参见表格。 
+注意：只有在不使用这些位时（例如当 SMS=000 时）才
+必须更改这些位，以避免在转换时出现错误的边沿检测。 
+0x0 rw  
+3 Reserved  0x0 rw  
+
+===== PAGE 152 =====
+ 
+上海朔集半导体科技有限公司 第 152 页 / 共 343 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+SLM32M030 用户手册 
+16 定时器（TIMX） 
+Bit Field Description Reset RW Remark 
+2:0 SMS 
+从机模式选择 
+选择外部信号时，触发信号（TRGI）的有效边与外部输入
+上选择的极性相连接（参见输入控制寄存器和控制寄存器
+说明）。 
+000：从模式禁用 - 如果 CEN = ‘1’，则预分频器直接由内
+部时钟提供时钟。 
+001：编码器模式 1 - 计数器根据 TI1FP2 电平在 
+TI2FP1 边沿向上/向下计数。 
+010：编码器模式 2 - 计数器在 TI1FP2 边沿向上/向下计
+数，具体取决于 TI2FP1 电平。 
+011：编码器模式 3 - 计数器在 TI1FP1 和 TI2FP2 边沿
+上递增/递减计数，具体取决于另一个输入的电平。 
+100：复位模式 - 上升沿 
+选定的触发输入 (TRGI) 重新初始化计数器并生成寄存器
+更新。 
+101：门控模式 - 当触发输入 (TRGI) 为高电平时启用计
+数器时钟。一旦触发器变低，计数器就会停止（但不会重
+置）。计数器的启动和停止都受到控制。 
+110：触发模式 - 计数器在触发 TRGI 的上升沿开始（但
+不会复位）。仅控制计数器的启动。 
+111：外部时钟模式 1 - 所选触发器 (TRGI) 的上升沿为
+计数器提供时钟。 
+注意：如果选择 TI1F_ED 作为触发输入 (TS=’100’)，则
+不得使用门控模式。实际上，TI1F_ED 为 TI1F 上的每次
+转换输出 1 个脉冲，而门控模式检查触发信号的电平。从
+定时器的时钟必须在从主定时器接收事件之前启用，并且
+在从主定时器接收触发时不得即时更改。 
+0x0 rw  
+16.2.4 寄存器（TIMx_DIER） 
+偏移地址：0x0C，复位值：0x0000 0000。 
+31 30 29 28 27 26 25 24 23 22 21 20 19 18 17 16 
+Reserved 
+r 
+15 14 13 12 11 10 9 8 7 6 5 4 3 2 1 0 
+Reserved TDE COMDE CC4DE CC3DE CC2DE CC1DE UDE BIE TIE COMIE CC4IE CC3IE CC2IE CC1IE UIE 
+rw rw rw rw rw rw rw rw rw rw rw rw rw rw rw rw 
+ 
+Bit Field Description Reset RW Remark 
+31:15 Reserved 必须保持在复位值。  r  
+14 TDE 
+触发 DMA 请求使能 
+0：触发 DMA 请求禁用 
+1：触发 DMA 请求使能 
+0x0 rw  
+13 COMDE 
+COM DMA 请求使能 
+0：COM DMA 请求禁用 
+1：COM DMA 请求使能 
+0x0 rw  
+12 CC4DE 
+捕获/比较 4 DMA 请求使能 
+0：CC4 DMA 请求禁用 
+1：CC4 DMA 请求使能 
+0x0 rw  
+11 CC3DE 
+捕获/比较 3 DMA 请求使能 
+0：CC3 DMA 请求禁用 
+1：CC3 DMA 请求使能 
+0x0 rw  
+10 CC2DE 
+捕获/比较 2 DMA 请求使能 
+0：CC2 DMA 请求禁用 
+1：CC2 DMA 请求使能 
+0x0 rw  
+
+===== PAGE 153 =====
+ 
+上海朔集半导体科技有限公司 第 153 页 / 共 343 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+SLM32M030 用户手册 
+16 定时器（TIMX） 
+Bit Field Description Reset RW Remark 
+9 CC1DE 
+捕获/比较 1 DMA 请求使能 
+0：CC2 DMA 请求禁用 
+1：CC2 DMA 请求使能 
+0x0 rw  
+8 UDE 
+更新 DMA 请求使能 
+0：更新 DMA 请求禁用 
+1：更新 DMA 请求使能 
+0x0 rw  
+7 BIE 
+中断中断使能 
+0：中断中断禁用 
+1：中断中断使能 
+0x0 rw  
+6 TIE 
+触发中断使能 
+0：触发中断禁用 
+1：触发中断使能 
+0x0 rw  
+5 COMIE 
+COM 中断使能 
+0：COM 中断禁止 
+1：COM 中断使能 
+0x0 rw  
+4 CC4IE 
+捕捉/比较 4 中断使能 
+0：CC4 中断禁用 
+1：CC4 中断使能 
+0x0 rw  
+3 CC3IE 
+捕捉/比较 3 中断使能 
+0：CC3 中断禁用 
+1：CC3 中断使能 
+0x0 rw  
+2 CC2IE 
+捕捉/比较 2 中断使能 
+0：CC2 中断禁用 
+1：CC2 中断使能 
+0x0 rw  
+1 CC1IE 
+捕捉/比较 1 中断使能 
+0：CC1 中断禁用 
+1：CC1 中断使能 
+0x0 rw  
+0 UIE 
+更新中断使能 
+0：更新中断禁止 
+1：更新中断使能 
+0x0 rw  
+16.2.5 寄存器（TIMx_SR） 
+偏移地址：0x10，复位值：0x0000 0000。 
+31 30 29 28 27 26 25 24 23 22 21 20 19 18 17 16 
+Reserved 
+r 
+15 14 13 12 11 10 9 8 7 6 5 4 3 2 1 0 
+Reserved CC4OF CC3OF CC3OF CC1OF Reserved BIF TIF COMIF CC4IF CC3IF CC2IF CC1IF UIF 
+r rw rw rw rw rw rw rw rw rw rw rw wr wr 
+ 
+Bit Field Description Reset RW Remark 
+31:13 Reserved   r  
+12 CC4OF 捕捉/比较 4 捕获标志 参考 CC1OF 描述 0x0 rw  
+11 CC3OF 捕捉/比较 3 捕获标志 参考 CC1OF 描述 0x0 rw  
+10 CC2OF 捕捉/比较 2 捕获标志 参考 CC1OF 描述 0x0 rw  
+9 CC1OF 
+捕捉/比较 1 捕获标志 
+仅当相应通道配置为输入捕获模式时，该标志才由硬
+件设置。 它由软件通过将其写入“0”来清除。 
+0：未检测到过捕获。 
+1：计数器值已被捕获到 TIMx_CCR1 寄存器中，而 
+CC1IF 标志已设置 
+0x0 rw  
+8 Reserved  0x0 rw  
+
+===== PAGE 154 =====
+ 
+上海朔集半导体科技有限公司 第 154 页 / 共 343 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+SLM32M030 用户手册 
+16 定时器（TIMX） 
+Bit Field Description Reset RW Remark 
+7 BIF 
+中断中断标志 
+一旦中断输入变为活动状态，该标志就由硬件设置。 
+如果中断输入未激活，它可以由软件清除。 
+0：未发生中断事件。 
+1：在断点输入上检测到活动电平。 
+0x0  
+rw  
+6 TIF 
+触发中断标志 
+该标志由硬件在触发事件时设置（当从模式控制器在
+除门控模式之外的所有模式下启用时，在 TRGI 输入
+上检测到活动边沿，在选择门控模式时两个边沿）。 
+它被软件清除。 
+0：未发生触发事件。 
+1：触发中断挂起。 
+0x0 rw  
+5 COMIF 
+COM 中断标志 
+该标志由硬件在 COM 事件上设置（当捕获/比较控制
+位 - CCxE、CCxNE、OCxM - 已更新）。 由软件清
+零。 
+0：未发生 COM 事件。 
+1：COM 中断挂起。 
+0x0 rw  
+4 CC4IF 捕捉/比较 4 中断标志 参考 CC1IF 说明 0x0 rw  
+3 CC3IF 捕捉/比较 3 中断标志 参考 CC1IF 说明 0x0 rw  
+2 CC2IF 捕捉/比较 2 中断标志 参考 CC1IF 说明 0x0 rw  
+1 CC1IF 
+捕捉/比较 4 中断标志 
+如果通道 CC1 配置为输出：当计数器与比较值匹配
+时，该标志由硬件置位，但在中心对齐模式下除外
+（请参阅 TIMx_CR1 寄存器描述中的 CMS 位）。 
+由软件清零。 
+0：不匹配。 
+1：计数器 TIMx_CNT 的内容与 TIMx_CCR1 寄存
+器的内容匹配。 当 TIMx_CCR1 的内容大于 
+TIMx_ARR 的内容时，CC1IF 位在计数器溢出（在
+向上计数和向上/向下计数模式下）或下溢（在向下计
+数模式下）时变为高电平 
+ 
+如果通道 CC1 配置为输入：该位由硬件在捕获时设
+置。 它由软件或通过读取 TIMx_CCR1 寄存器清
+零。 
+0：未发生输入捕捉 
+1：计数器值已在 TIMx_CCR1 寄存器中捕获（在 
+IC1 上检测到与所选极性匹配的边沿） 
+0x0 rw  
+0 UIF 
+更新中断标志 
+该位由硬件在更新事件时设置。 由软件清零。 
+0：未发生更新。 
+1：更新中断挂起。 
+当寄存器更新时，该位由硬件设置： 
+关于重复计数器值的上溢或下溢（如果重复计数器值
+更新 
+= 0) 并且如果 TIMx_CR1 寄存器中的 UDIS=0。 
+当 CNT 由软件使用 TIMx_EGR 寄存器中的 UG 位
+重新初始化时，如果 TIMx_CR1 寄存器中的 URS=0 
+和 UDIS=0。 
+当 CNT 被触发事件重新初始化时，如果 TIMx_CR1 
+寄存器中的 URS=0 和 UDIS=0。 
+0x0 rw  
+16.2.6 寄存器（TIMx_EGR） 
+偏移地址：0x14，复位值：0x0000 0000。 
+
+===== PAGE 155 =====
+ 
+上海朔集半导体科技有限公司 第 155 页 / 共 343 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+SLM32M030 用户手册 
+16 定时器（TIMX） 
+31 30 29 28 27 26 25 24 23 22 21 20 19 18 17 16 
+Reserved 
+r 
+15 14 13 12 11 10 9 8 7 6 5 4 3 2 1 0 
+Reserved BG TG COMG CC4G CC3G CC2G CC1G UG 
+r rw rw rw rw rw rw rw rw 
+ 
+Bit Field Description Reset RW Remark 
+31:8 Reserved   r  
+7 BG 
+断代 
+该位由软件置位以产生事件，由硬件自动清零。 
+0：无动作 
+1：产生中断事件。 MOE 位清零并设置 BIF 标志。 
+如果使能，可能会发生相关的中断或 DMA 传输。 
+0x0 rw  
+6 TG 
+触发生成 
+该位由软件置位以产生事件，由硬件自动清零。 
+0：无动作 
+1：在 TIMx_SR 寄存器中设置 TIF 标志。 如果使
+能，可能会发生相关的中断或 DMA 传输。 
+0x0 rw  
+5 COMG 
+捕获/比较控件更新生成 
+该位可由软件设置，由硬件自动清零 
+0：无动作 
+1：当 CCPC 位置 1 时，它允许更新 CCxE、
+CCxNE 和 OCxM 位 
+注：该位仅作用于具有互补输出的通道。 
+0x0 rw  
+4 CC4G 捕获/比较 4 代 
+参考 CC1G 说明 0x0 rw  
+3 CC3G 捕获/比较 3 代 
+参考 CC1G 说明 0x0 rw  
+2 CC2G 捕获/比较 2 代 
+参考 CC1G 说明 0x0 rw  
+1 CC1G 
+捕获/比较 1 代 
+该位由软件置位以产生事件，由硬件自动清零。 
+0：无动作 
+1：在通道 1 上产生捕获/比较事件：如果通道 CC1 
+配置为输出：设置 CC1IF 标志，如果使能，则发送相
+应的中断或 DMA 请求。 
+如果通道 CC1 配置为输入：计数器的当前值在 
+TIMx_CCR1 寄存器中捕获。 CC1IF 标志置位，如果
+使能，则发送相应的中断或 DMA 请求。 如果 CC1IF 
+标志已经为高，则设置 CC1OF 标志。 
+0x0 rw  
+0 UG 
+更新生成 
+该位可由软件设置，由硬件自动清零。 
+0：无动作 
+1：重新初始化计数器并生成寄存器更新。 请注意，预
+分频计数器也被清除（无论如何预分频比不受影响）。 
+如果选择了中心对齐模式或 DIR=0（向上计数），则计
+数器被清零，否则，如果 DIR=1（向下计数），它将采
+用自动重载值 (TIMx_ARR)。 
+0x0 rw  
+16.2.7 寄存器（TIMx_CCMR1） 
+偏移地址：0x18，复位值：0x0000 0000。 
+
+===== PAGE 156 =====
+ 
+上海朔集半导体科技有限公司 第 156 页 / 共 343 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+SLM32M030 用户手册 
+16 定时器（TIMX） 
+31 30 29 28 27 26 25 24 23 22 21 20 19 18 17 16 
+Reserved 
+r 
+15 14 13 12 11 10 9 8 7 6 5 4 3 2 1 0 
+CC2CE OC2M OC2PE OC2FE CC2S OC1CE OC1M OC1PE OC1FE CC1S 
+rw rw rw rw rw rw rw rw rw rw 
+ 
+Bit Field Description Reset RW Remark 
+31:16 Reserved  0x0 r  
+15 OC2CE 输出比较 2 清除使能 0x0 rw  
+14:12 OC2M 输出比较 2 模式 0x0 rw  
+11 OC2PE 输出比较 2 预加载使能 0x0 rw  
+10 OC2FE 输出比较 2 快速启用 0x0 rw  
+9:8 CC2S 
+该位域定义了通道（输入/输出）的方向以及使用的输
+入。 
+00：CC2 通道配置为输出 
+01：CC2 通道配置为输入，IC2 映射到 TI2 
+10：CC2 通道配置为输入，IC2 映射到 TI1 
+11：CC2 通道配置为输入，IC2 映射到 TRC。 仅当
+通过 TS 位（TIMx_SMCR 寄存器）选择内部触发输入
+时，此模式才有效 
+注：CC2S 位仅在通道关闭（TIMx_CCER 中的 CC2E 
+=‘0’）时可写。 
+0x0 rw  
+7 OC1CE 
+OC1CE：输出比较 1 清除使能 
+0：OC1Ref 不受 ETRF 输入的影响 
+1：一旦在 ETRF 输入上检测到高电平，OC1Ref 就被
+清除 
+0x0 rw  
+
+===== PAGE 157 =====
+ 
+上海朔集半导体科技有限公司 第 157 页 / 共 343 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+SLM32M030 用户手册 
+16 定时器（TIMX） 
+Bit Field Description Reset RW Remark 
+6:4 OC1M 
+这些位定义了输出参考信号 OC1REF 的行为，OC1 和 
+OC1N 来自该信号。 
+OC1REF 为高电平有效，而 OC1 和 OC1N 有效电平
+取决于 CC1P 和 CC1NP 位。 
+000：冻结 - 输出比较寄存器 TIMx_CCR1 和计数器 
+TIMx_CNT 之间的比较对输出没有影响。（此模式用于
+生成时序基准）。 
+001：匹配时将通道 1 设置为活动电平。当计数器 
+TIMx_CNT 匹配捕获/比较寄存器 1 (TIMx_CCR1) 时，
+OC1REF 信号被强制为高电平。 
+010：在匹配时将通道 1 设置为非活动电平。当计数器 
+TIMx_CNT 与捕获/比较寄存器 1 (TIMx_CCR1) 匹配
+时，OC1REF 信号被强制为低电平。 
+011：切换 - 当 TIMx_CNT=TIMx_CCR1 时，
+OC1REF 切换。 
+100：强制无效电平 - OC1REF 被强制为低电平。 
+101：强制激活电平 - OC1REF 被强制为高电平。 
+110：PWM 模式 1 - 在递增计数中，只要 
+TIMx_CNT<TIMx_CCR1 否则通道 1 处于活动状态。
+在递减计数中，只要 TIMx_CNT>TIMx_CCR1 处于活
+动状态（OC1REF=‘1’），通道 1 就处于非活动状态
+（OC1REF=‘0’）。 
+111：PWM 模式 2 - 在递增计数中，只要 
+TIMx_CNT<TIMx_CCR1else 有效，通道 1 就无效。
+在递减计数中，只要 TIMx_CNT>TIMx_CCR1 否则通
+道 1 处于活动状态。 
+注： 1：只要 LOCK 级别 3 已编程（TIMx_BDTR 寄
+存器中的 LOCK 位）且 CC1S='00'（通道配置为输
+出），就不能修改这些位。 
+2：在 PWM 模式 1 或 2 下，OCREF 电平仅在比较结
+果发生变化或输出比较模式从“冻结”模式切换到“PWM”
+模式时发生变化。 
+0x0 rw  
+3 OC1PE 
+输出比较 1 预加载使能 
+0：禁用 TIMx_CCR1 上的预加载寄存器。 
+TIMx_CCR1 可以随时写入，新值会立即被考虑在内。 
+1：使能 TIMx_CCR1 上的预加载寄存器。 读/写操作
+访问预加载寄存器。 TIMx_CCR1 预加载值在每次更新
+事件时加载到活动寄存器中。 
+注：1：只要 LOCK 级别 3 已编程（TIMx_BDTR 寄存
+器中的 LOCK 位）且 CC1S='00'（通道配置为输出），
+就不能修改这些位。 
+2： PWM 模式可以在不验证预加载寄存器的情况下仅
+在一个脉冲模式下使用（在 TIMx_CR1 寄存器中设置 
+OPM 位）。 否则无法保证行为 
+0x0 rw  
+2 OC1FE 
+该位用于加速事件对 CC 输出输入触发的影响。 
+0：CC1 的正常行为取决于计数器和 CCR1 值，即使
+在触发器为 ON 时也是如此。 当触发输入上出现边沿
+时激活 CC1 输出的最小延迟为 5 个时钟周期。 
+1：触发输入上的有效边沿相当于 CC1 输出上的比较匹
+配。 然后，OC 被设置为独立于比较结果的比较电平。 
+采样触发输入和激活 CC1 输出的延迟减少到 3 个时钟
+周期。仅当通道配置为 PWM1 或 PWM2 模式时，
+OCFE 才起作用。 
+0x0 rw  
+
+===== PAGE 158 =====
+ 
+上海朔集半导体科技有限公司 第 158 页 / 共 343 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+SLM32M030 用户手册 
+16 定时器（TIMX） 
+Bit Field Description Reset RW Remark 
+1:0 CC1S 
+捕获/比较 1 个选择 
+该位域定义了通道（输入/输出）的方向以及使用的输
+入。 
+00：CC1 通道配置为输出 
+01：CC1 通道配置为输入，IC1 映射到 TI1 
+10：CC1 通道配置为输入，IC1 映射到 TI2 
+11：CC1 通道配置为输入，IC1 映射到 TRC。 仅当
+通过 TS 位（TIMx_SMCR 寄存器）选择内部触发输入
+时，此模式才有效 
+注：CC1S 位仅在通道关闭（TIMx_CCER 中的 CC1E 
+= ‘0’）时可写。 
+0x0 rw  
+16.2.8 寄存器（TIMx_CCMR2） 
+偏移地址：0x1C，复位值：0x0000 0000。 
+31 30 29 28 27 26 25 24 23 22 21 20 19 18 17 16 
+Reserved 
+r 
+15 14 13 12 11 10 9 8 7 6 5 4 3 2 1 0 
+IC4F IC4PSC CC4S IC3F IC3PSC CC3S 
+rw rw rw rw rw rw 
+ 
+Bit Field Description Reset 
+value 
+RW 
+attribute Remark 
+31:12 IC4F 输入捕获 4 过滤器 0x0 rw  
+11:10 IC4PSC 输入捕捉 4 预分频器 0x0 rw  
+9:8 CC4S 
+CC4S：捕获/比较 4 选择 此位字段定义通道（输入/
+输出）的方向以及使用的输入。 
+00：CC4 通道配置为输出 
+01：CC4 通道配置为输入，IC4 映射到 TI4 
+10：CC4 通道配置为输入，IC4 映射到 TI3 
+11：CC4 通道配置为输入，IC4 映射到 TRC。 仅当
+通过 TS 位（TIMx_SMCR 寄存器）选择内部触发输
+入时，此模式才有效 
+注：CC4S 位仅在通道关闭（TIMx_CCER 中的 
+CC4E = ‘0’）时可写。 
+0x0 rw  
+7:4 IC3F 输入捕获 3 过滤器 0x0 rw  
+3:2 IC3PSC 输入捕捉 3 预分频器 0x0 rw  
+1:0 CC3S 
+捕获/比较 3 个选择 
+该位域定义了通道（输入/输出）的方向以及使用的输
+入。 
+00：CC3 通道配置为输出 
+01：CC3 通道配置为输入，IC3 映射到 TI3 
+10：CC3 通道配置为输入，IC3 映射到 TI4 
+11：CC3 通道配置为输入，IC3 映射到 TRC。 仅当
+通过 TS 位（TIMx_SMCR 寄存器）选择内部触发输
+入时，此模式才有效 
+注：CC3S 位仅在通道关闭（TIMx_CCER 中的 
+CC3E = ‘0’）时可写。 
+0x0 rw  
+16.2.9 寄存器（TIMx_CCER） 
+偏移地址：0x20，复位值：0x0000 0000。 
+
+===== PAGE 159 =====
+ 
+上海朔集半导体科技有限公司 第 159 页 / 共 343 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+SLM32M030 用户手册 
+16 定时器（TIMX） 
+31 30 29 28 27 26 25 24 23 22 21 20 19 18 17 16 
+Reserved 
+r 
+15 14 13 12 11 10 9 8 7 6 5 4 3 2 1 0 
+Reserved CC4P CC4E CC3NP CC3NE CC3P CC3E CC2NP CC2NE CC2P CC2E CC1NP CC1NE CC1P CC1E 
+r rw rwr rw rw rw rw rw rw rw rw rw rw rw rw 
+ 
+Bit Field Description Reset RW Remark 
+31:14 Reserved 必须保持在复位值。  r  
+13 CC4P 捕获/比较 4 输出极性 
+参考 CC1P 说明 0x0 rw  
+12 CC4E 捕获/比较 4 输出使能 
+参考 CC1E 说明 0x0 rw  
+11 CC3NP 捕获/比较 3 互补输出极性 
+参考 CC1NP 说明 0x0 rw  
+10 CC3NE 捕获/比较 3 互补输出使能 
+参考 CC1NE 说明 0x0 rw  
+9 CC3P 捕获/比较 3 输出极性 
+参考 CC1P 说明 0x0 rw  
+8 CC3E 捕获/比较 3 输出使能 
+参考 CC1E 说明 0x0 rw  
+7 CC2NP 捕获/比较 2 互补输出极性 
+参考 CC1NP 说明 0x0 rw  
+6 CC2NE 捕获/比较 2 互补输出使能 
+参考 CC1NE 说明 0x0 rw  
+5 CC2P 捕获/比较 2 输出极性 
+参考 CC1P 说明 0x0 rw  
+4 CC2E 捕获/比较 2 输出使能 
+参考 CC1E 说明 0x0 rw  
+3 CC1NP 
+捕获/比较 1 互补输出极性 
+0：OC1N 高电平有效。 
+1：OC1N 低电平有效。 
+注意：一旦 LOCK 级别 2 或 3 已被编程
+（TIMx_BDTR 寄存器中的 LOCK 位）且 CC1S=”00”
+（通道配置为输出），则该位不可写。 
+0x0 rw  
+2 CC1NE 
+捕获/比较 1 个互补输出使能 
+0：关闭 - OC1N 未激活。 OC1N 电平是 MOE、
+OSSI、OSSR、OIS1、OIS1N 和 CC1E 位的函数。 
+1: On - OC1N 信号根据 MOE、OSSI、OSSR、
+OIS1、OIS1N 和 CC1E 位在相应的输出引脚上输
+出。 
+0x0 rw  
+1 CC1P 
+捕获/比较 1 输出极性 CC1 通道配置为输出： 
+0：OC1 高电平有效 
+1：OC1 低电平有效 
+CC1 通道配置为输入：根据 IC1 上升沿或者 IC1 下降
+沿采集。 
+0：非反相：捕捉在 IC1 的上升沿完成。 当用作外部
+触发器时，IC1 是非反相的。 
+1：反转：捕捉在 IC1 的下降沿完成。 当用作外部触
+发器时，IC1 反相。 
+注意：一旦 LOCK 级别 2 或 3 被编程（TIMx_BDTR 
+中的 LOCK 位 
+0x0 rw  
+
+===== PAGE 160 =====
+ 
+上海朔集半导体科技有限公司 第 160 页 / 共 343 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+SLM32M030 用户手册 
+16 定时器（TIMX） 
+Bit Field Description Reset RW Remark 
+0 CC1E 
+捕获/比较 1 输出使能 CC1 通道配置为输出： 
+0：关闭 - OC1 未激活。 OC1 电平是 MOE、
+OSSI、OSSR、OIS1、OIS1N 和 CC1NE 位的函数。 
+1：开 - OC1 信号根据 MOE、OSSI、OSSR、
+OIS1、OIS1N 和 CC1NE 位在相应的输出引脚上输
+出。 
+0x0 rw  
+16.2.10 寄存器（TIMx_CNT） 
+偏移地址：0x24，复位值：0x0000 0000。 
+31 30 29 28 27 26 25 24 23 22 21 20 19 18 17 16 
+CNT 
+rw 
+15 14 13 12 11 10 9 8 7 6 5 4 3 2 1 0 
+CNT 
+rw 
+ 
+Bit Field Description Reset value  RW attribute  Remark 
+31:0 CNT 计数器值 0x0 rw  
+16.2.11 寄存器（TIMx_PSC） 
+偏移地址：0x28，复位值：0x0000 0000。 
+31 30 29 28 27 26 25 24 23 22 21 20 19 18 17 16 
+Reserved 
+r 
+15 14 13 12 11 10 9 8 7 6 5 4 3 2 1 0 
+PSC 
+rw 
+ 
+Bit Field Description Reset RW Remark 
+31:16 Reserved  0x0 r  
+15:0 PSC 预分频值 0x0 rw  
+16.2.12 寄存器（TIMx_ARR） 
+偏移地址：0x2C，复位值：0xFFFF 0000。 
+3 1  30 29 28 27 26 25 24 23 22 21 20 19 18 17 16 
+ARR 
+rw 
+15 14 13 12 11 10 9 8 7 6 5 4 3 2 1 0 
+ARR 
+rw 
+ 
+Bit Field Description Reset RW Remark 
+31:0 ARR 自动重载值 
+ARR 是要加载到实际自动重载寄存器中的值。 0x0 rw  
+16.2.13 寄存器（TIMx_RCR） 
+偏移地址：0x30，复位值：0x0000 0000。 
+
+===== PAGE 161 =====
+ 
+上海朔集半导体科技有限公司 第 161 页 / 共 343 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+SLM32M030 用户手册 
+16 定时器（TIMX） 
+31 30 29 28 27 26 25 24 23 22 21 20 19 18 17 16 
+Reserved 
+r 
+15 14 13 12 11 10 9 8 7 6 5 4 3 2 1 0 
+Reserved REP 
+r rw 
+ 
+Bit Field Description Reset RW Remark 
+31:8 Reserved  0x0 rw  
+7:0 REP 
+重复计数器值。 这些位允许用户在预加载寄存器启用
+时设置比较寄存器的更新速率（即从预加载到活动寄存
+器的定期传输），以及更新中断生成速率（如果该中断
+启用）。 每次与 REP_CNT 相关的递减计数器达到零
+时，都会生成一个更新事件，并从 REP 值重新开始计
+数。 由于 REP_CNT 仅在重复更新事件 U_RC 时重
+新加载 REP 值，因此在下一次重复更新事件之前不会
+考虑对 TIMx_RCR 寄存器的任何写入。 这意味着在 
+PWM 模式下 (REP+1) 对应于： 
+-边沿对齐模式下的 PWM 周期数 
+-中心对齐模式下半个 PWM 周期数 
+0x0 rw  
+16.2.14 寄存器（TIMx_CCR1） 
+偏移地址：0x34，复位值：0x0000 0000。 
+31 30 29 28 27 26 25 24 23 22 21 20 19 18 17 16 
+CCR1 
+rw 
+15 14 13 12 11 10 9 8 7 6 5 4 3 2 1 0 
+CCR1 
+rw 
+ 
+Bit Field Description Reset RW Remark 
+31:0 CCR1 
+捕获/比较 1 值 
+如果通道 CC1 配置为输出： 
+CCR1 是要加载到实际捕获/比较 1 寄存器中的值（预加载
+值）。 如果未在 TIMx_CCMR1 寄存器（位 OC1PE）中
+选择预加载功能，则会永久加载它。 否则，当更新事件发
+生时，预加载值被复制到活动捕获/比较 1 寄存器中。 主动
+捕获/比较寄存器包含要与计数器 TIMx_CNT 进行比较并在 
+OC1 输出上发出信号的值。 
+如果通道 CC1 配置为输入： 
+CCR1 是由最后一个输入捕获 1 事件 (IC1) 传输的计数器
+值。 TIMx_CCR1 寄存器是只读的，不能编程。 
+0x0 rw  
+16.2.15 寄存器（TIMx_CCR2） 
+偏移地址：0x38，复位值：0x0000 0000。 
+31 30 29 28 27 26 25 24 23 22 21 20 19 18 17 16 
+CCR2 
+rw 
+15 14 13 12 11 10 9 8 7 6 5 4 3 2 1 0 
+CCR2 
+rw 
+ 
+
+===== PAGE 162 =====
+ 
+上海朔集半导体科技有限公司 第 162 页 / 共 343 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+SLM32M030 用户手册 
+16 定时器（TIMX） 
+Bit Field Description Reset RW Remark 
+31:0 CCR2 
+捕获/比较 2 值 
+如果通道 CC2 配置为输出： 
+CCR2 是要加载到实际捕获/比较 2 寄存器中的值（预加载
+值）。如果未在 TIMx_CCMR2 寄存器（位 OC2PE）中选
+择预加载功能，则它会被永久加载。 否则，当更新事件发
+生时，预加载值被复制到主动捕获/比较 2 寄存器中。主动
+捕获/比较寄存器包含要与计数器 TIMx_CNT 进行比较并在 
+OC2 输出上发出信号的值。 
+如果通道 CC2 配置为输入： 
+CCR2 是由最后一个输入捕获 2 事件 (IC2) 传输的计数器
+值。 TIMx_CCR2 寄存器是只读的，不能编程 
+0x0 rw  
+16.2.16 寄存器（TIMx_CCR3） 
+偏移地址：0x3C，复位值：0x0000 0000。 
+31 30 29 28 27 26 25 24 23 22 21 20 19 18 17 16 
+CCR3 
+rw 
+15 14 13 12 11 10 9 8 7 6 5 4 3 3 1 0 
+CCR3 
+rw 
+ 
+Bit Field Description Reset RW Remark 
+31:0 CCR3 
+捕获/比较 3 值 
+如果通道 CC3 配置为输出： 
+CCR3 是要加载到实际捕获/比较 3 寄存器中的值（预加载
+值）。如果未在 TIMx_CCMR3 寄存器（位 OC3PE）中选
+择预加载功能，则它会被永久加载。 否则，当更新事件发
+生时，预加载值被复制到主动捕获/比较 3 寄存器中。主动
+捕获/比较寄存器包含要与计数器 TIMx_CNT 进行比较并在 
+OC3 输出上发出信号的值。 
+如果通道 CC3 配置为输入： 
+CCR3 是由最后一个输入捕获 3 事件 (IC3) 传输的计数器
+值。 TIMx_CCR3 寄存器是只读的，不能编程 
+0x0 rw  
+16.2.17 寄存器（TIMx_CCR4） 
+偏移地址：0x40，复位值：0x0000 0000。 
+31 30 29 28 27 26 25 24 23 22 21 20 19 18 17 16 
+CCR4 
+rw 
+15 14 13 12 11 10 9 8 7 6 5 4 3 2 1 0 
+CCR4 
+rw 
+ 
+Bit Field Description Reset RW Remark 
+31:0 CCR4 
+捕获/比较 4 值 
+如果通道 CC4 配置为输出： 
+CCR4 是要加载到实际捕获/比较 4 寄存器中的值（预加载
+值）。如果未在 TIMx_CCMR4 寄存器（位 OC4PE）中选
+择预加载功能，则它会被永久加载。 否则，当更新事件发
+生时，预加载值被复制到主动捕获/比较 4 寄存器中。主动
+捕获/比较寄存器包含要与计数器 TIMx_CNT 进行比较并在 
+OC4 输出上发出信号的值。 
+如果通道 CC4 配置为输入： 
+CCR4 是由最后一个输入捕获 4 事件 (IC4) 传输的计数器
+值。 TIMx_CCR4 寄存器是只读的，不能编程 
+0x0 rw  
+
+===== PAGE 163 =====
+ 
+上海朔集半导体科技有限公司 第 163 页 / 共 343 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+SLM32M030 用户手册 
+16 定时器（TIMX） 
+16.2.18 寄存器（TIMx_BDTR4） 
+偏移地址：0x44，复位值：0x0000 0000。 
+31 30 29 28 27 26 25 24 23 22 21 20 19 18 17 16 
+Reserved 
+r 
+15 14 13 12 11 10 9 8 7 6 5 4 3 2 1 0 
+MOE AOE BKP BKE OSSR OSSI LOCK DTG 
+rw rw rw rw rw rw rw rw 
+ 
+Bit Field Description Reset RW Remark 
+31:15 Reserved  0x0 r  
+15 MOE 
+主输出使能。 
+一旦中断输入有效，该位就由硬件异步清零。 它由软件设置
+或根据 AOE 位自动设置。 它仅作用于在输出中配置的通
+道。 
+0：OC 和 OCN 输出禁用或强制为空闲状态。 
+1：如果 OC 和 OCN 输出各自的使能位被设置
+（TIMx_CCER 寄存器中的 CCxE、CCxNE），则使能 OC 
+和 OCN 输出。 
+0x0 rw  
+14 AOE 
+自动输出使能 
+0：MOE 只能通过软件设置 
+1：MOE 可由软件设置或在下一次更新事件时自动设置（如
+果中断输入未激活） 
+注意：只要 LOCK 级别 1 已被编程（TIMx_BDTR 寄存器
+中的 LOCK 位），就不能修改该位。 
+0x0 rw  
+13 BKP 
+断开极性 
+0：中断输入 BRK 为低电平有效 
+1：中断输入 BRK 为高电平有效 
+注意：只要 LOCK 级别 1 已被编程（TIMx_BDTR 寄存器
+中的 LOCK 位），就不能修改该位。 
+注意：对该位的任何写操作都需要 1 个 APB 时钟周期的延
+迟才能生效。 
+0x0 rw  
+12 BKE 
+中断使能 
+0：中断输入（BRK 和 CSS 时钟故障事件）禁用 
+1: 中断输入（BRK 和 CSS 时钟故障事件）已启用 
+注意：当 LOCK 级别 1 已编程（TIMx_BDTR 寄存器中的 
+LOCK 位）时，无法修改该位。 
+注意：对该位的任何写操作都需要 1 个 APB 时钟周期的延
+迟才能生效。 
+0x0 rw  
+11 OSSR 
+运行模式的关闭状态选择 
+当 MOE=1 在具有互补输出且配置为输出的通道上使用该
+位。 如果定时器中没有实现互补输出，则不会实现 OSSR。
+有关详细信息，请参阅 OC/OCN 使能描述（TIM1 捕获/比较
+使能寄存器 (TIMx_CCER)）。 
+0：无效时，OC/OCN 输出禁用（OC/OCN 使能输出信号
+=0）。 
+1：当处于非活动状态时，一旦 CCxE=1 或 CCxNE=1，
+OC/OCN 输出就会以其非活动电平启用。 然后，OC/OCN
+使能输出信号=1 
+注意：一旦 LOCK 级别 2 被编程（TIMx_BDTR 寄存器中
+的 LOCK 位），就不能修改该位。 
+0x0 rw  
+
+===== PAGE 164 =====
+ 
+上海朔集半导体科技有限公司 第 164 页 / 共 343 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+SLM32M030 用户手册 
+16 定时器（TIMX） 
+Bit Field Description Reset RW Remark 
+10 OSSI 
+空闲模式的关闭状态选择 
+该位在配置为输出的通道上 MOE=0 时使用。 
+有关更多详细信息，请参阅 OC/OCN 使能说明（TIM1 捕获/
+比较使能寄存器 (TIMx_CCER)）。 
+0：无效时，OC/OCN 输出禁用（OC/OCN 使能输出信号
+=0）。 
+1：当未激活时，一旦 CCxE=1 或 CCxNE=1，OC/OCN 输
+出首先被强制为其空闲电平。 OC/OCN 使能输出信号=1) 
+注意：一旦 LOCK 级别 2 被编程（TIMx_BDTR 寄存器中
+的 LOCK 位），就不能修改该位。 
+0x0 rw  
+9:8 LOCK 
+锁定配置。 这些位提供针对软件错误的写保护。 
+00：锁定关闭 - 没有位被写保护。 
+01：LOCK Level 1 = TIMx_BDTR 寄存器中的 DTG 位、
+TIMx_CR2 寄存器中的 OISx 和 OISxN 位以及 
+TIMx_BDTR 寄存器中的 BKE/BKP/AOE 位不能再写入。 
+10：LOCK Level 2 = LOCK Level 1 + CC 极性位
+（TIMx_CCER 寄存器中的 CCxP/CCxNP 位，只要相关通道
+通过 CCxS 位配置为输出）以及 OSSR 和 OSSI 位不能再
+写入。 
+11：锁定级别 3 = 锁定级别 2 + CC 控制位
+（TIMx_CCMRx 寄存器中的 OCxM 和 OCxPE 位，只要相
+关通道通过 CCxS 位配置为输出）不能再写入。 
+注意：LOCK 位只能在复位后写入一次。 一旦 TIMx_BDTR 
+寄存器被写入，它们的内容就会被冻结，直到下一次复位。 
+0x0 rw  
+7:0 DTG 
+DTG[7:0]：死区发生器设置 该位域定义了在互补输出之间插
+入的死区持续时间。 DT 对应于这个持续时间。 
+DTG[7:5]=0xx => DT=DTG[7:0]x tdtg，tdtg=tDTS。 
+DTG[7:5]=10x => DT=(64+DTG[5:0])xtdtg，Tdtg=2xtDTS。 
+DTG[7:5]=110 => DT=(32+DTG[4:0])xtdtg，其中 
+Tdtg=8xtDTS。 
+DTG[7:5]=111 => DT=(32+DTG[4:0])xtdtg，其中 
+Tdtg=16xtDTS。 
+例如，如果 TDTS=125ns (8MHz)，死区时间可能值为： 
+0 到 15875 ns，125 ns 步长，16 us 到 31750 ns，250 ns 
+步长，32 us 到 63us，1 us 步长，64 us 到 126 us，2 us 
+步长 
+注意：只要 LOCK 级别 1、2 或 3 已被编程
+（TIMx_BDTR 寄存器中的 LOCK 位），就不能修改该位字
+段。 
+0x0 rw  
+16.2.19 寄存器（TIMx_DCR） 
+偏移地址：0x48，复位值：0x0000 0000。 
+31 30 29 28 27 26 25 24 23 22 21 20 19 18 17 16 
+Reserved 
+r 
+15 14 13 12 11 10 9 8 7 6 5 4 3 2 1 0 
+Reserved DBL Reserved DBA 
+rw rw rw rw 
+ 
+Bit Field Description Reset RW Remark 
+31:13 Reserved  0x0 r  
+
+===== PAGE 165 =====
+ 
+上海朔集半导体科技有限公司 第 165 页 / 共 343 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+SLM32M030 用户手册 
+16 定时器（TIMX） 
+Bit Field Description Reset RW Remark 
+12:8 DBL 
+这个 5 位向量定义了 DMA 传输的次数（当对 
+TIMx_DMAR 寄存器地址执行读或写访问时，定时器
+检测到突发传输）。 
+注：DMA burst 只针对更新事件 
+TIMx_DMAR 地址 
+00000：1 次传输 
+00001：1 次传输 
+00010：2 次传输 
+... 
+10001：17 次传输 
+0x0 rw  
+7:5 Reserved  0x0 rw  
+4:0 DBA 
+DMA 基址 
+这个 5 位向量定义了 DMA 传输的基地址（当读/写
+访问通过 TIMx_DMAR 地址完成时）。 DBA 定义
+为从 TIMx_CR1 寄存器地址开始的偏移量。 
+例子： 
+00000：TIMx_CR1， 
+00001：TIMx_CR2， 
+00010：TIMx_SMCR， 
+... 
+示例：让我们考虑以下传输：DBL = 7 传输和 DBA 
+= TIMx_CR1。 在这种情况下，从 TIMx_CR1 地址
+开始的 7 个寄存器之间进行传输。 
+0x0 rw  
+16.2.20 寄存器（TIMx_DMAR） 
+偏移地址：0x4C，复位值：0x0000 0000。 
+31 30 29 28 27 26 25 24 23 22 21 20 19 18 17 16 
+DMAB[31:16] 
+rw 
+15 14 13 12 11 10 9 8 7 6 5 4 3 2 1 0 
+DMAB[15:0] 
+rw 
+ 
+Bit Field Description Reset RW Remark 
+31:0 DMAB 
+用于突发访问的 DMA 寄存器 
+对 DMAR 寄存器的读或写操作访问位于地址
+（TIMx_CR1 地址）+（DBA + DMA 索引）x 4 处的寄
+存器，其中 TIMx_CR1 地址是控制寄存器 1 的地址，
+DBA 是 TIMx_DCR 中配置的 DMA 基地址 寄存器，
+DMA 索引由 DMA 传输自动控制，范围从 0 到 DBL
+（在 TIMx_DCR 中配置的 DBL）。 
+0x0 rw  
+ 
+  
+
+===== PAGE 166 =====
+ 
+上海朔集半导体科技有限公司 第 166 页 / 共 343 页 提交文档反馈 
+www.soulsemi.com  最新版本文档链接 
+ 
+SLM32M030 用户手册 
+17 低功耗定时器（LPTIM） 
+17 
+17 
+17 低功耗定时器（LPTIM） 
+17.1 低功耗定时器(LPTIM) 
+LPTIM 是异步 16 位定时/计数器，在系统时钟关闭后仍然可以通过内部低速 RC 时钟或者外部
+低速晶体振荡时钟计时/计数，通过中断在低功耗模式下唤醒系统。 
+图17.1 LPTIMER 结构框图 
+ 
+ 
+17.1.1 LPTIM 描述 
+LPTIM 具有独立的控制启动信号、外部输入时钟和门控信号。 
+LPTIM 使用 EXT、GATE 来进行计数功能，EXT 用于计数器的外部输入时钟信号，GATE 为有
+效电平计数使能信号。 
+LPTIM 的定时器支持两种工作模式，通过设置定时器控制寄存器(LPTIM_CR)中 MODE 选择工作
+模式。 
+⚫ 模式 1 为 16 位自由计数模式，计数器从 LPTIM_LOAD 设定的值开始计数，溢出后
+计数值从 0x0000 开始重新计数。 
+⚫ 模式 2 为 16 位重载模式，LPTIM 启动时会自动装载重载寄存器 LPTIM_LOAD 的值
+到计数器中，当溢出后会自动装载 Period LOAD 的值到计数器中。用户写 
+LPTIM_LOAD 或者 LPTIM_BGLOAD 都会更新 Period LOAD 的值，Period LOAD 的
+值为用户最近一次跟新 LPTIM_LOAD 或 LPTIM_BGLOAD 的值。 
+LPTIM 可选三种时钟作为定时器时钟，通过控制寄存器 LPTIM_CR.TCK_SEL 来选择。默认选
+择 PCLK。时钟选择如表： 
+TCK_SEL 00 01 10 11 
+定时器时钟 PCLK PCLK LXT LIRC 
+读定时器计数值 读经过同步 无同步 读经过同步 读经过同步 
+ 
+当选择相应的时钟源，然后设定 TCK_EN 为 1 后可以打开计数器的计数时钟源。当时钟源选择
+并打开后，设置对应定时器的 TIM_RUN 为 1 后定时器开始运行。 
+LPTimer
+Register
+Low Power TimerEXT
+GATE
+Dbg_active
+LIRC
+LXT
+PCLK
+Reg interface
+TOG
+TOGN
+interrupt
