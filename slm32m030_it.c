@@ -76,16 +76,24 @@ void DMA1_Channel0_5_IRQHandler(void)
 
         uint32_t t0 = tim_load_isr_get();
 
-        g_state.idc_meas = idc_code_to_pu((int32_t)adc_get_code(ADC_SEQ1_I_DC), state_task_adc_off_idc());
         g_state.ib_meas  = iphase_code_to_pu((int32_t)adc_get_code(ADC_SEQ1_I_B), state_task_adc_off_ib());
         g_state.ic_meas  = iphase_code_to_pu((int32_t)adc_get_code(ADC_SEQ1_I_C), state_task_adc_off_ic());
         g_state.udc_meas = udc_code_to_pu((int32_t)adc_get_code(ADC_SEQ1_V_DC));
 
         /* gain compensation */
-        g_state.ib_meas  = (q15_t)(((int32_t)g_state.ib_meas * CURRENT_GAIN_Q8 >> 8));
-        g_state.ic_meas  = (q15_t)(((int32_t)g_state.ic_meas * CURRENT_GAIN_Q8 >> 8));
+        g_state.ib_meas = (q15_t)(((int32_t)g_state.ib_meas * CURRENT_GAIN_Q8 >> 8));
+        g_state.ic_meas = (q15_t)(((int32_t)g_state.ic_meas * CURRENT_GAIN_Q8 >> 8));
+        g_state.ia_meas = q15_sat(-g_state.ib_meas - g_state.ic_meas);
+
+#if (IDC_SOURCE == IDC_FROM_ADC)
+        g_state.idc_meas = idc_code_to_pu((int32_t)adc_get_code(ADC_SEQ1_I_DC), state_task_adc_off_idc());
         g_state.idc_meas = (q15_t)(((int32_t)g_state.idc_meas * CURRENT_GAIN_Q8 >> 8));
-        g_state.ia_meas  = q15_sat(-g_state.ib_meas - g_state.ic_meas);
+#else
+        int32_t idc_acc = ((int32_t)g_state.ia_meas * g_state.duties_q15.a >> Q15_SHIFT) +
+                          ((int32_t)g_state.ib_meas * g_state.duties_q15.b >> Q15_SHIFT) +
+                          ((int32_t)g_state.ic_meas * g_state.duties_q15.c >> Q15_SHIFT);
+        g_state.idc_meas = q15_sat(idc_acc);
+#endif
 
         /* state task: cali/charge timing + (when RUNNING) OC, poke, FOC -> ccr */
         uint16_t ccr[3];

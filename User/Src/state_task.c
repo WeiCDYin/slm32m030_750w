@@ -549,8 +549,7 @@ bool state_task_isr(uint16_t ccr[3])
         }
         return false;
     }
-
-    if (g_state.cali_active)
+    else if (g_state.cali_active)
     {
         g_state.cali_sum_ib += (int32_t)adc_get_code(ADC_SEQ1_I_B);
         g_state.cali_sum_ic += (int32_t)adc_get_code(ADC_SEQ1_I_C);

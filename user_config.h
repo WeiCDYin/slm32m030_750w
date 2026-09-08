@@ -57,8 +57,18 @@ extern "C"
 /* post-conversion current gain compensation, applied to the pu phase/bus
  * currents in the ADC ISR (slm32m030_it.c). Float multiple: 1.2f = x1.2,
  * 1.0f = no extra gain. Implemented as Q8 fixed-point (x * N >> 8). */
-#define CURRENT_GAIN_COMP    (1.2f)
-#define CURRENT_GAIN_Q8      ((int32_t)(CURRENT_GAIN_COMP * 256.0f + 0.5f))
+#define CURRENT_GAIN_COMP (1.2f)
+#define CURRENT_GAIN_Q8   ((int32_t)(CURRENT_GAIN_COMP * 256.0f + 0.5f))
+
+/* DC-bus current (idc) source selection (ADC ISR, slm32m030_it.c):
+ *   IDC_FROM_ADC        measure idc directly with the dedicated ADC channel
+ *                       (current behaviour).
+ *   IDC_FROM_PHASE_DUTY reconstruct idc from this frame's measured phase
+ *                       currents weighted by the PREVIOUS frame's applied
+ *                       phase duties: idc = ia*da + ib*db + ic*dc (pu). */
+#define IDC_FROM_ADC        (0u)
+#define IDC_FROM_PHASE_DUTY (1u)
+#define IDC_SOURCE          (IDC_FROM_PHASE_DUTY)
 
 /* CMDBUS_CALI phase-current zero offset: zero-current code = 12-bit mid-scale */
 #define CALI_OFFSET_NOMINAL (2048) /* zero-current bias [adc count] */
