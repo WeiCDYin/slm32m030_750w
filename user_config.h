@@ -88,18 +88,20 @@ extern "C"
 #define MOTOR_B_NMS        (0.0f)    /* viscous friction [N*m*s] */
 
 /* ===== 6. FOC control-loop configuration ===== */
-#define SPEED_RATE_RPM    (1450)                               /* rate speed [rpm] */
-#define SPEED_BASE_RMP    (2000)                               /* pu speed, dueto feedback speed may over flow(negative) */
-#define SPEED_REF_DEFAULT (1260)                               /* default speed reference after start [rpm] */
-#define I_BASE_A          (10.0f)                              /* max current [A] */
-#define U_BASE_V          (2.0f * DC_VOLTAGE_MAX / PI_F)       /* max phase-voltage amplitude [V] */
-#define W_BASE_HZ         (SPEED_BASE_RMP / 60.0f * MOTOR_NPP) /* max electrical frequency [Hz] */
-#define FOC_FAST_HZ       PWM_FREQ_HZ                          /* carrier = fast loop */
-#define FOC_SLOW_HZ       (1000.0f)                            /* slow loop (speed) [Hz] */
-#define CC_BW_RAD_S       (2.0f * PI_F * 200.0f)               /* current-loop bandwidth [rad/s] */
-#define SC_BW_RAD_S       (2.0f * PI_F * 0.15f)                /* speed-loop bandwidth [rad/s] */
-#define IQ_MAX_PU         (0.3f)                               /* q-axis current clamp [pu] */
-#define SC_ACCEL_PU_S     (0.5f)
+#define SPEED_RATE_RPM     (1450)                               /* rate speed [rpm] */
+#define SPEED_BASE_RMP     (2000)                               /* pu speed, dueto feedback speed may over flow(negative) */
+#define SPEED_REF_DEFAULT  (1260)                               /* default speed reference after start [rpm] */
+#define IQ_MAX_PU          (0.3f)                               /* q-axis current clamp [pu] */
+#define I_BASE_A           (10.0f)                              /* max current [A] */
+#define U_BASE_V           (2.0f * DC_VOLTAGE_MAX / PI_F)       /* max phase-voltage amplitude [V] */
+#define W_BASE_HZ          (SPEED_BASE_RMP / 60.0f * MOTOR_NPP) /* max electrical frequency [Hz] */
+#define CC_BW_RAD_S        (2.0f * PI_F * 200.0f)               /* current-loop bandwidth [rad/s] */
+#define SC_BW_RAD_S        (2.0f * PI_F * 0.15f)                /* speed-loop bandwidth [rad/s] */
+#define SC_ACCEL_PU_S      (0.5f)
+#define FOC_FAST_HZ        PWM_FREQ_HZ /* carrier = fast loop */
+#define FOC_SLOW_HZ        (1000.0f)   /* slow loop (speed) [Hz] */
+#define FOC_DUTY_LIMIT_PCT (95u)       /* duty clamp [%], uint8 0..100; 100 = no clamp */
+#define FOC_DUTY_LIMIT_Q15 ((q15_t)(((uint32_t)FOC_DUTY_LIMIT_PCT * Q15_ONE) / 100u))
 /* IF (I-f open-loop startup) */
 #define IF_HANDOVER_PU  (0.08f)   /* IF->FOC handover speed [pu] */
 #define IF_I_MAG_PU     (0.15f)   /* current magnitude [pu]      */
