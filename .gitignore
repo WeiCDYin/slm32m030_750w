@@ -4,3 +4,4 @@
 *.scvd*
 *JlinkLog.txt*
 *.uvoptx
+*.log

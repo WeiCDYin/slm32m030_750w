@@ -1,0 +1,11 @@
+si SWD
+speed 4000
+device SLM32M030CCT7
+connect
+r
+h
+loadfile MDK/Objects/slm32m030_750w.hex
+verifyfile MDK/Objects/slm32m030_750w.hex
+r
+g
+q
