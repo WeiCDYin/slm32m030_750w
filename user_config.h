@@ -100,8 +100,6 @@ extern "C"
 #define SC_ACCEL_PU_S      (0.5f)
 #define FOC_FAST_HZ        PWM_FREQ_HZ /* carrier = fast loop */
 #define FOC_SLOW_HZ        (1000.0f)   /* slow loop (speed) [Hz] */
-#define FOC_DUTY_LIMIT_PCT (95u)       /* duty clamp [%], uint8 0..100; 100 = no clamp */
-#define FOC_DUTY_LIMIT_Q15 ((q15_t)(((uint32_t)FOC_DUTY_LIMIT_PCT * Q15_ONE) / 100u))
 /* IF (I-f open-loop startup) */
 #define IF_HANDOVER_PU  (0.08f)   /* IF->FOC handover speed [pu] */
 #define IF_I_MAG_PU     (0.15f)   /* current magnitude [pu]      */

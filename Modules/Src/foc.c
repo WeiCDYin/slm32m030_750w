@@ -157,7 +157,7 @@ void foc_isr_proc(mc_in_t *in, volatile duties_t *dabc_pu)
 {
     mc_fast_step(g_hsm_ptr->mc, in);
 
-    dabc_pu->a = g_hsm_ptr->mc->act_duty_abc.a > FOC_DUTY_LIMIT_Q15 ? FOC_DUTY_LIMIT_Q15 : g_hsm_ptr->mc->act_duty_abc.a;
-    dabc_pu->b = g_hsm_ptr->mc->act_duty_abc.b > FOC_DUTY_LIMIT_Q15 ? FOC_DUTY_LIMIT_Q15 : g_hsm_ptr->mc->act_duty_abc.b;
-    dabc_pu->c = g_hsm_ptr->mc->act_duty_abc.c > FOC_DUTY_LIMIT_Q15 ? FOC_DUTY_LIMIT_Q15 : g_hsm_ptr->mc->act_duty_abc.c;
+    dabc_pu->a = g_hsm_ptr->mc->act_duty_abc.a;
+    dabc_pu->b = g_hsm_ptr->mc->act_duty_abc.b;
+    dabc_pu->c = g_hsm_ptr->mc->act_duty_abc.c;
 }
