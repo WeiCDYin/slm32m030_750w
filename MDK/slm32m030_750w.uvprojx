@@ -313,7 +313,7 @@
           </ArmAdsMisc>
           <Cads>
             <interw>1</interw>
-            <Optim>3</Optim>
+            <Optim>5</Optim>
             <oTime>1</oTime>
             <SplitLS>0</SplitLS>
             <OneElfS>1</OneElfS>
@@ -330,8 +330,8 @@
             <useXO>0</useXO>
             <v6Lang>3</v6Lang>
             <v6LangP>3</v6LangP>
-            <vShortEn>1</vShortEn>
-            <vShortWch>1</vShortWch>
+            <vShortEn>0</vShortEn>
+            <vShortWch>0</vShortWch>
             <v6Lto>1</v6Lto>
             <v6WtE>1</v6WtE>
             <v6Rtti>0</v6Rtti>
@@ -609,9 +609,14 @@
           <GroupName>Core</GroupName>
           <Files>
             <File>
-              <FileName>Core.lib</FileName>
+              <FileName>libmc_core.a</FileName>
               <FileType>4</FileType>
-              <FilePath>..\Core\Core.lib</FilePath>
+              <FilePath>..\Core\libmc_core.a</FilePath>
+            </File>
+            <File>
+              <FileName>libmc_super.a</FileName>
+              <FileType>4</FileType>
+              <FilePath>..\Core\libmc_super.a</FilePath>
             </File>
           </Files>
         </Group>
@@ -687,11 +692,6 @@
               <FileName>cmdbus.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\Modules\Src\cmdbus.c</FilePath>
-            </File>
-            <File>
-              <FileName>convert.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Modules\Src\convert.c</FilePath>
             </File>
             <File>
               <FileName>fault.c</FileName>

@@ -76,29 +76,34 @@ void DMA1_Channel0_5_IRQHandler(void)
 
         uint32_t t0 = tim_load_isr_get();
 
-        g_state.ib_meas  = iphase_code_to_pu((int32_t)adc_get_code(ADC_SEQ1_I_B), state_task_adc_off_ib());
-        g_state.ic_meas  = iphase_code_to_pu((int32_t)adc_get_code(ADC_SEQ1_I_C), state_task_adc_off_ic());
+        /* raw code -> gain-compensated Q15 in one fused multiply (inline);
+         * offsets read directly, ia = -(ib+ic) derived from register caches to
+         * avoid bouncing the volatile meas fields. */
+        int32_t ib = iphase_code_to_gain_pu((int32_t)adc_get_code(ADC_SEQ1_I_B), g_state.adc_off_ib);
+        int32_t ic = iphase_code_to_gain_pu((int32_t)adc_get_code(ADC_SEQ1_I_C), g_state.adc_off_ic);
+        int32_t ia = q15_sat(-ib - ic);
+
+        g_state.ib_meas = (q15_t)ib;
+        g_state.ic_meas = (q15_t)ic;
+        g_state.ia_meas = (q15_t)ia;
         g_state.udc_meas = udc_code_to_pu((int32_t)adc_get_code(ADC_SEQ1_V_DC));
 
-        /* gain compensation */
-        g_state.ib_meas = (q15_t)(((int32_t)g_state.ib_meas * CURRENT_GAIN_Q8 >> 8));
-        g_state.ic_meas = (q15_t)(((int32_t)g_state.ic_meas * CURRENT_GAIN_Q8 >> 8));
-        g_state.ia_meas = q15_sat(-g_state.ib_meas - g_state.ic_meas);
-
 #if (IDC_SOURCE == IDC_FROM_ADC)
-        g_state.idc_meas = idc_code_to_pu((int32_t)adc_get_code(ADC_SEQ1_I_DC), state_task_adc_off_idc());
+        g_state.idc_meas = idc_code_to_pu((int32_t)adc_get_code(ADC_SEQ1_I_DC), g_state.adc_off_idc);
         g_state.idc_meas = (q15_t)(((int32_t)g_state.idc_meas * CURRENT_GAIN_Q8 >> 8));
 #else
-        int32_t idc_acc = ((int32_t)g_state.ia_meas * g_state.duties_q15.a >> Q15_SHIFT) +
-                          ((int32_t)g_state.ib_meas * g_state.duties_q15.b >> Q15_SHIFT) +
-                          ((int32_t)g_state.ic_meas * g_state.duties_q15.c >> Q15_SHIFT);
+        /* telemetry-only bus current: weight THIS frame's measured currents by
+         * the PREVIOUS frame's applied duties (cached off the volatile struct). */
+        q15_t da = g_state.duties_q15.a;
+        q15_t db = g_state.duties_q15.b;
+        q15_t dc = g_state.duties_q15.c;
+        int32_t idc_acc = (((ia * da) >> Q15_SHIFT) + ((ib * db) >> Q15_SHIFT) + ((ic * dc) >> Q15_SHIFT));
         g_state.idc_meas = q15_sat(idc_acc);
 #endif
 
         /* state task: cali/charge timing + (when RUNNING) OC, poke, FOC -> ccr */
         state_task_isr();
             
-
         uint32_t t1 = tim_load_isr_get();
         g_isr_cyc   = t1 - t0;
         if (g_isr_cyc > g_isr_cyc_max)

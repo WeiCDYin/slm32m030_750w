@@ -200,7 +200,7 @@ typedef struct
  * g_mc is defined in foc.c; g_monitor_para in state_task.c. The state-task's
  * internal state (machine state, offsets, V/I telemetry, cali/charge counters)
  * is packed into a static block in state_task.c; the carrier ISR reads the
- * zero offsets through state_task_adc_off_ib/ic(). */
+ * zero offsets directly from g_state.adc_off_ib/ic/idc. */
 extern mc_t                g_mc;
 extern monitor_parameter_t g_monitor_para;
 

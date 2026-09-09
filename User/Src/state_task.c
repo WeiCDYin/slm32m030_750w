@@ -31,19 +31,10 @@ state_para_t g_state = {
  * standalone extern rather than inside the static state block. */
 monitor_parameter_t g_monitor_para;
 
-/* Phase-current zero offsets consumed by the carrier ISR in it.c. */
-int32_t state_task_adc_off_ib(void)
-{
-    return g_state.adc_off_ib;
-}
-int32_t state_task_adc_off_ic(void)
-{
-    return g_state.adc_off_ic;
-}
-int32_t state_task_adc_off_idc(void)
-{
-    return g_state.adc_off_idc;
-}
+/* Carrier ISR input bundle, file-static to avoid a ~20-byte stack zero-init on
+ * every 6 kHz frame. It is touched only by the single carrier ISR context; the
+ * sensorless build never reads theta/spd/idq, so just the used fields are set. */
+static mc_in_t g_isr_foc_in;
 
 typedef void (*state_fn_t)(void);
 
@@ -488,9 +479,13 @@ void state_task_poll(void)
 /* 1 ms tick: telemetry + slow loops + housekeeping. */
 void state_task_1ms(void)
 {
-    int16_t  temperature = ntc_temp_c((uint16_t)adc_get_code(ADC_SEQ1_NTC));
-    int16_t  spd_rpm_fb  = pu_to_rpm(g_mc.act_spd_fb);
-    uint16_t pwr_watt_fb = udc_idc_to_pwr_x10(g_state.udc_mv, g_state.idc_ma);
+    int16_t temperature, spd_rpm_fb, pwr_watt_fb;
+    /* DC bus V/I telemetry + protection feed (reconstruct idc from last duties). */
+    g_state.udc_mv = udc_pu_to_mv(g_state.udc_meas);
+    g_state.idc_ma = idc_pu_to_ma(g_state.idc_meas);
+    temperature    = ntc_temp_c((uint16_t)adc_get_code(ADC_SEQ1_NTC));
+    spd_rpm_fb     = pu_to_rpm(g_mc.act_spd_fb);
+    pwr_watt_fb    = udc_idc_to_pwr_x10(g_state.udc_mv, g_state.idc_ma);
 
     ac_peak_1ms_proc();
     dc_delay_1ms_proc();
@@ -527,59 +522,58 @@ void state_task_isr_break(void)
  * false (no CCR update). */
 void state_task_isr()
 {
-    /* DC bus V/I telemetry + protection feed (reconstruct idc from last duties). */
-    g_state.udc_mv = udc_pu_to_mv(g_state.udc_meas);
-    g_state.idc_ma = idc_pu_to_ma(g_state.idc_meas);
-
     /* CALI: accumulate zero-current offsets; CHARGE: pump bootstrap low-sides.
      * Both run their own timing and publish state; FOC only while RUNNING. */
-    if (g_state.charge_active)
+    if (g_state.main_state == CMDBUS_CHARGE)
     {
-        if (++g_state.charge_cnt >= CHARGE_CARRIER_CYCLES)
+        if (g_state.charge_active)
         {
-            g_state.charge_cnt = 0;
-            if (++g_state.charge_phase >= CHARGE_PHASE_NUM)
+            if (++g_state.charge_cnt >= CHARGE_CARRIER_CYCLES)
             {
-                g_state.charge_active = 0; /* all phases charged: signal the thread */
-                g_state.charge_phase  = 0;
+                g_state.charge_cnt = 0;
+                if (++g_state.charge_phase >= CHARGE_PHASE_NUM)
+                {
+                    g_state.charge_active = 0; /* all phases charged: signal the thread */
+                    g_state.charge_phase  = 0;
+                }
+                else
+                    tim_pwm_charge_phase(g_state.charge_phase);
             }
-            else
-                tim_pwm_charge_phase(g_state.charge_phase);
+            return;
         }
-        return;
     }
-    else if (g_state.cali_active)
+    else if (g_state.main_state == CMDBUS_CALI)
     {
-        g_state.cali_sum_ib += (int32_t)adc_get_code(ADC_SEQ1_I_B);
-        g_state.cali_sum_ic += (int32_t)adc_get_code(ADC_SEQ1_I_C);
-        g_state.cali_sum_idc += (int32_t)adc_get_code(ADC_SEQ1_I_DC);
-
-        if (++g_state.cali_cnt >= CALI_SAMPLE_COUNT)
+        if (g_state.cali_active)
         {
-            g_state.adc_off_ib   = g_state.cali_sum_ib / CALI_SAMPLE_COUNT;
-            g_state.adc_off_ic   = g_state.cali_sum_ic / CALI_SAMPLE_COUNT;
-            g_state.adc_off_idc  = g_state.cali_sum_idc / CALI_SAMPLE_COUNT;
-            g_state.cali_active  = 0;
-            g_state.cali_cnt     = 0;
-            g_state.cali_sum_ib  = 0;
-            g_state.cali_sum_ic  = 0;
-            g_state.cali_sum_idc = 0;
-        }
-        return;
-    }
+            g_state.cali_sum_ib += (int32_t)adc_get_code(ADC_SEQ1_I_B);
+            g_state.cali_sum_ic += (int32_t)adc_get_code(ADC_SEQ1_I_C);
+            g_state.cali_sum_idc += (int32_t)adc_get_code(ADC_SEQ1_I_DC);
 
-    if (g_state.main_state == CMDBUS_RUNNING)
+            if (++g_state.cali_cnt >= CALI_SAMPLE_COUNT)
+            {
+                g_state.adc_off_ib   = g_state.cali_sum_ib / CALI_SAMPLE_COUNT;
+                g_state.adc_off_ic   = g_state.cali_sum_ic / CALI_SAMPLE_COUNT;
+                g_state.adc_off_idc  = g_state.cali_sum_idc / CALI_SAMPLE_COUNT;
+                g_state.cali_active  = 0;
+                g_state.cali_cnt     = 0;
+                g_state.cali_sum_ib  = 0;
+                g_state.cali_sum_ic  = 0;
+                g_state.cali_sum_idc = 0;
+            }
+            return;
+        }
+    }
+    else if (g_state.main_state == CMDBUS_RUNNING)
     {
         fault_isr_proc(g_state.ia_meas, g_state.ib_meas, g_state.ic_meas);
 
-        mc_in_t in     = {0};
-        in.iabc_meas.a = g_state.ia_meas;
-        in.iabc_meas.b = g_state.ib_meas;
-        in.iabc_meas.c = g_state.ic_meas;
-        in.udc_meas    = g_state.udc_meas;
-        foc_isr_proc(&in, &g_state.duties_q15);
+        g_isr_foc_in.iabc_meas.a = g_state.ia_meas;
+        g_isr_foc_in.iabc_meas.b = g_state.ib_meas;
+        g_isr_foc_in.iabc_meas.c = g_state.ic_meas;
+        g_isr_foc_in.udc_meas    = g_state.udc_meas;
+        foc_isr_proc(&g_isr_foc_in, &g_state.duties_q15);
 
-        tim_pwm_update_ccr(duty_to_ccr(g_state.duties_q15.a, TIM_PWM_RELOAD_CNT), duty_to_ccr(g_state.duties_q15.b, TIM_PWM_RELOAD_CNT),
-                           duty_to_ccr(g_state.duties_q15.c, TIM_PWM_RELOAD_CNT));
+        tim_pwm_update_ccr(duty_to_ccr_arr(g_state.duties_q15.a), duty_to_ccr_arr(g_state.duties_q15.b), duty_to_ccr_arr(g_state.duties_q15.c));
     }
 }

@@ -42,8 +42,8 @@ typedef struct
     volatile uint16_t idc_ma;
 
     /* Phase-current zero offsets; default mid-scale so the ISR sees ~zero current
-     * from boot; CMDBUS_CALI re-measures on every START. Exposed to the ISR via
-     * the state_task_adc_off_*() accessors (it.c lives outside this file). */
+     * from boot; CMDBUS_CALI re-measures on every START. The carrier ISR (it.c)
+     * reads these directly from g_state. */
     volatile int32_t adc_off_ib;
     volatile int32_t adc_off_ic;
     volatile int32_t adc_off_idc;
@@ -104,11 +104,6 @@ void state_task_isr();
 
 /* TIM1 hardware break: DC-bus over current latched by the break input. */
 void state_task_isr_break(void);
-
-/* Phase-current zero offsets (adc counts) used by the carrier ISR in it.c. */
-int32_t state_task_adc_off_ib(void);
-int32_t state_task_adc_off_ic(void);
-int32_t state_task_adc_off_idc(void);
 
 /* Telemetry snapshot (monitoring only; values may lag their source by 1 ms). */
 extern monitor_parameter_t g_monitor_para;

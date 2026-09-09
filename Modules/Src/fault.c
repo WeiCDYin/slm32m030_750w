@@ -247,24 +247,13 @@ void fault_1ms_proc(void)
 
 void fault_isr_proc(q15_t ia, q15_t ib, q15_t ic)
 {
-    static uint8_t phase_oc_cnt = 0;
-
     // phase current over protection
     if ((int32_t)ia >= (int32_t)SW_PHASE_OC_TRIP_PU || (int32_t)ia <= -(int32_t)SW_PHASE_OC_TRIP_PU || (int32_t)ib >= (int32_t)SW_PHASE_OC_TRIP_PU ||
         (int32_t)ib <= -(int32_t)SW_PHASE_OC_TRIP_PU || (int32_t)ic >= (int32_t)SW_PHASE_OC_TRIP_PU || (int32_t)ic <= -(int32_t)SW_PHASE_OC_TRIP_PU)
     {
-        phase_oc_cnt++;
-        if (phase_oc_cnt >= 3)
-        {
-            fault_set(FAULT_ID_SW_IPHASE_OVER_CURRENT);
-            tim_pwm_disable();
-            phase_oc_cnt = 0;
-            return;
-        }
-    }
-    else
-    {
-        phase_oc_cnt = 0;
+        fault_set(FAULT_ID_SW_IPHASE_OVER_CURRENT);
+        tim_pwm_disable();
+        return;
     }
 }
 

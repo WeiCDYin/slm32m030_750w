@@ -6,6 +6,7 @@ extern "C"
 #endif
 
 #include "user_config.h"
+#include "svm.h" /* SVM_UDC_NOM */
 
 // adc code convert to I pu
 #define IPHASE_PU_PER_COUNT (ANALOG_REF_VOLTAGE / 4096.0f / (AFE_PGA_GAIN_NUM * SAMPLE_RESISTOR_PHASE) / I_BASE_A)
@@ -53,20 +54,149 @@ extern "C"
 #define LOAD_X10_SHIFT    (16)
 #define LOAD_X10_FIXED    ((int32_t)((float)(1 << (LOAD_X10_SHIFT + LOAD_UDC_PRESHIFT + LOAD_IDC_PRESHIFT)) / 100000.0f + 0.5f))
 
-q15_t    percent_to_q15(int16_t pct);
-int16_t  q15_to_percent(q15_t v);
-angle_t  deg_to_bam(int16_t deg);
-int16_t  bam_to_deg(angle_t bam);
-q15_t    rpm_to_pu(int16_t rpm);
-int16_t  pu_to_rpm(q15_t pu);
-uint16_t duty_to_ccr(q15_t d, uint16_t arr);
-q15_t    idc_code_to_pu(int32_t count, int32_t offset);
-q15_t    iphase_code_to_pu(int32_t count, int32_t offset);
-int32_t  udc_code_to_pu(int32_t count);
-uint32_t idc_pu_to_ma(q15_t idc_pu);
-uint32_t udc_pu_to_mv(int32_t udc_pu);
-uint32_t ac_code_to_v(int32_t count);
-uint16_t udc_idc_to_pwr_x10(uint32_t udc_mv, uint32_t idc_ma);
+/* Fused phase-current gain: raw (count-offset) -> gain-compensated Q15 in ONE
+ * multiply. The raw->pu factor (IPHASE_SCALE_FIXED, net >>10) and the post
+ * CURRENT_GAIN_Q8 (net >>8) combine into a single Q15/count factor (net >>15).
+ * Rounding the product once differs from the two-stage pipeline by <=2 LSB over
+ * the normal operating span, and the single saturate also rails the region the
+ * old un-saturated gain multiply used to wrap. |delta| up to ~3268 counts stays
+ * inside int32. Derived at compile time: IPHASE_SCALE_FIXED * GAIN / 8. */
+#define IPHASE_GAIN_SHIFT  (15)
+#define IPHASE_GAIN_FIXED  (((IPHASE_SCALE_FIXED * CURRENT_GAIN_Q8 + 4) / 8))
+
+/* All converters are header-only static inline so the 6 kHz carrier path pays
+ * no call boundary (push/pop/bl/bx) -- the bodies are a few integer ops. */
+
+static inline q15_t percent_to_q15(int16_t pct)
+{
+    if (pct <= 0)
+        return 0;
+    if (pct >= 100)
+        return Q15_MAX;
+    /* pct * 1342177 >> 12 == pct * Q15_ONE / 100, compile-time scaled */
+    return (q15_t)(((int32_t)pct * PCT_TO_Q15_FIXED) >> PCT_TO_Q15_SHIFT);
+}
+
+static inline int16_t q15_to_percent(q15_t v)
+{
+    return (int16_t)(((int32_t)v * 100) >> Q15_SHIFT);
+}
+
+static inline angle_t deg_to_bam(int16_t deg)
+{
+    /* %360: wraps any int16 input and keeps (deg * FIXED) inside int32 */
+    return (angle_t)(((int32_t)(deg % 360) * DEG_TO_BAM_FIXED) >> DEG_TO_BAM_SHIFT);
+}
+
+static inline int16_t bam_to_deg(angle_t bam)
+{
+    return (int16_t)(((int32_t)bam * 360) >> 16); /* 65536 BAM = 360 deg */
+}
+
+static inline q15_t rpm_to_pu(int16_t rpm)
+{
+    int32_t pu;
+
+    if (rpm > SPEED_RATE_RPM)
+        rpm = (int16_t)SPEED_RATE_RPM;
+    else if (rpm < -SPEED_RATE_RPM)
+        rpm = (int16_t)-SPEED_RATE_RPM;
+
+    pu = ((int32_t)rpm * RPM_TO_PU_FIXED) >> RPM_TO_PU_SHIFT;
+
+    if (pu > Q15_MAX)
+        pu = Q15_MAX;
+    if (pu < Q15_MIN)
+        pu = Q15_MIN;
+    return (q15_t)pu;
+}
+
+static inline int16_t pu_to_rpm(q15_t pu)
+{
+    return (int16_t)(((int32_t)pu * PU_TO_RPM_FIXED) >> PU_TO_RPM_SHIFT);
+}
+
+/* Carrier-ISR specialization: arr is the compile-time PWM reload, so the whole
+ * scale+clamp expands inline with a constant multiplier (3 calls/tick). */
+static inline uint16_t duty_to_ccr_arr(q15_t d)
+{
+    int32_t c = ((int32_t)d * (int32_t)TIM_PWM_RELOAD_CNT) >> Q15_SHIFT;
+    return (uint16_t)c;
+}
+
+static inline q15_t iphase_code_to_pu(int32_t count, int32_t offset)
+{
+    int32_t pu = -(((count - offset) * IPHASE_SCALE_FIXED) >> IPHASE_SCALE_SHIFT);
+    return q15_sat(pu);
+}
+
+/* Raw phase-current code -> gain-compensated Q15, one fused multiply. The
+ * negation preserves iphase_code_to_pu's current sign convention. */
+static inline q15_t iphase_code_to_gain_pu(int32_t count, int32_t offset)
+{
+    int32_t pu = -(((count - offset) * IPHASE_GAIN_FIXED) >> IPHASE_GAIN_SHIFT);
+    return q15_sat(pu);
+}
+
+/* IIR state lives in a function-local static, so this header-inline form must
+ * be called from ONE translation unit only (the carrier ISR in it.c); a second
+ * caller would get its own disconnected filter state. */
+static inline q15_t idc_code_to_pu(int32_t count, int32_t offset)
+{
+#define IDC_IIT_SHIFT 4
+    static int32_t idc_filter = 0;
+
+    int32_t raw;
+
+    raw = (((count - offset) * IDC_SCALE_FIXED) >> IDC_PU_SCALE_SHIFT);
+    idc_filter += (raw - idc_filter) >> IDC_IIT_SHIFT;
+
+    if (idc_filter > Q15_MAX)
+        idc_filter = Q15_MAX;
+    if (idc_filter < Q15_MIN)
+        idc_filter = Q15_MIN;
+    return (q15_t)idc_filter;
+}
+
+static inline uint32_t idc_pu_to_ma(q15_t idc_pu)
+{
+    if (idc_pu <= 0)
+        return 0;
+    return (uint32_t)(((int32_t)idc_pu * IDC_MA_FIXED) >> IDC_MA_SHIFT);
+}
+
+/* Same single-translation-unit caveat as idc_code_to_pu: the IIR state is a
+ * function-local static, today owned solely by the carrier ISR in it.c. */
+static inline int32_t udc_code_to_pu(int32_t count)
+{
+#define UDC_IIR_SHIFT 4
+    static int32_t udc_filer = SVM_UDC_NOM;
+    int32_t        raw;
+
+    raw = (count * UDC_SCALE_FIXED) >> UDC_SCALE_SHIFT;
+    udc_filer += (raw - udc_filer) >> UDC_IIR_SHIFT;
+
+    return (udc_pu_t)udc_filer;
+}
+
+static inline uint32_t udc_pu_to_mv(int32_t udc_pu)
+{
+    if (udc_pu <= 0)
+        return 0;
+    return (uint32_t)(((int32_t)udc_pu * UDC_MV_FIXED) >> UDC_MV_SHIFT);
+}
+
+static inline uint32_t ac_code_to_v(int32_t count)
+{
+    if (count <= 0)
+        return 0;
+    return (uint32_t)((count * AC_V_SCALE_FIXED) >> AC_V_SCALE_SHIFT);
+}
+
+static inline uint16_t udc_idc_to_pwr_x10(uint32_t udc_mv, uint32_t idc_ma)
+{
+    return (uint16_t)(((udc_mv >> LOAD_UDC_PRESHIFT) * (idc_ma >> LOAD_IDC_PRESHIFT) * (uint32_t)LOAD_X10_FIXED) >> LOAD_X10_SHIFT);
+}
 
 #ifdef __cplusplus
 }
