@@ -9,5 +9,5 @@
  * see cmake/mc_core_id.cmake for why that cannot be inverted. */
 #ifndef MC_CORE_ID_H
 #define MC_CORE_ID_H
-#define MC_CORE_ID "167dbd41d71bb05b"
+#define MC_CORE_ID "870ceeafe27d47be"
 #endif

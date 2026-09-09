@@ -1,11 +1,11 @@
 /* GENERATED per ABI row by CMakeLists.txt -- DO NOT EDIT.
  *
- * This release is 0.1.0, built for cortex-m0-gcc.
+ * This release is 0.1.0, built for armv6m-armclang.
  *
  * IF YOU ARE READING THIS BECAUSE A BUILD FAILED, it is one of two checks, and each one is asking
  * a different question:
  *
- *   "undefined reference to mc_abi__cortex_m0_gcc__v0_1_0"
+ *   "undefined reference to mc_abi__armv6m_armclang__v0_1_0"
  *       DID THE .h FILES AND THE .a FILE COME FROM THE SAME RELEASE? No -- you have mixed two
  *       downloads. These headers are from 0.1.0; the library you linked is from some
  *       other release. Use the inc/ and lib/ from ONE drop.
@@ -36,7 +36,7 @@
 #define MC_VERSION_MINOR  1
 #define MC_VERSION_PATCH  0
 #define MC_VERSION_STR   "0.1.0"
-#define MC_ABI           "cortex-m0-gcc"
+#define MC_ABI           "armv6m-armclang"
 #define MC_T_SIZE_EXPECTED 112
 
 /* CHECK 1 -- DID THESE .h FILES AND THAT .a FILE COME FROM THE SAME RELEASE? Asked at LINK time.
@@ -45,7 +45,7 @@
  * files from two different downloads cannot resolve against each other. The NAME carries the row and the version so the linker's
  * message is a diagnosis rather than a puzzle. mc.h calls it from mc_abi_check(), because a
  * declaration nothing references links happily against anything. */
-#define MC_ABI_TAG mc_abi__cortex_m0_gcc__v0_1_0
+#define MC_ABI_TAG mc_abi__armv6m_armclang__v0_1_0
 #ifdef __cplusplus
 extern "C" {
 #endif
