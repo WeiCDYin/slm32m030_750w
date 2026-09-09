@@ -333,9 +333,16 @@ static void cmd_speed(const void *payload)
 {
     if (g_state.main_state == CMDBUS_RUNNING)
     {
-        const cmdbus_speed_t *p = (const cmdbus_speed_t *)payload;
-        foc_hsm_set(EV_SET_SPD, EV_FIELD_A, rpm_to_pu(p->speed_rpm), 0, 0);
-        g_state.spd_rpm_ref = p->speed_rpm;
+        const cmdbus_speed_t *p   = (const cmdbus_speed_t *)payload;
+        int16_t               rpm = p->speed_rpm;
+
+        if (rpm > SPEED_RATE_RPM)
+            rpm = (int16_t)SPEED_RATE_RPM;
+        else if (rpm < -SPEED_RATE_RPM)
+            rpm = (int16_t)-SPEED_RATE_RPM;
+            
+        foc_hsm_set(EV_SET_SPD, EV_FIELD_A, rpm_to_pu(rpm), 0, 0);
+        g_state.spd_rpm_ref = rpm;
     }
 }
 
