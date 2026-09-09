@@ -525,7 +525,7 @@ void state_task_isr_break(void)
  * dc voltage in pu (gain-compensated). When RUNNING, writes the new CCR ticks
  * into ccr[0..2] and returns true; cali/charge run their own timing and return
  * false (no CCR update). */
-bool state_task_isr(uint16_t ccr[3])
+void state_task_isr()
 {
     /* DC bus V/I telemetry + protection feed (reconstruct idc from last duties). */
     g_state.udc_mv = udc_pu_to_mv(g_state.udc_meas);
@@ -546,7 +546,7 @@ bool state_task_isr(uint16_t ccr[3])
             else
                 tim_pwm_charge_phase(g_state.charge_phase);
         }
-        return false;
+        return;
     }
     else if (g_state.cali_active)
     {
@@ -565,25 +565,21 @@ bool state_task_isr(uint16_t ccr[3])
             g_state.cali_sum_ic  = 0;
             g_state.cali_sum_idc = 0;
         }
-        return false;
+        return;
     }
 
-    if (g_state.main_state != CMDBUS_RUNNING)
-        return false;
+    if (g_state.main_state == CMDBUS_RUNNING)
+    {
+        fault_isr_proc(g_state.ia_meas, g_state.ib_meas, g_state.ic_meas);
 
-    /* software over-current: kill PWM before the control update */
-    fault_isr_proc(g_state.ia_meas, g_state.ib_meas, g_state.ic_meas);
+        mc_in_t in     = {0};
+        in.iabc_meas.a = g_state.ia_meas;
+        in.iabc_meas.b = g_state.ib_meas;
+        in.iabc_meas.c = g_state.ic_meas;
+        in.udc_meas    = g_state.udc_meas;
+        foc_isr_proc(&in, &g_state.duties_q15);
 
-    mc_in_t in     = {0};
-    in.iabc_meas.a = g_state.ia_meas;
-    in.iabc_meas.b = g_state.ib_meas;
-    in.iabc_meas.c = g_state.ic_meas;
-    in.udc_meas    = g_state.udc_meas;
-
-    foc_isr_proc(&in, &g_state.duties_q15);
-
-    ccr[0] = duty_to_ccr(g_state.duties_q15.a, TIM_PWM_RELOAD_CNT);
-    ccr[1] = duty_to_ccr(g_state.duties_q15.b, TIM_PWM_RELOAD_CNT);
-    ccr[2] = duty_to_ccr(g_state.duties_q15.c, TIM_PWM_RELOAD_CNT);
-    return true;
+        tim_pwm_update_ccr(duty_to_ccr(g_state.duties_q15.a, TIM_PWM_RELOAD_CNT), duty_to_ccr(g_state.duties_q15.b, TIM_PWM_RELOAD_CNT),
+                           duty_to_ccr(g_state.duties_q15.c, TIM_PWM_RELOAD_CNT));
+    }
 }

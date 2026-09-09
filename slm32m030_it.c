@@ -96,9 +96,8 @@ void DMA1_Channel0_5_IRQHandler(void)
 #endif
 
         /* state task: cali/charge timing + (when RUNNING) OC, poke, FOC -> ccr */
-        uint16_t ccr[3];
-        if (state_task_isr(ccr))
-            tim_pwm_update_ccr(ccr[0], ccr[1], ccr[2]);
+        state_task_isr();
+            
 
         uint32_t t1 = tim_load_isr_get();
         g_isr_cyc   = t1 - t0;

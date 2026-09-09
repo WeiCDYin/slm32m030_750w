@@ -100,7 +100,7 @@ void state_task_1ms(void);
  * dc voltage (pu) by the ISR. When the machine is RUNNING this writes the new
  * PWM CCR ticks into ccr[0..2] and returns true; otherwise it returns false
  * (cali / charge timing handled internally, no CCR update). */
-bool state_task_isr(uint16_t ccr[3]);
+void state_task_isr();
 
 /* TIM1 hardware break: DC-bus over current latched by the break input. */
 void state_task_isr_break(void);

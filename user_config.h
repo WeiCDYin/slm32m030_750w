@@ -22,7 +22,6 @@ extern "C"
 #define AC_INPUT_VOLTAGE_MAX   (AC_INPUT_VOLTAGE_RATED * 1.2f * 1.414f) /* 646 V */
 #define DC_VOLTAGE_MIN         (AC_INPUT_VOLTAGE_RATED * 0.7f * 1.414f) /* 377 V */
 #define DC_VOLTAGE_MAX         (AC_INPUT_VOLTAGE_RATED * 1.2f * 1.414f) /* 646 V */
-
 /* power-delay pin PB7: pin control only, no alarm */
 #define DC_DELAY_PIN_ON_THRESH_MV ((uint32_t)(DC_VOLTAGE_MIN * 0.8f * 1000.0f)) /* raise at 0.8 * UV [mV] */
 #define DC_DELAY_PIN_HYST_MV      (30000u)                                      /* lower at ON threshold - 30 V [mV] */
@@ -30,7 +29,7 @@ extern "C"
 
 /* ===== 1. constants ===== */
 #define PI_F             (3.14159265f)
-#define AUTO_RUN_MODE    (1) /* 0:normal; 1:free-running; 2:start-stop test */
+#define AUTO_RUN_MODE    (0) /* 0:normal; 1:free-running; 2:start-stop test */
 #define AUTO_RUN_SPD_RPM (1200)
 
 /* ===== 2. system clock ===== */
@@ -88,18 +87,18 @@ extern "C"
 #define MOTOR_B_NMS        (0.0f)    /* viscous friction [N*m*s] */
 
 /* ===== 6. FOC control-loop configuration ===== */
-#define SPEED_RATE_RPM     (1450)                               /* rate speed [rpm] */
-#define SPEED_BASE_RMP     (2000)                               /* pu speed, dueto feedback speed may over flow(negative) */
-#define SPEED_REF_DEFAULT  (1260)                               /* default speed reference after start [rpm] */
-#define IQ_MAX_PU          (0.3f)                               /* q-axis current clamp [pu] */
-#define I_BASE_A           (10.0f)                              /* max current [A] */
-#define U_BASE_V           (2.0f * DC_VOLTAGE_MAX / PI_F)       /* max phase-voltage amplitude [V] */
-#define W_BASE_HZ          (SPEED_BASE_RMP / 60.0f * MOTOR_NPP) /* max electrical frequency [Hz] */
-#define CC_BW_RAD_S        (2.0f * PI_F * 200.0f)               /* current-loop bandwidth [rad/s] */
-#define SC_BW_RAD_S        (2.0f * PI_F * 0.15f)                /* speed-loop bandwidth [rad/s] */
-#define SC_ACCEL_PU_S      (0.5f)
-#define FOC_FAST_HZ        PWM_FREQ_HZ /* carrier = fast loop */
-#define FOC_SLOW_HZ        (1000.0f)   /* slow loop (speed) [Hz] */
+#define SPEED_RATE_RPM    (1450)                               /* rate speed [rpm] */
+#define SPEED_BASE_RMP    (2000)                               /* pu speed, dueto feedback speed may over flow(negative) */
+#define SPEED_REF_DEFAULT (1260)                               /* default speed reference after start [rpm] */
+#define IQ_MAX_PU         (0.3f)                               /* q-axis current clamp [pu] */
+#define I_BASE_A          (10.0f)                              /* max current [A] */
+#define U_BASE_V          (2.0f * DC_VOLTAGE_MAX / PI_F)       /* max phase-voltage amplitude [V] */
+#define W_BASE_HZ         (SPEED_BASE_RMP / 60.0f * MOTOR_NPP) /* max electrical frequency [Hz] */
+#define CC_BW_RAD_S       (2.0f * PI_F * 200.0f)               /* current-loop bandwidth [rad/s] */
+#define SC_BW_RAD_S       (2.0f * PI_F * 0.15f)                /* speed-loop bandwidth [rad/s] */
+#define SC_ACCEL_PU_S     (0.5f)
+#define FOC_FAST_HZ       PWM_FREQ_HZ /* carrier = fast loop */
+#define FOC_SLOW_HZ       (1000.0f)   /* slow loop (speed) [Hz] */
 /* IF (I-f open-loop startup) */
 #define IF_HANDOVER_PU  (0.08f)   /* IF->FOC handover speed [pu] */
 #define IF_I_MAG_PU     (0.15f)   /* current magnitude [pu]      */
