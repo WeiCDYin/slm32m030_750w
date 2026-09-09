@@ -331,19 +331,17 @@ static void cmd_mode(const void *payload)
 
 static void cmd_speed(const void *payload)
 {
-    if (g_state.main_state == CMDBUS_RUNNING)
-    {
-        const cmdbus_speed_t *p   = (const cmdbus_speed_t *)payload;
-        int16_t               rpm = p->speed_rpm;
 
-        if (rpm > SPEED_RATE_RPM)
-            rpm = (int16_t)SPEED_RATE_RPM;
-        else if (rpm < -SPEED_RATE_RPM)
-            rpm = (int16_t)-SPEED_RATE_RPM;
-            
-        foc_hsm_set(EV_SET_SPD, EV_FIELD_A, rpm_to_pu(rpm), 0, 0);
-        g_state.spd_rpm_ref = rpm;
-    }
+    const cmdbus_speed_t *p   = (const cmdbus_speed_t *)payload;
+    int16_t               rpm = p->speed_rpm;
+
+    if (rpm > SPEED_RATE_RPM)
+        rpm = (int16_t)SPEED_RATE_RPM;
+    else if (rpm < -SPEED_RATE_RPM)
+        rpm = (int16_t)-SPEED_RATE_RPM;
+
+    foc_hsm_set(EV_SET_SPD, EV_FIELD_A, rpm_to_pu(rpm), 0, 0);
+    g_state.spd_rpm_ref = rpm;
 }
 
 static void cmd_duty(const void *payload)
@@ -358,26 +356,26 @@ static void cmd_duty(const void *payload)
 
 static void cmd_vec(const void *payload)
 {
-    if (g_state.main_state != CMDBUS_RUNNING)
-        return;
+    if (g_state.main_state == CMDBUS_RUNNING)
+    {
+        const cmdbus_vec_t *p = (const cmdbus_vec_t *)payload;
 
-    const cmdbus_vec_t *p = (const cmdbus_vec_t *)payload;
+        /* clamp the vector magnitude by mode: VV voltage-vector max 5%, CV current-vector max 30% */
+        uint16_t mag_max;
+        uint16_t mag = p->mag_pct;
 
-    /* clamp the vector magnitude by mode: VV voltage-vector max 5%, CV current-vector max 30% */
-    uint16_t mag_max;
-    uint16_t mag = p->mag_pct;
+        if (g_state.run_mode == CMDBUS_RUN_MODE_VV)
+            mag_max = VV_MAG_PCT_MAX;
+        else if (g_state.run_mode == CMDBUS_RUN_MODE_CV)
+            mag_max = CV_MAG_PCT_MAX;
+        else
+            mag_max = 100u;
 
-    if (g_state.run_mode == CMDBUS_RUN_MODE_VV)
-        mag_max = VV_MAG_PCT_MAX;
-    else if (g_state.run_mode == CMDBUS_RUN_MODE_CV)
-        mag_max = CV_MAG_PCT_MAX;
-    else
-        mag_max = 100u;
+        if (mag > mag_max)
+            mag = mag_max;
 
-    if (mag > mag_max)
-        mag = mag_max;
-
-    foc_hsm_set(EV_SET_VEC, EV_FIELD_A | EV_FIELD_B, percent_to_q15((int16_t)mag), (int16_t)vec_bam(p->ang_deg), 0);
+        foc_hsm_set(EV_SET_VEC, EV_FIELD_A | EV_FIELD_B, percent_to_q15((int16_t)mag), (int16_t)vec_bam(p->ang_deg), 0);
+    }
 }
 
 static void cmd_power(const void *payload)
