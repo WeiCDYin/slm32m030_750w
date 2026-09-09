@@ -5,7 +5,6 @@ connect
 r
 h
 loadfile MDK/Objects/slm32m030_750w.hex
-verifyfile MDK/Objects/slm32m030_750w.hex
 r
 g
 q
