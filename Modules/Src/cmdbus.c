@@ -84,5 +84,5 @@ void cmdbus_dispatch(void)
     g_cmdbus.counter--;
 
     if (cmd < CMDBUS_CMD_COUNT && g_cmdbus.handler[cmd])
-        g_cmdbus.handler[cmd](cmd, &s->data);
+        g_cmdbus.handler[cmd](&s->data);
 }

@@ -7,11 +7,12 @@ extern "C"
 
 #include <stdint.h>
 #include <stdbool.h>
-#include <stddef.h>     /* NULL */
-#include "mc.h"         /* mc_in_t, duties_t */
+#include <stddef.h>      /* NULL */
+#include "mc.h"          /* mc_in_t, duties_t */
 #include "user_config.h" /* monitor_parameter_t */
 
-typedef struct {
+typedef struct
+{
     q15_t ia_meas;
     q15_t ib_meas;
     q15_t ic_meas;
@@ -52,7 +53,7 @@ typedef struct
     uint16_t ac_peak_low_v;
 
     /* Last FOC duties (pu), carried between carrier frames for idc reconstruction. */
-    duties_t duties_q15;
+    volatile duties_t duties_q15;
 
     /* Charge state (sequential low-side bootstrap A -> B -> C). */
     volatile uint8_t charge_active;

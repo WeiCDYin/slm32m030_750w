@@ -21,7 +21,7 @@ extern "C" {
 typedef enum {
     ST_ROOT,             /* sentinel parent */
     ST_IDLE,             /* not running; PWM output off   */
-    ST_RUNNING,          /* composite: owns the power stage (gate/isense/fault-mon) */
+    ST_RUNNING,          /* composite: owns the power stage (gate/isense)             */
       ST_DUTY,           /* raw phase duties -> bridge (bypasses SVM) */
       ST_VV,             /* static VOLTAGE vector: V/f held at standstill (speed pinned to 0) */
       ST_VF,             /* scalar V/f: the voltage ramp spins the machine open-loop */

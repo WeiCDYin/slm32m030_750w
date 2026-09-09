@@ -13,26 +13,20 @@ extern "C" {
  * tracking PLL with smo.h. Only the SWITCH differs, which is the whole point: bind both
  * through ob_tee.h and the difference you measure is the switch, nothing else.
  *
- * WHY, vs the first-order sigmoid switch in smo.h:
- *   - smo.h needs k_slide > max|e_a|, so at low speed it injects many times the actual
- *     EMF. Here the discontinuity sits in the INTEGRAL, so the gains bound |de_a/dt|,
- *     not |e_a| -- one gain set covers standstill to rated.
- *     MEASURED on MACHINE_REF at 20 kHz, one gain set (k1 = 1.2, k2 = 1860) holds the
- *     EMF estimate to 0.07-0.17% over a 30x span of EMF amplitude, while the sigmoid at
- *     k_slide = 0.2 goes from -11.8% to -92.3% as its switch saturates.
- *   - The sigmoid's boundary layer parks s where k_slide*sigma(a*s) == e_a, an
- *     amplitude-dependent bias in the ESTIMATE. Super-twisting's error is a zero-mean
- *     limit cycle instead (see the discretization note below), so z is unbiased.
- *   - z stays continuous without a filter, for a structural reason rather than by
- *     smoothing -- so the "no equivalent-control LPF" property of smo.h survives.
+ * WHICH OF THE TWO TO BIND. The discontinuity sits in the INTEGRAL here, so the gains bound
+ * |de_a/dt| rather than |e_a|: ONE gain set covers standstill to rated, where smo.h's k_slide
+ * must exceed the largest EMF the machine will produce and therefore over-injects at low speed.
+ * The estimate is also unbiased -- the error is a zero-mean limit cycle (see DISCRETIZATION
+ * below) rather than the amplitude-dependent offset smo.h's boundary layer parks it at -- and z
+ * stays continuous for a structural reason rather than by smoothing, so smo.h's "no
+ * equivalent-control LPF" property survives. The measured comparison behind all three is in
+ * stsmo.c.
  *
- * DISCRETIZATION (read before tuning). In continuous time super-twisting reaches s == 0
- * in finite time. This is explicit Euler at a finite Ts, and it does NOT: s settles into
- * a bounded limit cycle, ~300 LSB (~0.009 pu) at the design point above. The mechanism is
- * that the sqrt term's per-step correction G*k1*sqrt(|s|) exceeds 2*|s| once
- * |s| < (G*k1/2)^2, so the surface cannot settle below that and dithers instead. It is a
- * ripple, not a bias -- the mean estimate stays accurate and Stage 2's bandwidth filters
- * what is left -- but it means k1 has an UPPER bound as well as Levant's lower one.
+ * DISCRETIZATION. In continuous time super-twisting reaches s == 0 in finite time. This is
+ * explicit Euler at a finite Ts, and it does NOT: s settles into a bounded limit cycle rather
+ * than to zero. That is a RIPPLE, not a bias -- the mean estimate stays accurate and Stage 2's
+ * bandwidth filters what is left -- so a dithering surface is the expected steady state here,
+ * not a fault to chase.
  *
  * Stage 1, per axis, on the sliding surface s = i_est - i_meas:
  *   z      = k1*sqrt(|s|)*sgn(s) + w        (the EMF estimate; continuous)
@@ -61,41 +55,43 @@ typedef struct {
     pll_t    pll;       /* Stage 2, by value -- the same loop smo_t embeds (pll.h)     */
 } stsmo_t;
 
-/* Tuning knobs the app chooses (cf. smo_cfg_t). SIZING, from the surface dynamics
- * s' = -alpha*(z - e_a) with alpha = u_base/(Lq*i_base) [(pu-A/s) per pu-V], and C an
- * upper bound on |de_a/dt| in pu-V/s (~ w_elec_max * |e_a|_max):
- *   k2 >  C                    (Levant; typically 1.1*C)
- *   k1 >  1.5*sqrt(C/alpha)    (Levant lower bound)
- * Note k1/k2 bound the EMF's RATE, not its amplitude -- the structural advantage over
- * smo_cfg_t.k_slide. Both are per-unit voltages; k1 additionally carries 1/sqrt(pu-A).
+/* The COLD half of stsmo_t: exactly what stsmo_tune writes, Stage 2's block included, and
+ * nothing a step touches. Its own type for the same reason smo_gains_t is one -- deriving the
+ * coefficients and loading them are separate acts (cf. pi2dof.h). */
+typedef struct {
+    q15_t       f_decay;   /* F = 1 - Ts*Rs/Lq                                      [Q15] */
+    q15_t       g_volt;    /* G = Ts*u_base/(Lq*i_base)                             [Q15] */
+    int32_t     k1;        /* sqrt-term gain         [pu-V per sqrt(pu-A), Q12, < 8.0] */
+    q15_t       k2_ts;     /* integral-term gain, Ts folded in: k2*Ts         [pu-V, Q15] */
+    int32_t     inv_eps;   /* 1/eps for the smoothed sgn     [1/pu-A, Q8]; 0 -> exact sgn */
+    bool        pll_on_w;  /* feed Stage 2 the integral state w instead of the full z     */
+    pll_gains_t pll;       /* Stage 2, the shared tracking loop (pll.h)                   */
+} stsmo_gains_t;
+
+/* Load a gain set and clear the runtime state, Stage 2 included -- what stsmo_tune does once
+ * it has computed one. NULL gains -> INERT: every coefficient zero, so the current model never
+ * moves and the loop reports angle 0. NULL-safe. */
+void       stsmo_set_gains(stsmo_t *o, const stsmo_gains_t *g);
+
+/* Tuning knobs the app chooses (cf. smo_cfg_t). k1 and k2 bound the EMF's RATE rather than its
+ * amplitude -- the structural advantage over smo_cfg_t.k_slide. Both are per-unit voltages; k1
+ * additionally carries 1/sqrt(pu-A).
  *
- * k1 ALSO HAS A DISCRETE UPPER BOUND (see the discretization note above), the analogue of
- * smo_cfg_t.sig_a's stability bound: the surface cannot settle below (G*k1/2)^2 with
- * G = Ts*alpha, so an over-large k1 turns the limit cycle into gross chatter and then
- * instability. MEASURED on MACHINE_REF at 20 kHz (G = 0.154), k2 = 1860:
- *   k1 = 0.9 .. 1.6  surface ripple ~300 LSB, estimate within 0.2%   <- usable window
- *   k1 = 2.0         ripple 660 LSB, estimate error 4x worse
- *   k1 = 3.0         ripple 2200 LSB, visibly degraded
- *   k1 = 6.0         unstable (w rails)
- * The (G*k1/2)^2 expression is conservative -- it over-predicts the ripple by ~2x -- so
- * treat it as the mechanism and the window above as the calibration. Both bounds move
- * with Ts: G is proportional to Ts, so a slower loop tightens the k1 window.
- *
- * WORKED EXAMPLE, MACHINE_REF at rated (alpha = 3087, |e_a| = 0.898 pu, w_e = 1885 rad/s):
- *   C = w_e*|e_a| = 1693 pu-V/s -> k2 = 1.1*C ~ 1860
- *   Levant floor 1.5*sqrt(C/alpha) = 1.11, discrete window tops out ~1.6 -> k1 = 1.2
- * Note how narrow that window is. It is a real design constraint of this observer, not
- * slack: if the two bounds cross for a given machine, raise the sample rate. */
+ * k1 IS BOUNDED FROM BOTH SIDES, and the window between them is narrow. Too small and the
+ * surface does not converge; too large and its limit cycle grows into gross chatter and then
+ * instability. Both bounds move with Ts, so a slower loop TIGHTENS the window -- and if they
+ * cross for a given machine, the answer is a faster sample rate, not a compromise value. The
+ * sizing rules, the discrete mechanism behind the upper bound, and a worked example with
+ * measured numbers are in stsmo.c. */
 typedef struct {
     float k1;        /* sqrt-term gain    [pu-V/sqrt(pu-A)]; Q12 internally, keep < 8 */
     float k2;        /* integral-term gain            [pu-V per second]               */
     float eps;       /* sgn boundary layer [pu-A]: sgn(s) -> sat(s/eps). <= 0 gives the
-                      * exact sign. RECOMMENDED ~0.01: measured, it removes the DC offset
-                      * the exact sign leaves on the surface (s_mean -32 -> 0 LSB) and
-                      * trims the ripple, at no cost in estimate accuracy. It does NOT
-                      * reintroduce smo.h's bias -- the integral term still owns the
-                      * steady state -- and it does not cause the limit cycle either, so
-                      * do not expect it to remove one.                               */
+                      * exact sign. RECOMMENDED ~0.01: it removes the DC offset the exact
+                      * sign leaves on the surface and trims the ripple, at no cost in
+                      * estimate accuracy. It does NOT reintroduce smo.h's bias -- the
+                      * integral term still owns the steady state -- and it does not cause
+                      * the limit cycle either, so do not expect it to remove one.     */
     bool  pll_on_w;  /* true: Stage 2 tracks w (smoother); false: the full z (faster) */
     float bw_pll;    /* PLL tracking bandwidth                             [rad/s]    */
     float zeta_pll;  /* PLL damping (~1)                                      [-]     */

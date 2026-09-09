@@ -14,6 +14,14 @@ typedef struct {
     int32_t  k_delay;     /* delay comp. coeff (we*k_delay)>>16 = 1.5*Ts*we */
 } cc_t;
 
+/* The COLD half of cc_t: everything cc_tune derives from the machine, and nothing that a step
+ * writes. A type of its own so the DERIVATION and the LOADING are separable -- cc_set_gains
+ * takes one of these no matter where the numbers came from (pi2dof.h). */
+typedef struct {
+    pi2dof_gains_t d, q;      /* the two axis regulators (pi2dof.h)                  */
+    int32_t        k_delay;   /* delay comp. coeff, as in cc_t above                 */
+} cc_gains_t;
+
 /* input */
 typedef struct {
     dq_pu_t  idq_ref;    /* the reference to track (mc->act_idq_ref) */
@@ -29,6 +37,11 @@ typedef struct {
 
 
 void     cc_init(cc_t *cc);
+/* Load a gain set and clear the runtime state -- what cc_tune itself does once it has computed
+ * one. NULL gains -> INERT: zero gains and no delay lead, so cc_step asks for zero volts. That
+ * is the state a current loop is in before it has been given gains, and it has to be a safe
+ * one. NULL-safe. */
+void     cc_set_gains(cc_t *cc, const cc_gains_t *g);
 void     cc_tune(cc_t *cc, const motor_cfg_t *m, const base_t *b, float bw_cc, float Ts);
 /* I-f -> FOC handover: set both integrators so the NEXT cc_step asks for udq (the applied
  * u[k-1], re-expressed in the estimated frame) at the operating point (idq_ref, idq_meas)

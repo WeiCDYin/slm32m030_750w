@@ -83,12 +83,12 @@ static const state_ops_t g_state_callback_tbl[CMDBUS_STATE_COUNT] = {
     [CMDBUS_FAULT]   = {entry_fault, run_fault, NULL},          // CMDBUS_FAULT
 };
 
-static void cmd_ctrl(uint8_t cmd, const void *payload);
-static void cmd_mode(uint8_t cmd, const void *payload);
-static void cmd_speed(uint8_t cmd, const void *payload);
-static void cmd_power(uint8_t cmd, const void *payload);
-static void cmd_duty(uint8_t cmd, const void *payload);
-static void cmd_vec(uint8_t cmd, const void *payload);
+static void cmd_ctrl(const void *payload);
+static void cmd_mode(const void *payload);
+static void cmd_speed(const void *payload);
+static void cmd_power(const void *payload);
+static void cmd_duty(const void *payload);
+static void cmd_vec(const void *payload);
 
 /* Register one bus handler per command, with its expected payload size. */
 static void state_register_cmds(void)
@@ -318,9 +318,8 @@ static angle_t vec_bam(uint16_t ang_deg)
     return (g_state.run_mode == CMDBUS_RUN_MODE_CV) ? off : (angle_t)(off - 16384);
 }
 
-static void cmd_ctrl(uint8_t cmd, const void *payload)
+static void cmd_ctrl(const void *payload)
 {
-    (void)cmd;
     /* g_state.ctrl_req is always consumed (cleared) at the end of the previous
      * run_*, so a freshly latched CTRL cannot be overwritten. */
     const cmdbus_ctrl_t *p = (const cmdbus_ctrl_t *)payload;
@@ -330,18 +329,16 @@ static void cmd_ctrl(uint8_t cmd, const void *payload)
         g_state.ctrl_req = v;
 }
 
-static void cmd_mode(uint8_t cmd, const void *payload)
+static void cmd_mode(const void *payload)
 {
-    (void)cmd;
     /* remembered for the next START; only a known mode is accepted */
     const cmdbus_mode_t *p = (const cmdbus_mode_t *)payload;
     if (p->run_mode <= CMDBUS_RUN_MODE_IF_FOC)
         g_state.run_mode = p->run_mode;
 }
 
-static void cmd_speed(uint8_t cmd, const void *payload)
+static void cmd_speed(const void *payload)
 {
-    (void)cmd;
     if (g_state.main_state == CMDBUS_RUNNING)
     {
         const cmdbus_speed_t *p = (const cmdbus_speed_t *)payload;
@@ -350,19 +347,18 @@ static void cmd_speed(uint8_t cmd, const void *payload)
     }
 }
 
-static void cmd_duty(uint8_t cmd, const void *payload)
+static void cmd_duty(const void *payload)
 {
-    (void)cmd;
     if (g_state.main_state == CMDBUS_RUNNING)
     {
         const cmdbus_duty_t *p = (const cmdbus_duty_t *)payload;
-        poke_task_set_duty(percent_to_q15((int16_t)p->duty_a), percent_to_q15((int16_t)p->duty_b), percent_to_q15((int16_t)p->duty_c));
+        foc_hsm_set(EV_SET_DUTY, EV_FIELD_A | EV_FIELD_B | EV_FIELD_C, percent_to_q15(p->duty_a), percent_to_q15(p->duty_b),
+                    percent_to_q15(p->duty_c));
     }
 }
 
-static void cmd_vec(uint8_t cmd, const void *payload)
+static void cmd_vec(const void *payload)
 {
-    (void)cmd;
     if (g_state.main_state != CMDBUS_RUNNING)
         return;
 
@@ -385,9 +381,8 @@ static void cmd_vec(uint8_t cmd, const void *payload)
     foc_hsm_set(EV_SET_VEC, EV_FIELD_A | EV_FIELD_B, percent_to_q15((int16_t)mag), (int16_t)vec_bam(p->ang_deg), 0);
 }
 
-static void cmd_power(uint8_t cmd, const void *payload)
+static void cmd_power(const void *payload)
 {
-    (void)cmd;
     /* power W, consumed by the application layer (no FOC event) */
     const cmdbus_power_t *p = (const cmdbus_power_t *)payload;
     g_state.pwr_watt_ref    = p->power_w;
@@ -585,7 +580,6 @@ bool state_task_isr(uint16_t ccr[3])
     in.iabc_meas.c = g_state.ic_meas;
     in.udc_meas    = g_state.udc_meas;
 
-    poke_task_isr(&in);
     foc_isr_proc(&in, &g_state.duties_q15);
 
     ccr[0] = duty_to_ccr(g_state.duties_q15.a, TIM_PWM_RELOAD_CNT);

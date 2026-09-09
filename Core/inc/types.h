@@ -23,6 +23,26 @@ typedef int32_t q31_t;
  * which for a ramp accumulator is a real behavioural change. A right shift of a negative value is
  * implementation-defined (6.5.7p5), not undefined, and every compiler this tree builds with defines
  * it as the arithmetic shift the fixed-point maths wants. Leave the reads alone. */
+/* CACHE-LINE ALIGNMENT for the tables the carrier tick indexes out of flash. OPTIONAL BY
+ * CONSTRUCTION: a toolchain that cannot express it gets an empty macro and the tables land
+ * wherever the linker puts them, which is correct and merely slower -- so this never becomes a
+ * portability barrier for the core. __attribute__((aligned)) covers GCC, Clang and ARM Compiler 6;
+ * C11 would let this be _Alignas, but the build is C99 (CMakeLists.txt:4).
+ *
+ * It earns its place: an unrelated function added to hsm.c once slid .rodata ~20 bytes, and the
+ * settled carrier-ISR figure moved 36 cycles with every hot-path INSTRUCTION byte-identical --
+ * the literal-pool addresses were the entire diff. Pinning the tables takes that free variable out
+ * of the measurement. 32 is the G4 line; a port with a different one defines MC_CACHE_LINE on the
+ * command line, the same way MC_SIN_INTERP used to be chosen (trans.h). */
+#ifndef MC_CACHE_LINE
+#define MC_CACHE_LINE 32
+#endif
+#if defined(__GNUC__) || defined(__clang__)
+#define MC_CACHE_ALIGN __attribute__((aligned(MC_CACHE_LINE)))
+#else
+#define MC_CACHE_ALIGN            /* not expressible here: placement is the linker's, as before */
+#endif
+
 #define Q15_MAX   (32767)                                            /* +0.99997 */
 #define Q15_MIN   (-32768)                                           /* -1.0     */
 #define Q31_MAX   (2147483647)

@@ -32,8 +32,8 @@ extern "C" {
  * rotor's SOUTH pole in reverse, and since the rotation by 180 is -I (it commutes with the
  * current loop, which is regulating in the same inverted frame) the drive happily lands
  * i_q_ref on -i_q, inverting torque and closing the speed loop with POSITIVE feedback.
- * That was a real bug: reverse startups stalled on the reference machine and ran away to
- * the voltage ceiling on BL4260, gated only by rotor inertia. See core.py's
+ * That was a real bug: reverse startups stalled on one of our machines and ran away to the
+ * voltage ceiling on the other, gated only by rotor inertia. See core.py's
  * test_if_foc_transition_negative_speed.
  *
  * dir comes from spd_est, and that is sound rather than circular: the analysis above puts
@@ -49,7 +49,7 @@ extern "C" {
  * in RADIANS. This is what the gains below are actually derived for -- a type-II loop wants
  * w = Kp*dtheta + Ki*int(dtheta) with dtheta in radians, and sin(dtheta) ~ dtheta. The
  * un-normalized -e_d silently multiplied that design by |e|, so the loop gain rode on SPEED:
- * |e| = 0.855*s pu on BL4260, a 4x gain swing between the I-f handover (s = 0.15) and
+ * |e| ~ 0.86*s pu on one machine here, a 4x gain swing between the I-f handover (s = 0.15) and
  * 5000 rpm (s = 0.625), critically damped at only one of them. Normalized, the small-signal
  * bandwidth IS w_pll everywhere above the low-speed floor.
  *
@@ -69,8 +69,7 @@ extern "C" {
  * of the one |e| that IS published either compares it against a threshold (conv.c) or divides
  * it by the floor (below), and both of those survive squaring, since x >= t iff x^2 >= t^2 for
  * non-negative x. So the loop publishes |e|^2 and the threshold is squared once at tune time.
- * isqrt_q30 still exists in qmath.c for stsmo_sqrt_pu and mc.c's modulation index; it is no
- * longer on the observer path.
+ * isqrt_q30 still exists in qmath.c for stsmo_sqrt_pu; it is no longer on the observer path.
  *
  * HARNEFORS TAP: the INTEGRATOR output is the speed estimate w_est = Ki*int(err); the
  * Kp*err correction goes straight onto the POSITION integrator (theta_est =
@@ -159,12 +158,28 @@ typedef struct {
                          * a setting -- pll_init puts it at +1. See the block above.   */
 } pll_t;
 
+/* The COLD half of pll_t: exactly the three coefficients pll_tune writes. Its own type so an
+ * observer that embeds a pll_t can carry Stage 2's numbers inside its own gain block rather
+ * than tuning the embedded loop as a separate act (smo.h, stsmo.h). */
+typedef struct {
+    q15_t    kp;        /* proportional gain                                   [Q15] */
+    q15_t    ki;        /* integral gain (Ts folded in)                        [Q15] */
+    int32_t  k_theta;   /* angle increment per speed LSB: w_base*Ts/2pi * 2^17       */
+} pll_gains_t;
+
+/* Load a gain set and clear the runtime state (accumulator, integrator, speed, dir) -- what
+ * pll_tune does once it has computed one. NULL gains -> INERT: zero gains, so the loop holds
+ * angle 0 and never moves. dir starts at +1 either way; 0 is not a valid sign. NULL-safe. */
+void       pll_set_gains(pll_t *pll, const pll_gains_t *g);
 /* Derive the Q15/Q31 coefficients from the bases + bandwidth/damping (float, COLD PATH
- * -- call once at composition, from the owning observer's *_tune):
- *   Kp = 2*zeta*w_pll/w_base,  Ki = w_pll^2/w_base * Ts   (Ts folded in, cf. pi2dof.c)
+ * -- call once at composition, from the owning observer's *_tune). The derivation is in pll.c.
  * Zeroes the whole object first, so it also clears state. NULL-safe / inert on a bad
  * cfg (Ts <= 0, NULL b, w_base <= 0). */
 void       pll_tune(pll_t *pll, const base_t *b, float w_pll, float zeta, float Ts);
+/* The same derivation, into a gain block instead of into a loop -- so an observer building one
+ * block for its whole object can fill Stage 2's part without owning a pll_t to tune. Zeroed on
+ * the same bad cfg pll_tune goes inert on. NULL-safe. */
+void       pll_tune_gains(pll_gains_t *g, const base_t *b, float w_pll, float zeta, float Ts);
 /* Reset runtime STATE only (accumulator, integrator, speed), PRESERVING coefficients --
  * runs on every observer re-entry (via ob_init, hsm.c). */
 void       pll_init(pll_t *pll);
@@ -172,7 +187,9 @@ void       pll_init(pll_t *pll);
  * updated angle estimate. NULL-safe: returns 0. */
 angle_t    pll_step(pll_t *pll, ab_pu_t eab_est);
 /* The tracking-loop byproducts. NULL-safe: return 0. */
-spd_pu_t   pll_get_spd(const pll_t *pll);
+/* INLINE: the body is three instructions, so out of line the bl, the frame and the return cost
+ * several times what the function does. One call site, so there is no duplication to trade. */
+static inline spd_pu_t pll_get_spd(const pll_t *pll) { return pll ? pll->spd_est : 0; }
 angle_t    pll_get_angle(const pll_t *pll);
 #ifdef __cplusplus
 }

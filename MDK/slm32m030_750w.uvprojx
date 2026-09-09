@@ -11,7 +11,7 @@
       <ToolsetNumber>0x4</ToolsetNumber>
       <ToolsetName>ARM-ADS</ToolsetName>
       <pArmCC>6160000::V6.16::ARMCLANG</pArmCC>
-      <pCCUsed>6160000::V6.16::ARMCLANG</pCCUsed>
+      <pCCUsed>5060960::V5.06 update 7 (build 960)::.\ARMCC</pCCUsed>
       <uAC6>1</uAC6>
       <TargetOption>
         <TargetCommonOption>
@@ -313,7 +313,7 @@
           </ArmAdsMisc>
           <Cads>
             <interw>1</interw>
-            <Optim>3</Optim>
+            <Optim>2</Optim>
             <oTime>1</oTime>
             <SplitLS>0</SplitLS>
             <OneElfS>1</OneElfS>
@@ -337,7 +337,7 @@
             <v6Rtti>0</v6Rtti>
             <VariousControls>
               <MiscControls></MiscControls>
-              <Define>USE_HAL_DRIVER,NDEBUG</Define>
+              <Define>USE_HAL_DRIVER</Define>
               <Undefine></Undefine>
               <IncludePath>..\User\Inc;..\..\slm32m030_750w;..\Modules\Inc;..\Middle\modbus\freemodbus\modbus\include;..\Middle\modbus\freemodbus\modbus\rtu;..\Drives\CMSIS\Include;..\Drives\CMSIS\Device\SoulSemi\SLM32X030\Include;..\Drives\SATURN13;..\Drives\SLM32X030_HAL_Driver\Inc;..\Bsp\Inc;..\Core\inc</IncludePath>
             </VariousControls>
@@ -609,94 +609,9 @@
           <GroupName>Core</GroupName>
           <Files>
             <File>
-              <FileName>cc.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Core\src\cc.c</FilePath>
-            </File>
-            <File>
-              <FileName>conv.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Core\src\conv.c</FilePath>
-            </File>
-            <File>
-              <FileName>hsm.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Core\src\hsm.c</FilePath>
-            </File>
-            <File>
-              <FileName>if.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Core\src\if.c</FilePath>
-            </File>
-            <File>
-              <FileName>mc.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Core\src\mc.c</FilePath>
-            </File>
-            <File>
-              <FileName>ob.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Core\src\ob.c</FilePath>
-            </File>
-            <File>
-              <FileName>ob_tee.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Core\src\ob_tee.c</FilePath>
-            </File>
-            <File>
-              <FileName>pi2dof.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Core\src\pi2dof.c</FilePath>
-            </File>
-            <File>
-              <FileName>pll.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Core\src\pll.c</FilePath>
-            </File>
-            <File>
-              <FileName>qmath.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Core\src\qmath.c</FilePath>
-            </File>
-            <File>
-              <FileName>rate_limiter.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Core\src\rate_limiter.c</FilePath>
-            </File>
-            <File>
-              <FileName>rec.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Core\src\rec.c</FilePath>
-            </File>
-            <File>
-              <FileName>sc.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Core\src\sc.c</FilePath>
-            </File>
-            <File>
-              <FileName>smo.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Core\src\smo.c</FilePath>
-            </File>
-            <File>
-              <FileName>stsmo.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Core\src\stsmo.c</FilePath>
-            </File>
-            <File>
-              <FileName>svm.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Core\src\svm.c</FilePath>
-            </File>
-            <File>
-              <FileName>trans.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Core\src\trans.c</FilePath>
-            </File>
-            <File>
-              <FileName>vf.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Core\src\vf.c</FilePath>
+              <FileName>Core.lib</FileName>
+              <FileType>4</FileType>
+              <FilePath>..\Core\Core.lib</FilePath>
             </File>
           </Files>
         </Group>

@@ -106,7 +106,7 @@ typedef struct
 
 /* Consumer command handler: receives the command id and a pointer to its
  * payload (valid for the call only). Registered by main_state. */
-typedef void (*cmdbus_handler_t)(uint8_t cmd, const void *payload);
+typedef void (*cmdbus_handler_t)(const void *payload);
 
 /* ---- consumer side (main_state) ---- */
 /* Register the handler + expected payload size for one command id. */

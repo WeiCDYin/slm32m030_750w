@@ -25,7 +25,6 @@ typedef struct
     volatile int16_t  vv_mag_pct;
     volatile int16_t  cv_mag_pct;
     volatile int16_t  vec_ang_deg;
-    volatile duties_t duty_q15;
 } poke_t;
 
 static poke_t g_poke;
@@ -107,16 +106,13 @@ static int16_t bench_vec_mag_pct(void)
 
 void poke_task_init(void)
 {
-    g_poke.spd_rpm = 100;
-    g_poke.da_pct = 50;
-    g_poke.db_pct = 50;
-    g_poke.dc_pct = 50;
-    g_poke.vv_mag_pct = 2;
-    g_poke.cv_mag_pct = 5;
+    g_poke.spd_rpm     = 100;
+    g_poke.da_pct      = 50;
+    g_poke.db_pct      = 50;
+    g_poke.dc_pct      = 50;
+    g_poke.vv_mag_pct  = 2;
+    g_poke.cv_mag_pct  = 5;
     g_poke.vec_ang_deg = 0;
-    g_poke.duty_q15.a = Q15_ONE >> 1;
-    g_poke.duty_q15.b = Q15_ONE >> 1;
-    g_poke.duty_q15.c = Q15_ONE >> 1;
 }
 
 void poke_task_poll(void)
@@ -220,19 +216,13 @@ void poke_task_poll(void)
 
     if (da_pct != g_poke.da_pct || db_pct != g_poke.db_pct || dc_pct != g_poke.dc_pct)
     {
-        g_poke.duty_q15.a = percent_to_q15(g_poke.da_pct);
-        g_poke.duty_q15.b = percent_to_q15(g_poke.db_pct);
-        g_poke.duty_q15.c = percent_to_q15(g_poke.dc_pct);
-        da_pct            = g_poke.da_pct;
-        db_pct            = g_poke.db_pct;
-        dc_pct            = g_poke.dc_pct;
-    }
-}
+        da_pct = g_poke.da_pct;
+        db_pct = g_poke.db_pct;
+        dc_pct = g_poke.dc_pct;
 
-void poke_task_isr(mc_in_t *in)
-{
-    in->duty_abc = g_poke.duty_q15;
-    return;
+        cmdbus_duty_t p = {.duty_a = da_pct, .duty_b = db_pct, .duty_c = dc_pct};
+        cmdbus_post(CMDBUS_CMD_DUTY, &p, sizeof(p));
+    }
 }
 
 void poke_task_1ms(void)
@@ -250,11 +240,4 @@ void poke_task_1ms(void)
             g_poke.resync_delay--;
         }
     }
-}
-
-void poke_task_set_duty(int16_t duty_a, int16_t duty_b, int16_t duty_c)
-{
-    g_poke.duty_q15.a = duty_a;
-    g_poke.duty_q15.b = duty_b;
-    g_poke.duty_q15.c = duty_c;
 }

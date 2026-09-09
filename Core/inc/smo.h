@@ -43,7 +43,7 @@ typedef struct {
     q15_t    k_emf;       /* pu EMF per pu SPEED: lam_a*w_base/u_base -- the ONLY place a
                            * flux magnitude enters this observer, and it enters for the
                            * expected_emf_mag_sq DIAGNOSTIC alone, never for the estimate and
-                           * never for a decision. ~0.86 on BL4260, ~0.90 on REF: the two
+                           * never for a decision. ~0.86 and ~0.90 on the two machines here: the
                            * per-unit bases are chosen independently, so it is not 1.0. [Q15] */
     /* --- state: runtime, zeroed by smo_init ----------------------------------- */
     ab_pu_t  iab_est;     /* current estimate [pu, q15] */
@@ -64,15 +64,31 @@ typedef struct {
     pll_t    pll;
 } smo_t;
 
+/* The COLD half of smo_t: exactly what smo_tune writes, Stage 2's block included, and nothing
+ * a step touches. Its own type so DERIVING the coefficients and LOADING them are separable
+ * (cf. pi2dof.h) -- smo_set_gains takes one of these however it was produced. */
+typedef struct {
+    q15_t       f_decay;  /* F = 1 - Ts*Rs/Lq                                       [Q15] */
+    q15_t       g_volt;   /* G = Ts*u_base/(Lq*i_base)                              [Q15] */
+    q15_t       k_slide;  /* sliding gain (switching amplitude)                 [pu, Q15] */
+    int32_t     sig_a;    /* sigmoid steepness a                              [1/pu, Q8] */
+    q15_t       k_emf;    /* pu EMF per pu speed -- the diagnostic constant only    [Q15] */
+    pll_gains_t pll;      /* Stage 2, the shared tracking loop (pll.h)                   */
+} smo_gains_t;
+
+/* Load a gain set and clear the runtime state, Stage 2 included -- what smo_tune does once it
+ * has computed one. NULL gains -> INERT: every coefficient zero, so the current model never
+ * moves and the loop reports angle 0. NULL-safe. */
+void smo_set_gains(smo_t *smo, const smo_gains_t *g);
+
 /* Tuning knobs the app chooses (cf. if_cfg_t): pu/SI design parameters that
- * smo_tune turns into the Q15/Q31 coefficients above. */
+ * smo_tune turns into the Q15/Q31 coefficients of smo_gains_t. */
 typedef struct {
     float k_slide;   /* sliding gain -- must exceed the max back-EMF seen     [pu] */
-    float sig_a;     /* sigmoid steepness [1/pu]: larger -> sharper, closer to sign.
-                      * DISCRETE-STABILITY BOUND: the observer pole is F-G*k_slide*a/2,
-                      * so keep a < 2(1+F)/(G*k_slide) (single digits here) or the
-                      * current observer chatters -- which would defeat the no-LPF
-                      * design. F, G are the smo_tune coefficients (see smo.c). */
+    float sig_a;     /* sigmoid steepness [1/pu]: larger -> sharper, closer to sign. Bounded
+                      * ABOVE by discrete stability -- past the bound the current observer
+                      * chatters, which would defeat the no-LPF design. Single digits on these
+                      * machines; the bound itself is derived in smo.c. */
     float bw_pll;    /* PLL tracking bandwidth                             [rad/s] */
     float zeta_pll;  /* PLL damping (~1)                                      [-]  */
 } smo_cfg_t;

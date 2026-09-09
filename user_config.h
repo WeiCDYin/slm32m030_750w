@@ -126,7 +126,7 @@ extern "C"
  * bit0~7 one-shot: fault_set() latches immediately (HW break, ISR OC); cleared
  *                 by CTRL=3 Recovery, not gated by FAULT_DETECT_ENABLE.
  * bit8~31 poll: window *_LIMIT + *_DETECT_CNT / *_RECOVER_CNT (1 ms polls). */
-#define FAULT_DETECT_ENABLE        (1) /* master switch for poll channels */
+#define FAULT_DETECT_ENABLE        (0) /* master switch for poll channels */
 #define DC_IN_OVER_VOLTAGE_ENABLE  (1)
 #define DC_IN_UNDER_VOLTAGE_ENABLE (1)
 #define POWER_OVER_LOAD_ENABLE     (0)
@@ -145,7 +145,7 @@ extern "C"
 #define SW_PHASE_OC_TRIP_A  (8.0f) /* dc phase software over current [A] */
 #define SW_PHASE_OC_TRIP_PU ((q15_t)((SW_PHASE_OC_TRIP_A / I_BASE_A) * Q15_ONE + 0.5f))
 /* id 6: FOC start timeout */
-#define FOC_STARTUP_TIMEOUT_MS (5000u) /* startup sequence (RESYNC/STARTUP -> sensorless FOC) */
+#define FOC_STARTUP_TIMEOUT_MS (10000u) /* startup sequence (RESYNC/STARTUP -> sensorless FOC) */
 
 /* id 8: DC bus over voltage (sample: udc_mv [mV]) */
 #define DC_IN_OVER_VOLTAGE_LIMIT       (DC_VOLTAGE_MAX * 1000.0f)

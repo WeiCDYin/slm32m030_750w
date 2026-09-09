@@ -44,7 +44,6 @@ typedef struct {
                           * latched: the producer republishes it as mc->act_spd_fb, which is what
                           * the outer loop reads. So it must be fresh every fast tick. */
     dq_pu_t  idq_ref;    /* dq curr. ref.            */
-    duties_t duty_abc;   /* raw phase duties         */
 } mc_in_t;
 
 /* The speed below which the active-flux observer has too little back-EMF to be believed. Two things
@@ -87,6 +86,44 @@ typedef enum { IDLE, RESYNC, STARTUP, SENSORLESS_FOC } if_foc_stage_t;
 
 typedef struct mc_s {
     ctrl_mode_t       ctrl_mode;    /* ctrl_mode */
+    /* THE BYTE-WIDE FLAGS, KEPT TOGETHER AT THE FRONT ON PURPOSE. Thumb's compact load/store
+     * encodes a field offset in 5 bits scaled by the access width, so a byte member reachable
+     * within the first 32 costs one 16-bit instruction and one beyond it costs a 32-bit encoding
+     * on ARMv7-M -- or, on ARMv6-M where no wide form exists, an extra instruction to build the
+     * address. These four are read or written by prod_if_foc on every carrier tick, and they were
+     * scattered at 46 and 78-80, all past the limit. Grouped here they cost nothing to reach.
+     *
+     * Only the BYTES were gathered. The halfwords that are also past their own limit (62) --
+     * spd_est, transit_dwell_tick, and the counters inside conv -- would need those
+     * nested structs relocated and most of the members below resorted, which would scatter the
+     * role-based grouping the comments here depend on. That is a poor trade for a saving that is
+     * zero cycles on M4 and only shows up on an ARMv6-M port. */
+    if_foc_stage_t    if_foc_stage; /* IF_FOC's IDLE / RESYNC / STARTUP / SENSORLESS_FOC stage (above) */
+    bool              spd_loop_en;  /* spd loop enable, enable the loop only as needed */
+    bool              sensorless;   /*  */
+    bool              transit_en;   /*  */
+    /* HERE, not further down, for the same reason the flags above are: set_I_pending is a BYTE the
+     * carrier tick reads and writes through the transition, and inside a struct only the struct can
+     * move it -- a member cannot be relocated out of its own aggregate. At its old place the whole
+     * group sat past 58 and every access to the flag took a wide encoding. */
+    /* The arguments sc_trans_set_I will be called with, latched at the handover and applied in
+     * the SLOW bucket rather than on the carrier tick.
+     *
+     * sc_step and the reference ramp both run at Ts_SLOW -- 20 carrier ticks away at 20 kHz --
+     * so making that call inside transition_to_foc put ~116 ARMv6-M cycles (mostly one
+     * pi2dof_set_I, whose Q30 products spill on a core with no long multiply) on the drive's
+     * single most expensive tick, for a consumer that would not run for another millisecond.
+     *
+     * DEFERRED, NOT RECOMPUTED. iq_meas is the q-axis current measured at the handover and
+     * spd_est the observer's estimate then; re-reading either a millisecond later gives a
+     * different number, so all three arguments travel with the flag. The call still happens
+     * before the speed loop's first output, which is the only thing it exists to make bumpless. */
+    struct {
+        q15_t    iq_meas;        /* measured i_q at the handover                      */
+        spd_pu_t spd_ref;        /* the reference it is set against                   */
+        spd_pu_t spd_est;        /* and the observer's estimate at that instant       */
+        bool     set_I_pending;  /* raised by transition_to_foc, lowered once applied */
+    } sc_trans;
     angle_t           act_theta;    /* the ACTIVE working electrical angle: the frame the producer
                                      * is commutating in this tick. Its source is the producer's to
                                      * pick -- the V/f or I-f forced angle, the observer estimate
@@ -115,34 +152,6 @@ typedef struct mc_s {
                                      * mc_fast_step, so SAFE and the out-of-range fallback land here
                                      * through the same point as the real producers. Read-only
                                      * outside: the core never reads it back. */
-    int16_t           peak_duty_pct; /* max(act_duty_abc), in WHOLE PERCENT. The quantity the
-                                     * low-side sampling window is bounded in (TODO.md): a shunt
-                                     * reads valid current only while its phase's low side is on,
-                                     * and that window closes as that phase's duty rises. The PEAK
-                                     * is what decides it, and it is exactly what a Clarke of the
-                                     * duties cannot report -- min/max injection is zero-sequence,
-                                     * which the transform discards by design (svm.c), while the
-                                     * peak ripples 0.5+0.433m .. 0.5+0.5m with angle. Percent, not
-                                     * Q15, so it reads directly against the ceilings and against
-                                     * the port's _pct duty knobs. */
-    int16_t           mod_idx_pct;  /* MODULATION INDEX in percent: the duty space vector
-                                     * magnitude, scaled so that 100
-                                     * is the linear limit, i.e. how deep the drive is modulating
-                                     * as a fraction of what it HAS. Flat in steady state, unlike
-                                     * peak_duty_pct's 6x-electrical scallop, and it starts at 0
-                                     * rather than 50 -- the zero vector is no modulation and the
-                                     * Clarke reports it as none. Sampling-window ceilings land at
-                                     * 77 (phase b) and 89 (a and c), 100 IS the linear limit --
-                                     * and it reads 100 at sector centres and boundaries alike,
-                                     * which is the property peak_duty_pct lacks. Past the limit
-                                     * svm.c clamps the duties, and that clamping shows up HERE as
-                                     * a scallop the linear range does not have: pinned at 100 on
-                                     * the boundaries, rising toward 115 at the centres as the
-                                     * pattern squares up (2/3 is six-step's Clarke magnitude). A
-                                     * flat 100 that starts to ripple is the drive entering
-                                     * overmodulation. Computed in mc_SLOW_step: it moves at load
-                                     * and speed rates, so the isqrt stays out of the carrier ISR. */
-    if_foc_stage_t    if_foc_stage; /* IF_FOC's IDLE / RESYNC / STARTUP / SENSORLESS_FOC stage (above) */
     /* The ACTIVE references -- what the loop is tracking THIS tick, republished by whichever
      * producer is running (I-f's forced ramp, the speed PI, the caller's fast input). Already
      * capped, rate-limited and stage-appropriate, so they are what the transition seed and the
@@ -150,24 +159,6 @@ typedef struct mc_s {
      * separately -- the same cmd/ref split the generators keep one level down (vf_t.spd_cmd
      * chased by spd_acc, if_t.spd_tgt by its ramp). */
     dq_pu_t           act_idq_ref;
-    /* The arguments sc_trans_set_I will be called with, latched at the handover and applied in
-     * the SLOW bucket rather than on the carrier tick.
-     *
-     * sc_step and the reference ramp both run at Ts_SLOW -- 20 carrier ticks away at 20 kHz --
-     * so making that call inside transition_to_foc put ~116 ARMv6-M cycles (mostly one
-     * pi2dof_set_I, whose Q30 products spill on a core with no long multiply) on the drive's
-     * single most expensive tick, for a consumer that would not run for another millisecond.
-     *
-     * DEFERRED, NOT RECOMPUTED. iq_meas is the q-axis current measured at the handover and
-     * spd_est the observer's estimate then; re-reading either a millisecond later gives a
-     * different number, so all three arguments travel with the flag. The call still happens
-     * before the speed loop's first output, which is the only thing it exists to make bumpless. */
-    struct {
-        q15_t    iq_meas;        /* measured i_q at the handover                      */
-        spd_pu_t spd_ref;        /* the reference it is set against                   */
-        spd_pu_t spd_est;        /* and the observer's estimate at that instant       */
-        bool     set_I_pending;  /* raised by transition_to_foc, lowered once applied */
-    } sc_trans;
     spd_pu_t          act_spd_ref;
     spd_pu_t          act_spd_fb;   /* the drive's WORKING electrical speed this tick -- what the
                                      * producer is actually commutating at, and the same number it
@@ -201,9 +192,6 @@ typedef struct mc_s {
                                      * the core reads it too, so it is latched from the ob_out_t
                                      * ob_step fills, once a tick rather than once per consumer
                                      * (ob.h). 0 when there is no observer */
-    bool              spd_loop_en;  /* spd loop enable, enable the loop only as needed */
-    bool              sensorless;   /*  */
-    bool              transit_en;   /*  */
     spd_pu_t          handover_spd; /* where the forced I-f startup stops climbing and FOC takes over
                                      * (electrical, per-unit Q15). A property of the OBSERVER and the
                                      * machine -- how much back-EMF it needs to lock -- so it belongs
@@ -226,6 +214,13 @@ typedef struct mc_s {
                                      * make the two stages' timing readable as one number that means
                                      * different things depending on where the run is. */
     int16_t           cv_deg;       /* CURRENT VECTOR angle from the ESTIMATED rotor d-axis */
+    duties_t          duty_cmd;     /* the DUTY-mode DEMAND, three raw phase duties, deposited by
+                                     * the EV_SET_DUTY handler (hsm.c) exactly as spd_cmd above is
+                                     * by EV_SET_SPD. It used to arrive per-tick in mc_in_t, which
+                                     * meant the port wrote the core's input struct directly and
+                                     * ST_DUTY was the one leaf with no event handler. Seeded to
+                                     * the zero vector on entry, so the mode starts at rest.
+                                     * Read by prod_duty and nothing else. */
 } mc_t;
 
 /* Runs one carrier tick. The duties land in mc->act_duty_abc, which is where the port reads them
@@ -239,6 +234,33 @@ void mc_fast_step(mc_t *mc, const mc_in_t *in);
  * chooses itself -- mc->spd_est, republished by mc_fast_step every tick the observer runs, and
  * already the working speed both the sensorless and the sensored path use (mc.c). */
 void mc_slow_step(mc_t *mc);
+
+/* AT THE BOTTOM, deliberately: the assert below needs mc_t to exist, and by here this header has
+ * pulled in cc.h/sc.h/if.h/vf.h/ob.h/conv.h/rate_limiter.h, so the types a consumer allocates are
+ * all in scope. Included from mc.h rather than left for the consumer to remember, because that is
+ * the whole point -- the checks ride along with a header they already write. */
+#include "mc_version.h"
+
+/* DOES YOUR COMPILER PUT THE FIELDS OF mc_t WHERE OURS DID? You declare mc_t (`static mc_t g_mc;`)
+ * so your compiler decides where each field sits, while the library that reads those fields was
+ * compiled by us.
+ * If the two disagree there is no error anywhere -- it compiles, links, runs, and reads the wrong
+ * offsets. This turns that into a build failure. See mc_version.h for what to check when it fires.
+ *
+ * 0 means the configure-time bootstrap, where the size is not measured yet and there is nothing to
+ * compare against; CMake refuses to install a header in that state. */
+#if MC_T_SIZE_EXPECTED
+/* The NAME is the message: C99 has no _Static_assert, so this expands to a negative-array typedef
+ * and the identifier is all the compiler will print (mc_version.h). */
+MC_STATIC_ASSERT(sizeof(mc_t) == MC_T_SIZE_EXPECTED,
+    mc_t_is_not_the_size_this_release_was_built_for__check_enum_size_and_packing);
+#endif
+
+/* DID THESE HEADERS AND THAT LIBRARY COME FROM THE SAME RELEASE? Calling the tag is what asks the
+ * question: a declaration nothing references links happily against any library at all, so
+ * something has to USE it. Inline and called from here rather than a call the consumer must
+ * remember to write. */
+static inline void mc_abi_check(void) { MC_ABI_TAG(); }
 
 #ifdef __cplusplus
 }
