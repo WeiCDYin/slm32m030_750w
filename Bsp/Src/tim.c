@@ -210,7 +210,8 @@ void tim_pwm_disable(void)
  * 0=A (TIM_CH3), 1=B (TIM_CH1), 2=C (TIM_CH2) per update_ccr mapping. */
 void tim_pwm_charge_phase(uint8_t phase)
 {
-    TIM_TypeDef *         TIMx           = g_tim1_handle.Instance;
+    TIM_TypeDef *TIMx = g_tim1_handle.Instance;
+
     static const uint32_t ch_of_phase[3] = {TIM_CHANNEL_3, TIM_CHANNEL_1, TIM_CHANNEL_2};
 
     TIM_CCxChannelCmd(TIMx, TIM_CHANNEL_1, TIM_CCx_DISABLE);

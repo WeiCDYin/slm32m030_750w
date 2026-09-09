@@ -65,7 +65,7 @@ static void run_fault(void);
 static void state_switch(uint8_t next);
 /* One ops row per cmdbus_state_t (index == state value); exit NULL when a state
  * needs no teardown. Transitions run exit(old) -> entry(new). */
-static const state_ops_t g_state_callback_tbl[CMDBUS_STATE_COUNT] = {
+static const state_ops_t g_state_poll_cb[CMDBUS_STATE_COUNT] = {
     [CMDBUS_INIT]    = {entry_init, run_init, NULL},            // CMDBUS_INIT
     [CMDBUS_IDLE]    = {entry_idle, run_idle, NULL},            // CMDBUS_IDLE
     [CMDBUS_CALI]    = {entry_cali, run_cali, exit_cali},       // CMDBUS_CALI
@@ -111,13 +111,13 @@ static void state_switch(uint8_t next)
     if (next >= CMDBUS_STATE_COUNT || next == g_state.main_state)
         return;
 
-    const state_ops_t *old = &g_state_callback_tbl[g_state.main_state];
+    const state_ops_t *old = &g_state_poll_cb[g_state.main_state];
     if (old->exit)
         old->exit();
 
     g_state.main_state = next; /* set before entry so a nested switch sees the current state */
 
-    const state_ops_t *newo = &g_state_callback_tbl[next];
+    const state_ops_t *newo = &g_state_poll_cb[next];
     if (newo->entry)
         newo->entry();
 }
@@ -232,15 +232,15 @@ static void exit_charge(void)
 {
     ENTER_CRITICAL_SECTION();
     g_state.charge_active = 0;
-    tim_pwm_disable(); /* MOE off: all outputs to idle (all FETs off) */
-    tim_pwm_restore(); /* re-enable CHx + CHxN of all 3 phases for FOC */
+    tim_pwm_disable();
+    tim_pwm_restore();
     EXIT_CRITICAL_SECTION();
 }
 
 static void run_charge(void)
 {
     if (fault_get() != 0)
-        state_switch(CMDBUS_FAULT); /* exit_charge runs teardown via state_switch */
+        state_switch(CMDBUS_FAULT);
     else if (g_state.ctrl_req == CMDBUS_CTRL_FAULT)
         goto_user_fault();
     else if (g_state.ctrl_req == CMDBUS_CTRL_STOP)
@@ -314,7 +314,8 @@ static void cmd_ctrl(const void *payload)
     /* g_state.ctrl_req is always consumed (cleared) at the end of the previous
      * run_*, so a freshly latched CTRL cannot be overwritten. */
     const cmdbus_ctrl_t *p = (const cmdbus_ctrl_t *)payload;
-    uint8_t              v = p->ctrl_type;
+
+    uint8_t v = p->ctrl_type;
 
     if (v <= CMDBUS_CTRL_RECOVERY)
         g_state.ctrl_req = v;
@@ -469,8 +470,8 @@ void state_task_poll(void)
     cmdbus_dispatch();
 
     uint8_t st = g_state.main_state;
-    if (st < CMDBUS_STATE_COUNT && g_state_callback_tbl[st].run)
-        g_state_callback_tbl[st].run();
+    if (st < CMDBUS_STATE_COUNT && g_state_poll_cb[st].run)
+        g_state_poll_cb[st].run();
 
     /* background engine processing */
     foc_poll_proc(g_state.main_state);
@@ -516,64 +517,64 @@ void state_task_isr_break(void)
     fault_set(FAULT_ID_HW_IDC_OVER_CURRENT);
 }
 
-/* Carrier ISR: one ADC frame per call. mc_in already holds measured currents /
- * dc voltage in pu (gain-compensated). When RUNNING, writes the new CCR ticks
- * into ccr[0..2] and returns true; cali/charge run their own timing and return
- * false (no CCR update). */
 void state_task_isr()
 {
-    /* CALI: accumulate zero-current offsets; CHARGE: pump bootstrap low-sides.
-     * Both run their own timing and publish state; FOC only while RUNNING. */
-    if (g_state.main_state == CMDBUS_CHARGE)
+    switch (g_state.main_state)
     {
-        if (g_state.charge_active)
+        case CMDBUS_RUNNING:
         {
-            if (++g_state.charge_cnt >= CHARGE_CARRIER_CYCLES)
+            g_isr_foc_in.iabc_meas.a = g_state.ia_meas;
+            g_isr_foc_in.iabc_meas.b = g_state.ib_meas;
+            g_isr_foc_in.iabc_meas.c = g_state.ic_meas;
+            g_isr_foc_in.udc_meas    = g_state.udc_meas;
+            fault_isr_proc(g_state.ia_meas, g_state.ib_meas, g_state.ic_meas);
+            foc_isr_proc(&g_isr_foc_in, &g_state.duties_q15);
+            tim_pwm_update_ccr(duty_to_ccr_arr(g_state.duties_q15.a), duty_to_ccr_arr(g_state.duties_q15.b), duty_to_ccr_arr(g_state.duties_q15.c));
+            break;
+        }
+        case CMDBUS_CHARGE:
+        {
+            if (g_state.charge_active)
             {
-                g_state.charge_cnt = 0;
-                if (++g_state.charge_phase >= CHARGE_PHASE_NUM)
+                if (++g_state.charge_cnt >= CHARGE_CARRIER_CYCLES)
                 {
-                    g_state.charge_active = 0; /* all phases charged: signal the thread */
-                    g_state.charge_phase  = 0;
+                    g_state.charge_cnt = 0;
+                    if (++g_state.charge_phase >= CHARGE_PHASE_NUM)
+                    {
+                        g_state.charge_active = 0;
+                        g_state.charge_phase  = 0;
+                    }
+                    else
+                    {
+                        tim_pwm_charge_phase(g_state.charge_phase);
+                    }
                 }
-                else
-                    tim_pwm_charge_phase(g_state.charge_phase);
             }
-            return;
+            break;
         }
-    }
-    else if (g_state.main_state == CMDBUS_CALI)
-    {
-        if (g_state.cali_active)
+        case CMDBUS_CALI:
         {
-            g_state.cali_sum_ib += (int32_t)adc_get_code(ADC_SEQ1_I_B);
-            g_state.cali_sum_ic += (int32_t)adc_get_code(ADC_SEQ1_I_C);
-            g_state.cali_sum_idc += (int32_t)adc_get_code(ADC_SEQ1_I_DC);
-
-            if (++g_state.cali_cnt >= CALI_SAMPLE_COUNT)
+            if (g_state.cali_active)
             {
-                g_state.adc_off_ib   = g_state.cali_sum_ib / CALI_SAMPLE_COUNT;
-                g_state.adc_off_ic   = g_state.cali_sum_ic / CALI_SAMPLE_COUNT;
-                g_state.adc_off_idc  = g_state.cali_sum_idc / CALI_SAMPLE_COUNT;
-                g_state.cali_active  = 0;
-                g_state.cali_cnt     = 0;
-                g_state.cali_sum_ib  = 0;
-                g_state.cali_sum_ic  = 0;
-                g_state.cali_sum_idc = 0;
+                g_state.cali_sum_ib += (int32_t)adc_get_code(ADC_SEQ1_I_B);
+                g_state.cali_sum_ic += (int32_t)adc_get_code(ADC_SEQ1_I_C);
+                g_state.cali_sum_idc += (int32_t)adc_get_code(ADC_SEQ1_I_DC);
+
+                if (++g_state.cali_cnt >= CALI_SAMPLE_COUNT)
+                {
+                    g_state.adc_off_ib   = g_state.cali_sum_ib / CALI_SAMPLE_COUNT;
+                    g_state.adc_off_ic   = g_state.cali_sum_ic / CALI_SAMPLE_COUNT;
+                    g_state.adc_off_idc  = g_state.cali_sum_idc / CALI_SAMPLE_COUNT;
+                    g_state.cali_active  = 0;
+                    g_state.cali_cnt     = 0;
+                    g_state.cali_sum_ib  = 0;
+                    g_state.cali_sum_ic  = 0;
+                    g_state.cali_sum_idc = 0;
+                }
             }
-            return;
+            break;
         }
-    }
-    else if (g_state.main_state == CMDBUS_RUNNING)
-    {
-        fault_isr_proc(g_state.ia_meas, g_state.ib_meas, g_state.ic_meas);
-
-        g_isr_foc_in.iabc_meas.a = g_state.ia_meas;
-        g_isr_foc_in.iabc_meas.b = g_state.ib_meas;
-        g_isr_foc_in.iabc_meas.c = g_state.ic_meas;
-        g_isr_foc_in.udc_meas    = g_state.udc_meas;
-        foc_isr_proc(&g_isr_foc_in, &g_state.duties_q15);
-
-        tim_pwm_update_ccr(duty_to_ccr_arr(g_state.duties_q15.a), duty_to_ccr_arr(g_state.duties_q15.b), duty_to_ccr_arr(g_state.duties_q15.c));
+        default:
+            break;
     }
 }
