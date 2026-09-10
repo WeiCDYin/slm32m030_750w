@@ -332,7 +332,6 @@ static void cmd_mode(const void *payload)
 
 static void cmd_speed(const void *payload)
 {
-
     const cmdbus_speed_t *p   = (const cmdbus_speed_t *)payload;
     int16_t               rpm = p->speed_rpm;
 

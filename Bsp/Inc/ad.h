@@ -11,7 +11,7 @@ extern "C"
 
 /* ADC clock + sample-time timing (HAL enum based). Used by ad.c (setup) and
  * tim.c (CCR4 trigger point). */
-#define ADC_CLK_DIV       ADC_CLOCK_PCLK_DIV4
+#define ADC_CLK_DIV       ADC_CLOCK_PCLK_DIV8
 #define ADC_SAMPLE_SYSCLK ADC_SAMPLE_8CYCLE
 
 #define ADC_CLK_DIV_NUM      (0x01 << ADC_CLK_DIV)

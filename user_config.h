@@ -85,7 +85,7 @@ extern "C"
 #define SPEED_RATE_RPM    (1450)                               /* rate speed [rpm] */
 #define SPEED_BASE_RMP    (2000)                               /* pu speed, dueto feedback speed may over flow(negative) */
 #define SPEED_REF_DEFAULT (1260)                               /* default speed reference after start [rpm] */
-#define IQ_MAX_PU         (0.3f)                               /* q-axis current clamp [pu] */
+#define IQ_MAX_PU         (0.35f)                              /* q-axis current clamp [pu] */
 #define I_BASE_A          (10.0f)                              /* max current [A] */
 #define U_BASE_V          (2.0f * DC_VOLTAGE_MAX / PI_F)       /* max phase-voltage amplitude [V] */
 #define W_BASE_HZ         (SPEED_BASE_RMP / 60.0f * MOTOR_NPP) /* max electrical frequency [Hz] */
@@ -118,7 +118,7 @@ extern "C"
  * bit0~7 one-shot: fault_set() latches immediately (HW break, ISR OC); cleared
  *                 by CTRL=3 Recovery, not gated by FAULT_DETECT_ENABLE.
  * bit8~31 poll: window *_LIMIT + *_DETECT_CNT / *_RECOVER_CNT (1 ms polls). */
-#define FAULT_DETECT_ENABLE        (0)
+#define FAULT_DETECT_ENABLE        (1)
 #define DC_IN_OVER_VOLTAGE_ENABLE  (1)
 #define DC_IN_UNDER_VOLTAGE_ENABLE (1)
 #define POWER_OVER_LOAD_ENABLE     (1)

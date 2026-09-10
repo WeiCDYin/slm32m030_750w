@@ -106,7 +106,7 @@ static int16_t bench_vec_mag_pct(void)
 
 void poke_task_init(void)
 {
-    g_poke.spd_rpm     = 100;
+    g_poke.spd_rpm     = SPEED_REF_DEFAULT;
     g_poke.da_pct      = 50;
     g_poke.db_pct      = 50;
     g_poke.dc_pct      = 50;
@@ -119,7 +119,7 @@ void poke_task_poll(void)
 {
     // for poke process
     static uint8_t cur_mode    = CMDBUS_RUN_MODE_NONE;
-    static int16_t spd_rpm     = 0;
+    static int16_t spd_rpm     = SPEED_REF_DEFAULT;
     static int16_t vv_mag_pct  = 0;
     static int16_t cv_mag_pct  = 0;
     static int16_t vec_ang_deg = 0;
