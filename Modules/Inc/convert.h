@@ -195,7 +195,18 @@ static inline uint32_t ac_code_to_v(int32_t count)
 
 static inline uint16_t udc_idc_to_pwr_x10(uint32_t udc_mv, uint32_t idc_ma)
 {
-    return (uint16_t)(((udc_mv >> LOAD_UDC_PRESHIFT) * (idc_ma >> LOAD_IDC_PRESHIFT) * (uint32_t)LOAD_X10_FIXED) >> LOAD_X10_SHIFT);
+#define PWR_IIR_SHIFT 4
+    static int32_t pwr_filter = 0;
+    int32_t        raw;
+
+    raw = (int32_t)(((udc_mv >> LOAD_UDC_PRESHIFT) * (idc_ma >> LOAD_IDC_PRESHIFT) * (uint32_t)LOAD_X10_FIXED) >> LOAD_X10_SHIFT);
+    pwr_filter += (raw - pwr_filter) >> PWR_IIR_SHIFT;
+
+    if (pwr_filter < 0)
+        pwr_filter = 0;
+    if (pwr_filter > UINT16_MAX)
+        pwr_filter = UINT16_MAX;
+    return (uint16_t)pwr_filter;
 }
 
 #ifdef __cplusplus
