@@ -61,7 +61,7 @@ typedef struct
     uint16_t         charge_cnt;
 
     /* Phase-current offset calibration (CMDBUS_CALI): the carrier ISR accumulates
-     * raw I_B / I_C zero-current codes while cali_active==1; after CALI_SAMPLE_COUNT
+     * raw I_B / I_C zero-current codes while cali_active==1; after ADC_OFFSET_CALI_SAMPLE_CNT
      * frames it publishes the averaged offsets into adc_off_ib/ic and clears
      * cali_active. */
     volatile uint8_t  cali_active;

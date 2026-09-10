@@ -69,11 +69,6 @@ extern "C"
 #define IDC_FROM_PHASE_DUTY (1u)
 #define IDC_SOURCE          (IDC_FROM_PHASE_DUTY)
 
-/* CMDBUS_CALI phase-current zero offset: zero-current code = 12-bit mid-scale */
-#define CALI_OFFSET_NOMINAL (2048) /* zero-current bias [adc count] */
-#define CALI_OFFSET_TOL     (100)  /* allowed |offset - nominal| [adc count] */
-#define CALI_SAMPLE_COUNT   (128)  /* carrier frames averaged */
-
 /* CMDBUS_CHARGE bootstrap pre-charge: low-side on, per phase [carrier cycles] */
 #define CHARGE_CARRIER_CYCLES (5)
 
@@ -123,27 +118,36 @@ extern "C"
  * bit0~7 one-shot: fault_set() latches immediately (HW break, ISR OC); cleared
  *                 by CTRL=3 Recovery, not gated by FAULT_DETECT_ENABLE.
  * bit8~31 poll: window *_LIMIT + *_DETECT_CNT / *_RECOVER_CNT (1 ms polls). */
-#define FAULT_DETECT_ENABLE        (1) /* master switch for poll channels */
+#define FAULT_DETECT_ENABLE        (0)
 #define DC_IN_OVER_VOLTAGE_ENABLE  (1)
 #define DC_IN_UNDER_VOLTAGE_ENABLE (1)
-#define POWER_OVER_LOAD_ENABLE     (0)
-#define MOTOR_OVER_SPEED_ENABLE    (0)
+#define POWER_OVER_LOAD_ENABLE     (1)
+#define MOTOR_OVER_SPEED_ENABLE    (1)
 #define TEMPERATURE_OVER_ENABLE    (1)
 #define AC_IN_OVER_VOLTAGE_ENABLE  (1)
 #define AC_IN_UNDER_VOLTAGE_ENABLE (1)
 #define AC_IN_LOST_PHASE_ENABLE    (1)
-
+/***************** [one shot] fault threshold setting *****************/
 /* id 0: DC bus over current HW (DAC comparator; code built in BSP afe.h) */
-#define HW_OC_TRIP_A (8.0f) /* dc break over current [A] */
+#define HW_OC_TRIP_A (8.0f) /* [A] */
 /* id 1: DC bus over current SW */
-#define SW_BUS_OC_TRIP_A  (8.0f) /* dc software over current [A] */
+#define SW_BUS_OC_TRIP_A  (8.0f) /* [A] */
 #define SW_BUS_OC_TRIP_PU ((q15_t)((SW_BUS_OC_TRIP_A / I_BASE_A) * Q15_ONE + 0.5f))
 /* id 2: DC phase over current SW */
-#define SW_PHASE_OC_TRIP_A  (8.0f) /* dc phase software over current [A] */
+#define SW_PHASE_OC_TRIP_A  (8.0f) /* [A] */
 #define SW_PHASE_OC_TRIP_PU ((q15_t)((SW_PHASE_OC_TRIP_A / I_BASE_A) * Q15_ONE + 0.5f))
+/* id 3: motor phase lost error */
+/*
+ * todo
+ */
+/* id 4: adc offset calibration error */
+#define ADC_OFFSET_CALI_DEFAULT    (2048) /* [lsb] */
+#define ADC_OFFSET_CALI_THRESHOLD  (100)
+#define ADC_OFFSET_CALI_SAMPLE_CNT (128)
+/* id 5: fault set by user protocol */
 /* id 6: FOC start timeout */
 #define FOC_STARTUP_TIMEOUT_MS (10000u) /* startup sequence (RESYNC/STARTUP -> sensorless FOC) */
-
+/***************** [poll] fault threshold setting *****************/
 /* id 8: DC bus over voltage (sample: udc_mv [mV]) */
 #define DC_IN_OVER_VOLTAGE_LIMIT       (DC_VOLTAGE_MAX * 1000.0f)
 #define DC_IN_OVER_VOLTAGE_DETECT_CNT  (1000)
@@ -153,15 +157,15 @@ extern "C"
 #define DC_IN_UNDER_VOLTAGE_DETECT_CNT  (1000)
 #define DC_IN_UNDER_VOLTAGE_RECOVER_CNT (1000)
 /* id 10: output over load (sample: Vdc x Idc [0.1 W]) */
-#define POWER_OVER_LOAD_LIMIT       (8000) /* output power [0.1 W] */
+#define POWER_OVER_LOAD_LIMIT       (13000) /* [0.1 W] */
 #define POWER_OVER_LOAD_DETECT_CNT  (5000)
 #define POWER_OVER_LOAD_RECOVER_CNT (5000)
 /* id 11: motor over speed (sample: spd_rpm_fb [rpm]) */
-#define MOTOR_OVER_SPEED_LIMIT       (1680)
+#define MOTOR_OVER_SPEED_LIMIT       (1600) /* [rpm] */
 #define MOTOR_OVER_SPEED_DETECT_CNT  (100)
 #define MOTOR_OVER_SPEED_RECOVER_CNT (100)
-/* id 12: over temperature (sample: NTC [deg C]) */
-#define TEMPERATURE_OVER_LIMIT       (95)
+/* id 12: over temperature (sample: NTC [C]) */
+#define TEMPERATURE_OVER_LIMIT       (95) /* [C]*/
 #define TEMPERATURE_OVER_DETECT_CNT  (1000)
 #define TEMPERATURE_OVER_RECOVER_CNT (1000)
 /* id 13: AC over voltage (sample: AC rectified HIGH peak [V]) */

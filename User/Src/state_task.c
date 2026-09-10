@@ -20,9 +20,9 @@ state_para_t g_state = {
     .run_mode       = CMDBUS_RUN_MODE_IF_FOC,
     .ctrl_req       = CMDBUS_CTRL_NONE,
     .spd_rpm_ref    = SPEED_REF_DEFAULT,
-    .adc_off_ib     = CALI_OFFSET_NOMINAL,
-    .adc_off_ic     = CALI_OFFSET_NOMINAL,
-    .adc_off_idc    = CALI_OFFSET_NOMINAL,
+    .adc_off_ib     = ADC_OFFSET_CALI_DEFAULT,
+    .adc_off_ic     = ADC_OFFSET_CALI_DEFAULT,
+    .adc_off_idc    = ADC_OFFSET_CALI_DEFAULT,
     .ac_peak_high_v = 220,
     .ac_peak_low_v  = 220,
 };
@@ -182,12 +182,13 @@ static void exit_cali(void)
 
 static bool cali_offset_ok(void)
 {
-    int32_t delta_offset_ib  = g_state.adc_off_ib - (int32_t)CALI_OFFSET_NOMINAL;
-    int32_t delta_offset_ic  = g_state.adc_off_ic - (int32_t)CALI_OFFSET_NOMINAL;
-    int32_t delta_offset_idc = g_state.adc_off_idc - (int32_t)CALI_OFFSET_NOMINAL;
+    int32_t delta_offset_ib  = g_state.adc_off_ib - (int32_t)ADC_OFFSET_CALI_DEFAULT;
+    int32_t delta_offset_ic  = g_state.adc_off_ic - (int32_t)ADC_OFFSET_CALI_DEFAULT;
+    int32_t delta_offset_idc = g_state.adc_off_idc - (int32_t)ADC_OFFSET_CALI_DEFAULT;
 
-    if (delta_offset_ib < -(int32_t)CALI_OFFSET_TOL || delta_offset_ib > (int32_t)CALI_OFFSET_TOL || delta_offset_ic < -(int32_t)CALI_OFFSET_TOL ||
-        delta_offset_ic > (int32_t)CALI_OFFSET_TOL || delta_offset_idc < -(int32_t)CALI_OFFSET_TOL || delta_offset_idc > (int32_t)CALI_OFFSET_TOL)
+    if (delta_offset_ib < -(int32_t)ADC_OFFSET_CALI_THRESHOLD || delta_offset_ib > (int32_t)ADC_OFFSET_CALI_THRESHOLD ||
+        delta_offset_ic < -(int32_t)ADC_OFFSET_CALI_THRESHOLD || delta_offset_ic > (int32_t)ADC_OFFSET_CALI_THRESHOLD ||
+        delta_offset_idc < -(int32_t)ADC_OFFSET_CALI_THRESHOLD || delta_offset_idc > (int32_t)ADC_OFFSET_CALI_THRESHOLD)
         return false;
 
     return true;
@@ -450,9 +451,10 @@ static void ac_peak_1ms_proc(void)
     {
         g_state.ac_peak_high_v = (uint16_t)hi_v;
         g_state.ac_peak_low_v  = (uint16_t)lo_v;
-        cnt                    = 0;
-        hi_v                   = 0;
-        lo_v                   = 0xFFFFFFFFu;
+
+        cnt  = 0;
+        hi_v = 0;
+        lo_v = 0xFFFFFFFFu;
     }
 }
 
@@ -565,11 +567,11 @@ void state_task_isr()
                 g_state.cali_sum_ic += (int32_t)adc_get_code(ADC_SEQ1_I_C);
                 g_state.cali_sum_idc += (int32_t)adc_get_code(ADC_SEQ1_I_DC);
 
-                if (++g_state.cali_cnt >= CALI_SAMPLE_COUNT)
+                if (++g_state.cali_cnt >= ADC_OFFSET_CALI_SAMPLE_CNT)
                 {
-                    g_state.adc_off_ib   = g_state.cali_sum_ib / CALI_SAMPLE_COUNT;
-                    g_state.adc_off_ic   = g_state.cali_sum_ic / CALI_SAMPLE_COUNT;
-                    g_state.adc_off_idc  = g_state.cali_sum_idc / CALI_SAMPLE_COUNT;
+                    g_state.adc_off_ib   = g_state.cali_sum_ib / ADC_OFFSET_CALI_SAMPLE_CNT;
+                    g_state.adc_off_ic   = g_state.cali_sum_ic / ADC_OFFSET_CALI_SAMPLE_CNT;
+                    g_state.adc_off_idc  = g_state.cali_sum_idc / ADC_OFFSET_CALI_SAMPLE_CNT;
                     g_state.cali_active  = 0;
                     g_state.cali_cnt     = 0;
                     g_state.cali_sum_ib  = 0;
