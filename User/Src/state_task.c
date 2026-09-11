@@ -186,11 +186,12 @@ static bool cali_offset_ok(void)
     int32_t delta_offset_ic  = g_state.adc_off_ic - (int32_t)ADC_OFFSET_CALI_DEFAULT;
     int32_t delta_offset_idc = g_state.adc_off_idc - (int32_t)ADC_OFFSET_CALI_DEFAULT;
 
+#if FAULT_ONE_SHOT_ZERO_OFFSET_ERR_ENABLE
     if (delta_offset_ib < -(int32_t)ADC_OFFSET_CALI_THRESHOLD || delta_offset_ib > (int32_t)ADC_OFFSET_CALI_THRESHOLD ||
         delta_offset_ic < -(int32_t)ADC_OFFSET_CALI_THRESHOLD || delta_offset_ic > (int32_t)ADC_OFFSET_CALI_THRESHOLD ||
         delta_offset_idc < -(int32_t)ADC_OFFSET_CALI_THRESHOLD || delta_offset_idc > (int32_t)ADC_OFFSET_CALI_THRESHOLD)
         return false;
-
+#endif
     return true;
 }
 
@@ -207,7 +208,9 @@ static void run_cali(void)
     else if (!g_state.cali_active)
     {
         if (cali_offset_ok())
+        {
             state_switch(CMDBUS_CHARGE);
+        }
         else
         {
             fault_set(FAULT_ID_ZERO_OFFSET_ERROR);

@@ -177,36 +177,36 @@ void fault_init(void)
 {
     fault_reset();
 
-#if FAULT_DETECT_ENABLE
-#if DC_IN_OVER_VOLTAGE_ENABLE
+#if FAULT_POLL_DETECT_ALL_ENABLE
+#if FAULT_POLL_DC_IN_OVER_VOLTAGE_ENABLE
     fault_register(FAULT_ID_DC_OVER_VOLTAGE, FAULT_MASK_UPPER, DC_IN_OVER_VOLTAGE_LIMIT, 0, DC_IN_OVER_VOLTAGE_DETECT_CNT,
                    DC_IN_OVER_VOLTAGE_RECOVER_CNT);
 #endif
-#if DC_IN_UNDER_VOLTAGE_ENABLE
+#if FAULT_POLL_DC_IN_UNDER_VOLTAGE_ENABLE
     fault_register(FAULT_ID_DC_UNDER_VOLTAGE, FAULT_MASK_LOWER, 0, DC_IN_UNDER_VOLTAGE_LIMIT, DC_IN_UNDER_VOLTAGE_DETECT_CNT,
                    DC_IN_UNDER_VOLTAGE_RECOVER_CNT);
 #endif
-#if POWER_OVER_LOAD_ENABLE
+#if FAULT_POLL_POWER_OVER_LOAD_ENABLE
     /* over loading(power) */
     fault_register(FAULT_ID_OVER_LOADING, FAULT_MASK_UPPER, POWER_OVER_LOAD_LIMIT, 0, POWER_OVER_LOAD_DETECT_CNT, POWER_OVER_LOAD_RECOVER_CNT);
 #endif
-#if MOTOR_OVER_SPEED_ENABLE
+#if FAULT_POLL_MOTOR_OVER_SPEED_ENABLE
     /* over speed */
     fault_register(FAULT_ID_OVER_SPEED, FAULT_MASK_UPPER, MOTOR_OVER_SPEED_LIMIT, 0, MOTOR_OVER_SPEED_DETECT_CNT, MOTOR_OVER_SPEED_RECOVER_CNT);
 #endif
-#if TEMPERATURE_OVER_ENABLE
+#if FAULT_POLL_TEMPERATURE_OVER_ENABLE
     /* over temperature */
     fault_register(FAULT_ID_OVER_TEMPERATURE, FAULT_MASK_UPPER, TEMPERATURE_OVER_LIMIT, 0, TEMPERATURE_OVER_DETECT_CNT, TEMPERATURE_OVER_RECOVER_CNT);
 #endif
-#if AC_IN_OVER_VOLTAGE_ENABLE
+#if FAULT_POLL_AC_IN_OVER_VOLTAGE_ENABLE
     fault_register(FAULT_ID_AC_OVER_VOLTAGE, FAULT_MASK_UPPER, AC_IN_OVER_VOLTAGE_LIMIT, 0, AC_IN_OVER_VOLTAGE_DETECT_CNT,
                    AC_IN_OVER_VOLTAGE_RECOVER_CNT);
 #endif
-#if AC_IN_UNDER_VOLTAGE_ENABLE
+#if FAULT_POLL_AC_IN_UNDER_VOLTAGE_ENABLE
     fault_register(FAULT_ID_AC_UNDER_VOLTAGE, FAULT_MASK_LOWER, 0, AC_IN_UNDER_VOLTAGE_LIMIT, AC_IN_UNDER_VOLTAGE_DETECT_CNT,
                    AC_IN_UNDER_VOLTAGE_RECOVER_CNT);
 #endif
-#if AC_IN_LOST_PHASE_ENABLE
+#if FAULT_POLL_AC_IN_LOST_PHASE_ENABLE
     /* ac lost phase: LOWER edge on the rectified common-point LOW peak (valley);
      * it collapses when a phase drops (see main.h id 15) */
     fault_register(FAULT_ID_AC_LOST_PHASE, FAULT_MASK_LOWER, 0, AC_IN_LOST_PHASE_LIMIT, AC_IN_LOST_PHASE_DETECT_CNT, AC_IN_LOST_PHASE_RECOVER_CNT);
@@ -216,30 +216,30 @@ void fault_init(void)
 
 void fault_1ms_proc(void)
 {
-#if FAULT_DETECT_ENABLE
+#if FAULT_POLL_DETECT_ALL_ENABLE
 
-#if AC_IN_OVER_VOLTAGE_ENABLE
+#if FAULT_POLL_AC_IN_OVER_VOLTAGE_ENABLE
     fault_poll(FAULT_ID_AC_OVER_VOLTAGE, (int32_t)g_monitor_para.ac_peak_high_v);
 #endif
-#if AC_IN_UNDER_VOLTAGE_ENABLE
+#if FAULT_POLL_AC_IN_UNDER_VOLTAGE_ENABLE
     fault_poll(FAULT_ID_AC_UNDER_VOLTAGE, (int32_t)g_monitor_para.ac_peak_high_v);
 #endif
-#if AC_IN_LOST_PHASE_ENABLE
+#if FAULT_POLL_AC_IN_LOST_PHASE_ENABLE
     fault_poll(FAULT_ID_AC_LOST_PHASE, (int32_t)g_monitor_para.ac_peak_low_v);
 #endif
-#if DC_IN_OVER_VOLTAGE_ENABLE
+#if FAULT_POLL_DC_IN_OVER_VOLTAGE_ENABLE
     fault_poll(FAULT_ID_DC_OVER_VOLTAGE, (int32_t)g_monitor_para.udc_mv);
 #endif
-#if DC_IN_UNDER_VOLTAGE_ENABLE
+#if FAULT_POLL_DC_IN_UNDER_VOLTAGE_ENABLE
     fault_poll(FAULT_ID_DC_UNDER_VOLTAGE, (int32_t)g_monitor_para.udc_mv);
 #endif
-#if POWER_OVER_LOAD_ENABLE
+#if FAULT_POLL_POWER_OVER_LOAD_ENABLE
     fault_poll(FAULT_ID_OVER_LOADING, g_monitor_para.pwr_watt_fb);
 #endif
-#if TEMPERATURE_OVER_ENABLE
+#if FAULT_POLL_TEMPERATURE_OVER_ENABLE
     fault_poll(FAULT_ID_OVER_TEMPERATURE, g_monitor_para.temperature);
 #endif
-#if MOTOR_OVER_SPEED_ENABLE
+#if FAULT_POLL_MOTOR_OVER_SPEED_ENABLE
     fault_poll(FAULT_ID_OVER_SPEED, g_monitor_para.spd_rpm_fb);
 #endif
 #endif
@@ -247,6 +247,7 @@ void fault_1ms_proc(void)
 
 void fault_isr_proc(q15_t ia, q15_t ib, q15_t ic)
 {
+#if FAULT_ONE_SHOT_SW_OVER_CURRENT_ENABLE
     // phase current over protection
     if ((int32_t)ia >= (int32_t)SW_PHASE_OC_TRIP_PU || (int32_t)ia <= -(int32_t)SW_PHASE_OC_TRIP_PU || (int32_t)ib >= (int32_t)SW_PHASE_OC_TRIP_PU ||
         (int32_t)ib <= -(int32_t)SW_PHASE_OC_TRIP_PU || (int32_t)ic >= (int32_t)SW_PHASE_OC_TRIP_PU || (int32_t)ic <= -(int32_t)SW_PHASE_OC_TRIP_PU)
@@ -255,6 +256,7 @@ void fault_isr_proc(q15_t ia, q15_t ib, q15_t ic)
         tim_pwm_disable();
         return;
     }
+#endif
 }
 
 void fault_set(uint16_t id)

@@ -30,7 +30,7 @@ extern "C"
  *
  *   [no used]  Not implemented. No macros, never registered, never set.
  *
- * FAULT_DETECT_ENABLE (main.h) gates the POLL channels only; a one-shot trip
+ * FAULT_POLL_DETECT_ALL_ENABLE (main.h) gates the POLL channels only; a one-shot trip
  * always latches, because the hardware event already happened.
  *
  * Both classes land in the same packed fault code: bit (1u << id) in

@@ -111,6 +111,8 @@ void foc_1ms_proc(void)
      * If it does not hand over within that window, the observer never locked
      * and the run is latched as a startup fault. The counter clears the moment
      * the drive reaches SENSORLESS_FOC or falls back to IDLE. */
+
+#if FAULT_ONE_SHOT_FOC_STARTUP_ERR_ENABLE
     static uint16_t startup_ms = 0;
     if_foc_stage_t  stage      = g_hsm_ptr->mc->if_foc_stage;
     if (stage == RESYNC || stage == STARTUP)
@@ -125,6 +127,7 @@ void foc_1ms_proc(void)
     {
         startup_ms = 0;
     }
+#endif
 }
 
 void foc_poll_proc(uint8_t state)

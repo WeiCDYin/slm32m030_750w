@@ -66,7 +66,11 @@ void tim_pwm_init(void)
     tim1_oc_init.Pulse        = TIM_CCR4_TRIGGER_ADC_CNT; /* leads the apex so the SEQ1 current channels (last two) sample around it */
     HAL_TIM_PWM_ConfigChannel(&g_tim1_handle, &tim1_oc_init, TIM_CHANNEL_4);
 
-    tim1_break_cfg.BreakState       = TIM_BREAK_ENABLE;
+#if FAULT_ONE_SHOT_HW_OVER_CURRENT_ENABLE
+    tim1_break_cfg.BreakState = TIM_BREAK_ENABLE;
+#else
+    tim1_break_cfg.BreakState = TIM_BREAK_DISABLE;
+#endif
     tim1_break_cfg.BreakPolarity    = TIM_BREAKPOLARITY_HIGH;
     tim1_break_cfg.DeadTime         = DTG7_0;
     tim1_break_cfg.OffStateRunMode  = TIM_OSSR_ENABLE; // brake & MOE=1, PWM output setting by OCIdleState and OCNIdleState without floating

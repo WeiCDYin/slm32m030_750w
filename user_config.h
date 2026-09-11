@@ -116,17 +116,24 @@ extern "C"
 
 /* ===== 7. fault parameters =====
  * bit0~7 one-shot: fault_set() latches immediately (HW break, ISR OC); cleared
- *                 by CTRL=3 Recovery, not gated by FAULT_DETECT_ENABLE.
+ *                 by CTRL=3 Recovery, not gated by FAULT_POLL_DETECT_ALL_ENABLE.
  * bit8~31 poll: window *_LIMIT + *_DETECT_CNT / *_RECOVER_CNT (1 ms polls). */
-#define FAULT_DETECT_ENABLE        (1)
-#define DC_IN_OVER_VOLTAGE_ENABLE  (1)
-#define DC_IN_UNDER_VOLTAGE_ENABLE (1)
-#define POWER_OVER_LOAD_ENABLE     (1)
-#define MOTOR_OVER_SPEED_ENABLE    (1)
-#define TEMPERATURE_OVER_ENABLE    (1)
-#define AC_IN_OVER_VOLTAGE_ENABLE  (1)
-#define AC_IN_UNDER_VOLTAGE_ENABLE (1)
-#define AC_IN_LOST_PHASE_ENABLE    (1)
+// poll fault enable/disable switcher 
+#define FAULT_POLL_DETECT_ALL_ENABLE           (1)
+#define FAULT_POLL_DC_IN_OVER_VOLTAGE_ENABLE   (1)
+#define FAULT_POLL_DC_IN_UNDER_VOLTAGE_ENABLE  (1)
+#define FAULT_POLL_POWER_OVER_LOAD_ENABLE      (1)
+#define FAULT_POLL_MOTOR_OVER_SPEED_ENABLE     (1)
+#define FAULT_POLL_TEMPERATURE_OVER_ENABLE     (1)
+#define FAULT_POLL_AC_IN_OVER_VOLTAGE_ENABLE   (1)
+#define FAULT_POLL_AC_IN_UNDER_VOLTAGE_ENABLE  (1)
+#define FAULT_POLL_AC_IN_LOST_PHASE_ENABLE     (1)
+// one-shot fault enable/disable switcher
+#define FAULT_ONE_SHOT_HW_OVER_CURRENT_ENABLE  (1)
+#define FAULT_ONE_SHOT_SW_OVER_CURRENT_ENABLE  (1)
+#define FAULT_ONE_SHOT_MOTOR_LOST_PHASE_ENABLE (1)
+#define FAULT_ONE_SHOT_ZERO_OFFSET_ERR_ENABLE  (1)
+#define FAULT_ONE_SHOT_FOC_STARTUP_ERR_ENABLE  (0)
 /***************** [one shot] fault threshold setting *****************/
 /* id 0: DC bus over current HW (DAC comparator; code built in BSP afe.h) */
 #define HW_OC_TRIP_A (8.0f) /* [A] */
