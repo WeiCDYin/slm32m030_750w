@@ -93,7 +93,7 @@ void HAL_USART_MspInit(USART_HandleTypeDef *husart)
         HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
         HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_RESET); /* start in receive */
 
-        HAL_NVIC_SetPriority(USART2_IRQn, 2);
+        HAL_NVIC_SetPriority(USART2_IRQn, 1);
         HAL_NVIC_EnableIRQ(USART2_IRQn);
     }
 }

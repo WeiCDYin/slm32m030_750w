@@ -126,7 +126,7 @@ void adc_hw_start(void)
 {
     MODIFY_REG(ADC->SEQ1CR1, ADC_SEQ1CR1_SEQ1_TRIG1_SEL_Msk, (uint32_t)ADC_TRIG_SEL_TIM1_CC4 << ADC_SEQ1CR1_SEQ1_TRIG1_SEL_Pos);
 
-    HAL_NVIC_SetPriority(DMA1_Channel0_5_IRQn, 1);
+    HAL_NVIC_SetPriority(DMA1_Channel0_5_IRQn, 2);
     HAL_NVIC_EnableIRQ(DMA1_Channel0_5_IRQn);
 
     g_adc_hdma_seq1.State = HAL_DMA_STATE_READY;

@@ -32,7 +32,7 @@ BOOL xMBPortTimersInit(USHORT usTimeOut50us)
     g_tim6_handle.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
     HAL_TIM_Base_Init(&g_tim6_handle);
 
-    HAL_NVIC_SetPriority(TIM6_IRQn, 2);
+    HAL_NVIC_SetPriority(TIM6_IRQn, 3);
     HAL_NVIC_EnableIRQ(TIM6_IRQn);
 
     return TRUE;
