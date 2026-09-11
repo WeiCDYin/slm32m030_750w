@@ -8,7 +8,6 @@ typedef struct
 {
     uint8_t  cmd;
     uint8_t  len;
-    uint16_t pad;
     union
     {
         cmdbus_ctrl_t  ctrl;
