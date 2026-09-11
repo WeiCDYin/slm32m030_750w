@@ -16,8 +16,9 @@ volatile uint32_t g_poll_cyc;
 volatile uint32_t g_poll_cyc_max;
 volatile uint32_t g_isr_cyc;
 volatile uint32_t g_isr_cyc_max;
-volatile uint32_t g_load_pct; 
+volatile uint32_t g_load_pct;
 volatile uint32_t g_load_pct_max;
+volatile uint8_t  g_auto_test_flag = AUTO_RUN_MODE;
 
 /* Q24 reciprocal scale factors for the load formula
  *   load% = (poll_cyc*1000 + isr_cyc*PWM_FREQ_HZ) * 100 / SYSCLK
@@ -79,9 +80,9 @@ int main(void)
 
     iwdg_init();
 
-    uint32_t last_1ms        = systick_get();
-    uint32_t restart_delay   = 0;
-    uint8_t  auto_start_flag = 0;
+    uint32_t last_1ms          = systick_get();
+    uint32_t restart_delay     = 0;
+    uint8_t  free_running_flag = 0;
     while (1)
     {
         uint32_t t0 = tim_load_poll_get();
@@ -100,38 +101,47 @@ int main(void)
             state_task_1ms();
 
             iwdg_refresh();
-#if AUTO_RUN_MODE == 1
-            // free-running
-            if (auto_start_flag == 0)
-            {
-                restart_delay++;
 
-                if (restart_delay == AUTO_FREE_RUNNING_DELAY_MS)
+            switch (g_auto_test_flag)
+            {
+                case 1: // free-running test
                 {
-                    cmdbus_ctrl_t ctrl = {.ctrl_type = CMDBUS_CTRL_START};
-                    cmdbus_post(CMDBUS_CMD_CTRL, &ctrl, sizeof(ctrl));
-                    cmdbus_speed_t spd = {.speed_rpm = AUTO_RUN_SPD_RPM};
-                    cmdbus_post(CMDBUS_CMD_SPEED, &spd, sizeof(spd));
-                    auto_start_flag = 1;
+                    if (free_running_flag == 0)
+                    {
+                        restart_delay++;
+
+                        if (restart_delay == AUTO_FREE_RUNNING_DELAY_MS)
+                        {
+                            cmdbus_ctrl_t ctrl = {.ctrl_type = CMDBUS_CTRL_START};
+                            cmdbus_post(CMDBUS_CMD_CTRL, &ctrl, sizeof(ctrl));
+                            cmdbus_speed_t spd = {.speed_rpm = AUTO_RUN_SPD_RPM};
+                            cmdbus_post(CMDBUS_CMD_SPEED, &spd, sizeof(spd));
+                            free_running_flag = 1;
+                        }
+                    }
+                    break;
                 }
+                case 2: // start-stop test
+                {
+                    restart_delay++;
+                    if (restart_delay == AUTO_TEST_STOP_TIME_MS)
+                    {
+                        cmdbus_ctrl_t ctrl = {.ctrl_type = CMDBUS_CTRL_START};
+                        cmdbus_post(CMDBUS_CMD_CTRL, &ctrl, sizeof(ctrl));
+                        cmdbus_speed_t spd = {.speed_rpm = AUTO_RUN_SPD_RPM};
+                        cmdbus_post(CMDBUS_CMD_SPEED, &spd, sizeof(spd));
+                    }
+                    else if (restart_delay == AUTO_TEST_START_TIME_MS)
+                    {
+                        cmdbus_ctrl_t ctrl = {.ctrl_type = CMDBUS_CTRL_STOP};
+                        cmdbus_post(CMDBUS_CMD_CTRL, &ctrl, sizeof(ctrl));
+                        restart_delay = 0;
+                    }
+                    break;
+                }
+                default:
+                    break;
             }
-#elif AUTO_RUN_MODE == 2
-            // start-stop test
-            restart_delay++;
-            if (restart_delay == AUTO_TEST_STOP_TIME_MS)
-            {
-                cmdbus_ctrl_t ctrl = {.ctrl_type = CMDBUS_CTRL_START};
-                cmdbus_post(CMDBUS_CMD_CTRL, &ctrl, sizeof(ctrl));
-                cmdbus_speed_t spd = {.speed_rpm = AUTO_RUN_SPD_RPM};
-                cmdbus_post(CMDBUS_CMD_SPEED, &spd, sizeof(spd));
-            }
-            else if (restart_delay == AUTO_TEST_START_TIME_MS)
-            {
-                cmdbus_ctrl_t ctrl = {.ctrl_type = CMDBUS_CTRL_STOP};
-                cmdbus_post(CMDBUS_CMD_CTRL, &ctrl, sizeof(ctrl));
-                restart_delay = 0;
-            }
-#endif
 
             g_load_pct = (g_poll_cyc * LOAD_K_POLL + g_isr_cyc * LOAD_K_ISR) >> LOAD_Q;
             if (g_load_pct > g_load_pct_max)

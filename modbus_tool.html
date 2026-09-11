@@ -18,8 +18,8 @@
     0x0003 FAULT_LATCH2 r   sticky fault history, HIGH 16 bits (bits 16-31)
     0x0004 REF_SPEED    rw  speed setpoint, rpm (dec; +-1460 = +-1.0 pu)
     0x0005 ACT_SPEED    r   actual speed, rpm
-    0x0006 REF_POWER    rw  power setpoint, W
-    0x0007 ACT_POWER    r   actual power, W (DC bus V * I)
+     0x0006 REF_POWER    rw  power setpoint, 0.1 W
+     0x0007 ACT_POWER    r   actual power, 0.1 W (DC bus V * I)
     0x0008 ACT_TEMP     r   NTC temperature, deg C (signed)
     0x0010 MODE         rw  run mode (debug): 1=DUTY 2=VV 3=VF 4=CV 5=IF 6=IF_FOC
     0x0011 DUTY_A       rw  phase-A duty, percent 0~100 (debug)
@@ -138,7 +138,7 @@
     </div>
     <div class="row" style="border-top:1px dashed var(--line); margin-top:6px; padding-top:6px;">
       <label style="display:flex;align-items:center;gap:4px;cursor:pointer">
-        <input type="checkbox" id="pollEnable" checked style="width:auto;min-width:0"> 周期读取
+        <input type="checkbox" id="pollEnable" style="width:auto;min-width:0"> 周期读取
       </label>
       <label>间隔</label>
       <input type="number" id="pollInterval" value="1000" min="100" max="60000" step="100" style="width:90px;">
@@ -227,18 +227,19 @@
 
       <div class="row" style="margin:0">
         <input type="text" class="val-in" id="valActSpeed" readonly value="-">
+        <span class="t-dim" style="font-size:12px;">rpm</span>
         <button id="btnReadActSpeed">读</button>
       </div>
     </div>
     <div class="reg">
       <div>
         <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" class="pollChk" data-addr="6" style="width:auto;min-width:0"> <span class="name">0x0006</span></label>
-        <div class="desc">REF_POWER · 功率给定 W · rw</div>
+        <div class="desc">REF_POWER · 功率给定 0.1W · rw</div>
         <div class="note">应用层消费</div>
       </div>
       <div class="row" style="margin:0">
         <input type="number" id="refPowerVal" value="0" min="0" max="65535" step="10" style="flex:1;min-width:0;">
-        <span class="t-dim" style="font-size:12px;">W</span>
+        <span class="t-dim" style="font-size:12px;">0.1W</span>
         <button id="btnRefPower" class="primary">设置</button>
         <button id="btnReadRefPower">读</button>
       </div>
@@ -246,12 +247,13 @@
     <div class="reg">
       <div>
         <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" class="pollChk" data-addr="7" checked style="width:auto;min-width:0"> <span class="name">0x0007</span></label>
-        <div class="desc">ACT_POWER · 实际功率 W · r</div>
+        <div class="desc">ACT_POWER · 实际功率 0.1W · r</div>
         <div class="note">母线 V×I 估算</div>
       </div>
 
       <div class="row" style="margin:0">
         <input type="text" class="val-in" id="valActPower" readonly value="-">
+        <span class="t-dim" style="font-size:12px;">0.1W</span>
         <button id="btnReadActPower">读</button>
       </div>
     </div>
@@ -264,6 +266,7 @@
 
       <div class="row" style="margin:0">
         <input type="text" class="val-in" id="valActTemp" readonly value="-">
+        <span class="t-dim" style="font-size:12px;">°C</span>
         <button id="btnReadActTemp">读</button>
       </div>
     </div>
@@ -601,6 +604,40 @@ async function request(pdu) {
   return { func: respFunc, data: resp.slice(off, -2) };
 }
 
+/* ---------------- Serial transaction queue ----------------
+ * ALL bus access (periodic poll + manual read/write) is funneled through a
+ * single FIFO processed by one worker, so a manual action can never collide
+ * with an in-flight poll frame (Web Serial allows only ONE read() at a time).
+ * Each job = { run, onOk, onErr }. On any failure the whole queue is drained
+ * and cleared, so a bad frame can't wedge later requests. */
+const txQueue = [];
+let txBusy = false;
+
+function txPush(run, onOk, onErr) {
+  txQueue.push({ run, onOk, onErr });
+  txDrain();
+}
+
+async function txDrain() {
+  if (txBusy) return;
+  txBusy = true;
+  try {
+    while (txQueue.length) {
+      const job = txQueue.shift();
+      try {
+        await job.run();
+        if (job.onOk) job.onOk();
+      } catch (e) {
+        if (job.onErr) job.onErr(e);
+        txQueue.length = 0; /* 失败：清空队列 */
+        break;
+      }
+    }
+  } finally {
+    txBusy = false;
+  }
+}
+
 /* ---------------- Register operations ---------------- */
 function u16(hi, lo) { return (hi << 8) | lo; }
 function s16(hi, lo) { const v = u16(hi, lo); return v >= 0x8000 ? v - 0x10000 : v; }
@@ -620,6 +657,38 @@ async function writeRegs(addr, values) {
   const body = [values.length >> 8, values.length & 0xFF, values.length * 2];
   for (const v of values) body.push((v >> 8) & 0xFF, v & 0xFF);
   await request(frame(0x10, addr, ...body));
+}
+
+/* Queue-based variants: wrap the raw bus helpers into a txQueue job so manual
+ * and periodic traffic share the single-flight worker. */
+function readRegsQ(addr, count) {
+  return new Promise((resolve, reject) => {
+    txPush(
+      async () => resolve(await readRegs(addr, count)),
+      null,
+      reject
+    );
+  });
+}
+
+function writeRegQ(addr, value) {
+  return new Promise((resolve, reject) => {
+    txPush(
+      async () => { await writeReg(addr, value); resolve(); },
+      null,
+      reject
+    );
+  });
+}
+
+function writeRegsQ(addr, values) {
+  return new Promise((resolve, reject) => {
+    txPush(
+      async () => { await writeRegs(addr, values); resolve(); },
+      null,
+      reject
+    );
+  });
 }
 
 /* Cached halves of the 32-bit sticky fault latch (0x0002 low / 0x0003 high),
@@ -651,9 +720,9 @@ function renderReg(r, v) {
   }
 
   let txt = '0x' + v.toString(16).padStart(4, '0') + '  (' + v + ')';
-  if (r.addr === 0x0005) txt += ' rpm';
-  if (r.addr === 0x0007) txt += ' W';
-  if (r.addr === 0x0008) { const s = v >= 0x8000 ? v - 0x10000 : v; txt = '0x' + v.toString(16).padStart(4, '0') + '  (' + s + ' °C)'; }
+  if (r.addr === 0x0005) { const s = v >= 0x8000 ? v - 0x10000 : v; txt = String(s); } /* ACT_SPEED: signed int16 */
+  if (r.addr === 0x0007) txt = String(v); /* ACT_POWER: unsigned decimal */
+  if (r.addr === 0x0008) { const s = v >= 0x8000 ? v - 0x10000 : v; txt = String(s); } /* ACT_TEMP: signed decimal */
   if (r.addr === 0x0001) { /* MST_STATE: main state machine */
     const names = ['INIT 初始化', 'IDLE 待机', 'CALI 零点标定', 'CHARGE 预充电', 'RUNNING 运行', 'FAULT 故障'];
     txt = '0x' + v.toString(16).padStart(4, '0') + '  [' + ((v < names.length) ? names[v] : '未知') + ']';
@@ -687,32 +756,41 @@ function addrRanges(addrs) {
   return out;
 }
 
-/* Read only the selected registers (contiguous selections share one frame). */
-async function updateSelected(quiet) {
+/* Read only the selected registers (contiguous selections share one frame).
+ * Enqueued into txQueue; resolves when the job completes. Throws only if there
+ * is nothing selected (so callers can decide), never on bus failure -- the
+ * queue worker owns error handling. */
+function updateSelected(quiet) {
   const addrs = selectedAddrs();
   if (!addrs.length) {
     if (!quiet) log('请先选择要读取的寄存器', 't-warn');
-    return false;
+    return Promise.reject(new Error('nothing selected'));
   }
-  try {
-    const byAddr = {};
-    for (const { start, count } of addrRanges(addrs)) {
-      const vals = await readRegs(start, count);
-      vals.forEach((v, i) => { byAddr[start + i] = v; });
-    }
-    REGS.forEach(r => { if (r.addr in byAddr) renderReg(r, byAddr[r.addr]); });
-    renderFaultLatch(); /* 0x0002/0x0003 合成 32 位锁存码并解码故障名 */
-    if (!quiet) log('读取所选寄存器成功', 't-ok');
-    return true;
-  } catch (e) {
-    if (!quiet) log('读取失败: ' + e.message, 't-err');
-    throw e; /* 通讯失败：让周期轮询感知并退出 */
-  }
+  return new Promise((resolve, reject) => {
+    txPush(
+      async () => {
+        const byAddr = {};
+        for (const { start, count } of addrRanges(addrs)) {
+          const vals = await readRegs(start, count);
+          vals.forEach((v, i) => { byAddr[start + i] = v; });
+        }
+        REGS.forEach(r => { if (r.addr in byAddr) renderReg(r, byAddr[r.addr]); });
+        renderFaultLatch(); /* 0x0002/0x0003 合成 32 位锁存码并解码故障名 */
+      },
+      () => {
+        if (!quiet) log('读取所选寄存器成功', 't-ok');
+        resolve(true);
+      },
+      (e) => {
+        if (!quiet) log('读取失败: ' + e.message, 't-err');
+        reject(e);
+      }
+    );
+  });
 }
 
 /* ---------------- Periodic polling ---------------- */
 let pollTimer = null;
-let pollBusy  = false;
 
 function pollStop() {
   if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
@@ -724,17 +802,14 @@ function pollStart() {
   pollStop();
   const ms = Math.max(100, parseInt($('pollInterval').value, 10) || 1000);
   pollTimer = setInterval(async () => {
-    if (pollBusy) return;                     /* skip a tick while the previous read is in flight */
-    if (!selectedAddrs().length) return;      /* nothing checked: keep waiting */
-    pollBusy = true;
+    if (txBusy || txQueue.length) return;         /* previous job still pending: skip this tick */
+    if (!selectedAddrs().length) return;          /* nothing checked: keep waiting */
     try {
       await updateSelected(true);
     } catch (e) {
       log('通讯失败：从机无响应，已停止周期读取', 't-err');
-      $('pollEnable').checked = false;        /* 取消周期读取勾选，退出轮询 */
+      $('pollEnable').checked = false;            /* 取消周期读取勾选，退出轮询 */
       pollStop();
-    } finally {
-      pollBusy = false;
     }
   }, ms);
   $('pollState').textContent = '每 ' + ms + ' ms';
@@ -810,7 +885,7 @@ $('btnRead').onclick = async () => {
   const addr = parseInt($('genAddr').value, 10) || 0;
   const cnt  = Math.min(parseInt($('genCount').value, 10) || 1, 125);
   try {
-    const vals = await readRegs(addr, cnt);
+    const vals = await readRegsQ(addr, cnt);
     $('genResult').textContent = vals.map((v, i) =>
       `0x${(addr + i).toString(16).padStart(4, '0')} = 0x${v.toString(16).padStart(4, '0')} (${v})`).join('  |  ');
   } catch (e) { $('genResult').textContent = '错误: ' + e.message; log(e.message, 't-err'); }
@@ -823,8 +898,8 @@ $('btnWrite').onclick = async () => {
   const vals = $('genWrite').value.split(/[,，\s]+/).map(parseVal).filter(v => !isNaN(v));
   if (!vals.length) { log('写入值无效', 't-warn'); return; }
   try {
-    if (vals.length === 1) await writeReg(addr, vals[0]);
-    else await writeRegs(addr, vals);
+    if (vals.length === 1) await writeRegQ(addr, vals[0]);
+    else await writeRegsQ(addr, vals);
     log(`写入 0x${addr.toString(16)}: ${vals.join(', ')} 成功`, 't-ok');
   } catch (e) { log(e.message, 't-err'); }
 };
@@ -833,7 +908,7 @@ $('btnWrite').onclick = async () => {
  * follow-up read of the selected registers. */
 async function setReg(addr, val, unit, name, min, max) {
   if (val < min || val > max) { log(`${name} 超出范围（${min}~${max}${unit}）`, 't-warn'); return; }
-  try { await writeReg(addr, val & 0xFFFF); log(`${name}=0x${addr.toString(16)} <- ${val} ${unit} 成功`, 't-ok'); }
+  try { await writeRegQ(addr, val & 0xFFFF); log(`${name}=0x${addr.toString(16)} <- ${val} ${unit} 成功`, 't-ok'); }
   catch (e) { log(e.message, 't-err'); }
 }
 
@@ -841,7 +916,7 @@ async function setReg(addr, val, unit, name, min, max) {
 async function readOne(addr, name) {
   const r = REGS.find(x => x.addr === addr);
   try {
-    const vals = await readRegs(addr, 1);
+    const vals = await readRegsQ(addr, 1);
     if (r) renderReg(r, vals[0]);
     else if ($('genResult')) $('genResult').textContent = `0x${addr.toString(16).padStart(4, '0')} = 0x${vals[0].toString(16).padStart(4, '0')}`;
     log(`${r ? r.name : name} (0x${addr.toString(16).padStart(4, '0')}) 读取成功`, 't-ok');
@@ -875,7 +950,7 @@ READ_BTNS.forEach(([addr, id, name]) => {
 
 $('btnCtrl').onclick    = async () => { await setReg(0x0000, parseInt($('ctrlSel').value, 10),     '',   'CTRL',      0, 3); };
 $('btnRefSpeed').onclick = async () => { await setReg(0x0004, parseInt($('refSpeedVal').value, 10) || 0, 'rpm', 'REF_SPEED', -BASE_RPM, BASE_RPM); };
-$('btnRefPower').onclick = async () => { await setReg(0x0006, parseInt($('refPowerVal').value, 10) || 0, 'W', 'REF_POWER', 0, 65535); };
+$('btnRefPower').onclick = async () => { await setReg(0x0006, parseInt($('refPowerVal').value, 10) || 0, '0.1W', 'REF_POWER', 0, 65535); };
 $('btnMode').onclick    = async () => { await setReg(0x0010, parseInt($('modeSel').value, 10),     '',   'MODE',      1, 6); };
 $('btnDutyA').onclick   = async () => { await setReg(0x0011, parseInt($('dutyAVal').value, 10) || 0, '%', 'DUTY_A',    0, 100); };
 $('btnDutyB').onclick   = async () => { await setReg(0x0012, parseInt($('dutyBVal').value, 10) || 0, '%', 'DUTY_B',    0, 100); };
