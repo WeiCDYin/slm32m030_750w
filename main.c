@@ -106,7 +106,7 @@ int main(void)
             {
                 restart_delay++;
 
-                if (restart_delay == 3000)
+                if (restart_delay == AUTO_FREE_RUNNING_DELAY_MS)
                 {
                     cmdbus_ctrl_t ctrl = {.ctrl_type = CMDBUS_CTRL_START};
                     cmdbus_post(CMDBUS_CMD_CTRL, &ctrl, sizeof(ctrl));
@@ -117,14 +117,14 @@ int main(void)
             }
 #elif AUTO_RUN_MODE == 2
             restart_delay++;
-            if (restart_delay == 15000)
+            if (restart_delay == AUTO_TEST_STOP_TIME_MS)
             {
                 cmdbus_ctrl_t ctrl = {.ctrl_type = CMDBUS_CTRL_START};
                 cmdbus_post(CMDBUS_CMD_CTRL, &ctrl, sizeof(ctrl));
                 cmdbus_speed_t spd = {.speed_rpm = AUTO_RUN_SPD_RPM};
                 cmdbus_post(CMDBUS_CMD_SPEED, &spd, sizeof(spd));
             }
-            else if (restart_delay == 45000)
+            else if (restart_delay == AUTO_TEST_START_TIME_MS)
             {
                 cmdbus_ctrl_t ctrl = {.ctrl_type = CMDBUS_CTRL_STOP};
                 cmdbus_post(CMDBUS_CMD_CTRL, &ctrl, sizeof(ctrl));

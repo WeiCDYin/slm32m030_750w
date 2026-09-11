@@ -28,9 +28,12 @@ extern "C"
 #define DC_DELAY_PIN_HOLD_MS      (30u)                                         /* confirm time before toggle [ms] */
 
 /* ===== 1. constants ===== */
-#define PI_F             (3.14159265f)
-#define AUTO_RUN_MODE    (0) /* 0:normal; 1:free-running; 2:start-stop test */
-#define AUTO_RUN_SPD_RPM (1200)
+#define PI_F                       (3.14159265f)
+#define AUTO_RUN_MODE              (0) /* 0:normal; 1:free-running; 2:start-stop test */
+#define AUTO_RUN_SPD_RPM           (1200)
+#define AUTO_FREE_RUNNING_DELAY_MS (3000)  /* delay time after poweron */
+#define AUTO_TEST_START_TIME_MS    (45000) /* start-stop test start time */
+#define AUTO_TEST_STOP_TIME_MS     (15000) /* start-stop test stop time */
 
 /* ===== 2. system clock ===== */
 #define SYSTEM_CORE_CLOCK_HZ (64000000ul) /* system clock [Hz] */
@@ -118,16 +121,16 @@ extern "C"
  * bit0~7 one-shot: fault_set() latches immediately (HW break, ISR OC); cleared
  *                 by CTRL=3 Recovery, not gated by FAULT_POLL_DETECT_ALL_ENABLE.
  * bit8~31 poll: window *_LIMIT + *_DETECT_CNT / *_RECOVER_CNT (1 ms polls). */
-// poll fault enable/disable switcher 
-#define FAULT_POLL_DETECT_ALL_ENABLE           (1)
-#define FAULT_POLL_DC_IN_OVER_VOLTAGE_ENABLE   (1)
-#define FAULT_POLL_DC_IN_UNDER_VOLTAGE_ENABLE  (1)
-#define FAULT_POLL_POWER_OVER_LOAD_ENABLE      (1)
-#define FAULT_POLL_MOTOR_OVER_SPEED_ENABLE     (1)
-#define FAULT_POLL_TEMPERATURE_OVER_ENABLE     (1)
-#define FAULT_POLL_AC_IN_OVER_VOLTAGE_ENABLE   (1)
-#define FAULT_POLL_AC_IN_UNDER_VOLTAGE_ENABLE  (1)
-#define FAULT_POLL_AC_IN_LOST_PHASE_ENABLE     (1)
+// poll fault enable/disable switcher
+#define FAULT_POLL_DETECT_ALL_ENABLE          (1)
+#define FAULT_POLL_DC_IN_OVER_VOLTAGE_ENABLE  (1)
+#define FAULT_POLL_DC_IN_UNDER_VOLTAGE_ENABLE (1)
+#define FAULT_POLL_POWER_OVER_LOAD_ENABLE     (1)
+#define FAULT_POLL_MOTOR_OVER_SPEED_ENABLE    (1)
+#define FAULT_POLL_TEMPERATURE_OVER_ENABLE    (1)
+#define FAULT_POLL_AC_IN_OVER_VOLTAGE_ENABLE  (1)
+#define FAULT_POLL_AC_IN_UNDER_VOLTAGE_ENABLE (1)
+#define FAULT_POLL_AC_IN_LOST_PHASE_ENABLE    (1)
 // one-shot fault enable/disable switcher
 #define FAULT_ONE_SHOT_HW_OVER_CURRENT_ENABLE  (1)
 #define FAULT_ONE_SHOT_SW_OVER_CURRENT_ENABLE  (1)
