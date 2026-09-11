@@ -20,7 +20,7 @@ SHELL := cmd.exe
 export UV4_DIR  ?= C:/Keil_v5/UV4
 export JLINK_EXE ?= C:/Program Files/SEGGER/JLink_V952/JLink.exe
 
-.PHONY: all build build-all flash flash-keil clean
+.PHONY: all build build-all flash flash-keil clean push
 
 all: flash
 
@@ -38,3 +38,7 @@ flash-keil:
 
 clean:
 	@call MDK\clean.bat
+
+push:
+	git push origin main
+	git push new-origin main
