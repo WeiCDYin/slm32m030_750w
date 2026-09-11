@@ -1,5 +1,5 @@
 si SWD
-speed 4000
+speed 6000
 device SLM32M030CCT7
 connect
 r

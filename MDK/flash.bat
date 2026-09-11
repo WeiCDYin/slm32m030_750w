@@ -28,8 +28,8 @@ set "RC=%ERRORLEVEL%"
 popd
 
 if %RC% NEQ 0 (
-    echo [FLASH] FAILED ^(JLink exit %RC%^)
+    echo !!!!!!!!!!!!!!!!!!! [FLASH] FAILED ^(JLink exit %RC%^) !!!!!!!!!!!!!!!!!!!!!!
     exit /b 1
 )
-echo [FLASH] done
+echo ********************* [FLASH] done OKOKOKOKOKOKOK ********************
 exit /b 0
