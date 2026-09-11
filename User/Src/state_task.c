@@ -436,7 +436,7 @@ static void ac_peak_1ms_proc(void)
     static uint32_t hi_v = 0;
     static uint32_t lo_v = 0xFFFFFFFFu;
 
-    uint32_t ac_v = ac_code_to_v((int32_t)adc_get_code(ADC_SEQ1_AC_PEAK));
+    uint32_t ac_v = ac_code_to_v((int32_t)adc_get_seq1_code(ADC_SEQ1_AC_PEAK));
     if (ac_v > hi_v)
         hi_v = ac_v;
     if (ac_v < lo_v)
@@ -483,10 +483,15 @@ void state_task_poll(void)
 void state_task_1ms(void)
 {
     int16_t temperature, spd_rpm_fb, pwr_watt_fb;
+
+    /* Software-triggered SEQ1 (AC peak, BEMF, NTC): run one polled frame so the
+     * slow-channel codes are fresh this tick. */
+    adc_seq1_sw_conv();
+
     /* DC bus V/I telemetry + protection feed (reconstruct idc from last duties). */
     g_state.udc_mv = udc_pu_to_mv(g_state.udc_meas);
     g_state.idc_ma = idc_pu_to_ma(g_state.idc_meas);
-    temperature    = ntc_temp_c((uint16_t)adc_get_code(ADC_SEQ1_NTC));
+    temperature    = ntc_temp_c((uint16_t)adc_get_seq1_code(ADC_SEQ1_NTC));
     spd_rpm_fb     = pu_to_rpm(g_mc.act_spd_fb);
     pwr_watt_fb    = udc_idc_to_pwr_x10(g_state.udc_mv, g_state.idc_ma);
 
@@ -558,9 +563,9 @@ void state_task_isr()
         {
             if (g_state.cali_active)
             {
-                g_state.cali_sum_ib += (int32_t)adc_get_code(ADC_SEQ1_I_B);
-                g_state.cali_sum_ic += (int32_t)adc_get_code(ADC_SEQ1_I_C);
-                g_state.cali_sum_idc += (int32_t)adc_get_code(ADC_SEQ1_I_DC);
+                g_state.cali_sum_ib += (int32_t)adc_get_seq2_code(ADC_SEQ2_I_B);
+                g_state.cali_sum_ic += (int32_t)adc_get_seq2_code(ADC_SEQ2_I_C);
+                g_state.cali_sum_idc += (int32_t)adc_get_seq2_code(ADC_SEQ2_I_DC);
 
                 if (++g_state.cali_cnt >= ADC_OFFSET_CALI_SAMPLE_CNT)
                 {

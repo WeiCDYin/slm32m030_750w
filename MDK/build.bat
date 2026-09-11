@@ -40,7 +40,7 @@ goto :built
         type "%LOG%"
         del /q "%LOG%"
         echo.
-        echo [BUILD] ok
+        echo ********************* [BUILD] OK *********************
     ) else (
         echo [BUILD] up to date
     )
@@ -55,5 +55,5 @@ goto :built
         echo [BUILD] UV4 failed with code %RC% and produced no log
     )
     echo.
-    echo [BUILD] FAILED
+    echo !!!!!!!!!!!!!!!!!!! [BUILD] FAILED !!!!!!!!!!!!!!!!!!!
     exit /b 1

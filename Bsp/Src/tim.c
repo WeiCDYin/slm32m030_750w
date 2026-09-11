@@ -18,9 +18,9 @@ if DTG[7:5]=10x ==>> tdtg = 2 * 62.5ns * (DTG[5:0] + 64)  ==>> (8000, 11875)ns
 #define DTG7_0   (TIM_DEAD_TIME_NS / tDTS_NS)
 #define DEADTIME ((uint16_t)(SYSTEM_CORE_CLOCK_HZ / 2.0f * TIM_DEAD_TIME_NS / 1000000000uL))
 
-/* CCR4 fires the ADC sequence early so the last two (current) channels sample at
- * the PWM apex: reload minus the whole SEQ1 conversion window (ad.h). */
-#define TIM_CCR4_TRIGGER_ADC_CNT (TIM_PWM_RELOAD_CNT - ADC_SQE_SAMPLE_TICKS)
+/* CCR4 fires the injected SEQ2 early so I_B samples just before the ARR apex
+ * and I_C just after it: reload minus the SEQ2 straddle lead (ad.h). */
+#define TIM_CCR4_TRIGGER_ADC_CNT (TIM_PWM_RELOAD_CNT - ADC_SEQ2_TRIG_LEAD_TICKS)
 
 #define TIM_MOE_ENABLE(htim)  SET_BIT((htim)->Instance->BDTR, TIMX_BDTR4_MOE)
 #define TIM_MOE_DISABLE(htim) CLEAR_BIT((htim)->Instance->BDTR, TIMX_BDTR4_MOE)

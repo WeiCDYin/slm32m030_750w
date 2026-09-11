@@ -10,9 +10,13 @@
 /*           Cortex-M0+ Processor Interruption and Exception Handlers */
 /******************************************************************************/
 
-/* DMA sink for the SEQ1 conversions: one raw code per ADC_SEQ1_* channel,
- * filled by the ADC DMA every carrier frame (enum order == channel order). */
+/* Code sinks for the two ADC sequences:
+ *  - g_adc_seq1_code: SEQ1 software-triggered slow channels (AC peak, BEMF,
+ *    NTC), filled by adc_seq1_sw_conv() in the 1 ms task.
+ *  - g_adc_seq2_code: SEQ2 injected fast channels (I_B, I_C, V_DC, I_DC),
+ *    filled by ADC_IRQHandler on every TIM1_CC4 carrier edge. */
 volatile uint32_t g_adc_seq1_code[ADC_SEQ1_COUNT];
+volatile uint32_t g_adc_seq2_code[ADC_SEQ2_COUNT];
 
 void NMI_Handler(void)
 {
@@ -57,41 +61,43 @@ void TIM1_BRK_UP_TRG_COM_IRQHandler(void)
 }
 
 /**
- * @brief DMA1 channel 0..5: ADC SEQ1 frame done -> state_task carrier step.
- *        Handled inline: convert raw codes to pu, hand the frame to the
- *        state task, push the CCR it returns. Nothing else runs here.
+ * @brief ADC global interrupt: injected SEQ2 frame done -> carrier step.
+ *        Reads the four injected results (I_B, I_C, V_DC, I_DC) straight from
+ *        the SEQ2 result registers, converts them to pu, and hands the frame
+ *        to the state task. Nothing else runs here.
  */
 extern volatile uint32_t g_isr_cyc;
 extern volatile uint32_t g_isr_cyc_max;
 extern state_para_t      g_state;
 
-void DMA1_Channel0_5_IRQHandler(void)
+void ADC_IRQHandler(void)
 {
-    DMA_HandleTypeDef *hdma = g_adc_handle.hdmaSeq1;
-
-    uint32_t ch = 0x1U << hdma->ChannelNum;
-
-    if (__HAL_DMA_GET_INTTCSTA_FLAG(hdma, ch) != RESET)
+    if (__HAL_ADC_GET_FLAG(&g_adc_handle, ADC_INTR_SEQ2_1SEQ_STS) != RESET)
     {
-        __HAL_DMA_CLEAR_INTTCCLR_FLAG(hdma, ch);
-        __HAL_ADC_CLEAR_FLAG(&g_adc_handle, ADC_INTR_SEQ1_1SEQ_STS);
+        __HAL_ADC_CLEAR_FLAG(&g_adc_handle, ADC_INTR_SEQ2_1SEQ_STS);
+
+        /* Injected SEQ2 results, register order == g_adc_seq2_code enum order. */
+        g_adc_seq2_code[ADC_SEQ2_I_B]  = *(volatile uint32_t *)(ADC_SEQ2SR1_ADDR);
+        g_adc_seq2_code[ADC_SEQ2_I_C]  = *(volatile uint32_t *)(ADC_SEQ2SR2_ADDR);
+        g_adc_seq2_code[ADC_SEQ2_V_DC] = *(volatile uint32_t *)(ADC_SEQ2SR3_ADDR);
+        g_adc_seq2_code[ADC_SEQ2_I_DC] = *(volatile uint32_t *)(ADC_SEQ2SR4_ADDR);
 
         uint32_t t0 = tim_load_isr_get();
 
         /* raw code -> gain-compensated Q15 in one fused multiply (inline);
          * offsets read directly, ia = -(ib+ic) derived from register caches to
          * avoid bouncing the volatile meas fields. */
-        int32_t ib = iphase_code_to_gain_pu((int32_t)adc_get_code(ADC_SEQ1_I_B), g_state.adc_off_ib);
-        int32_t ic = iphase_code_to_gain_pu((int32_t)adc_get_code(ADC_SEQ1_I_C), g_state.adc_off_ic);
+        int32_t ib = iphase_code_to_gain_pu((int32_t)adc_get_seq2_code(ADC_SEQ2_I_B), g_state.adc_off_ib);
+        int32_t ic = iphase_code_to_gain_pu((int32_t)adc_get_seq2_code(ADC_SEQ2_I_C), g_state.adc_off_ic);
         int32_t ia = q15_sat(-ib - ic);
 
         g_state.ib_meas  = (q15_t)ib;
         g_state.ic_meas  = (q15_t)ic;
         g_state.ia_meas  = (q15_t)ia;
-        g_state.udc_meas = udc_code_to_pu((int32_t)adc_get_code(ADC_SEQ1_V_DC));
+        g_state.udc_meas = udc_code_to_pu((int32_t)adc_get_seq2_code(ADC_SEQ2_V_DC));
 
 #if (IDC_SOURCE == IDC_FROM_ADC)
-        g_state.idc_meas = idc_code_to_pu((int32_t)adc_get_code(ADC_SEQ1_I_DC), g_state.adc_off_idc);
+        g_state.idc_meas = idc_code_to_pu((int32_t)adc_get_seq2_code(ADC_SEQ2_I_DC), g_state.adc_off_idc);
         g_state.idc_meas = (q15_t)(((int32_t)g_state.idc_meas * CURRENT_GAIN_Q8 >> CURRENT_GAIN_SHIFT));
 #else
         q15_t da = g_state.duties_q15.a;
@@ -109,10 +115,6 @@ void DMA1_Channel0_5_IRQHandler(void)
         if (g_isr_cyc > g_isr_cyc_max)
             g_isr_cyc_max = g_isr_cyc;
     }
-
-    /* transfer error: clear; the Continue DMA re-triggers on the next frame */
-    if (__HAL_DMA_GET_INTERRSTA_FLAG(hdma, ch) != RESET)
-        __HAL_DMA_CLEAR_INTERRCLR_FLAG(hdma, ch);
 }
 
 /**
