@@ -1,4 +1,4 @@
-/* GENERATED per ABI row by CMakeLists.txt -- DO NOT EDIT.
+/* GENERATED per ABI variant by CMakeLists.txt -- DO NOT EDIT.
  *
  * This release is 0.1.0, built for armv6m-armclang.
  *
@@ -8,14 +8,14 @@
  *   "undefined reference to mc_abi__armv6m_armclang__v0_1_0"
  *       DID THE .h FILES AND THE .a FILE COME FROM THE SAME RELEASE? No -- you have mixed two
  *       downloads. These headers are from 0.1.0; the library you linked is from some
- *       other release. Use the inc/ and lib/ from ONE drop.
+ *       other release. Use the inc/ and lib/ from ONE release.
  *       Easy to get into: copy a new inc/ over an old project and forget the lib/, or point the
  *       build at an install directory that was refreshed at some other time.
  *
  *   "size of array 'mc_t_is_not_the_size_this_release_was_built_for...' is negative"
  *   "static assertion failed: mc_t_is_not_the_size..."
  *       DOES YOUR COMPILER PUT THE FIELDS OF mc_t IN THE SAME PLACES OURS DID? No. Compare your
- *       settings against ABI.txt at the top of this drop -- enum size (-fshort-enums) and struct
+ *       settings against ABI.txt at the top of this release -- enum size (-fshort-enums) and struct
  *       packing are what move them. The two compilers have to agree, because YOU declare mc_t
  *       (`static mc_t g_mc;`) while the library that reads those fields was compiled by us.
  *
@@ -42,7 +42,7 @@
 /* CHECK 1 -- DID THESE .h FILES AND THAT .a FILE COME FROM THE SAME RELEASE? Asked at LINK time.
  *
  * Only this release's library defines this symbol, and only this release's headers ask for it, so
- * files from two different downloads cannot resolve against each other. The NAME carries the row and the version so the linker's
+ * files from two different downloads cannot resolve against each other. The NAME carries the variant and the version so the linker's
  * message is a diagnosis rather than a puzzle. mc.h calls it from mc_abi_check(), because a
  * declaration nothing references links happily against anything. */
 #define MC_ABI_TAG mc_abi__armv6m_armclang__v0_1_0
@@ -56,7 +56,7 @@ void MC_ABI_TAG(void);
 
 /* CHECK 2 -- DOES YOUR COMPILER PUT THE FIELDS OF mc_t WHERE OURS DID? Asked at COMPILE time.
  *
- * sizeof(mc_t) was MEASURED when this row was built (112 bytes), not assumed. The
+ * sizeof(mc_t) was MEASURED when this variant was built (112 bytes), not assumed. The
  * customer writes `static mc_t g_mc;` themselves, so their compiler decides the layout -- and the
  * axes that move it fail SILENTLY otherwise. Enum size is the live one here: nothing in this tree
  * sets -fshort-enums, so every build takes its toolchain's default, and the same headers give

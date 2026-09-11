@@ -1,0 +1,60 @@
+mc 0.1.0 -- release variant armv6m-armclang
+
+WHAT YOU MUST MATCH
+  Set these on YOUR compiler. They decide how mc_t is laid out and how arguments are
+  passed, so if yours disagrees with this archive the build is wrong -- and only the
+  first line fails loudly. The rest fail silently, which is why mc.h checks them.
+
+  cpu        --target=arm-arm-none-eabi -march=armv6-m -mthumb -mfloat-abi=soft -fshort-enums -fshort-wchar
+  enums      short -- -fshort-enums    (gcc arm-none-eabi does this by default; armclang and most others do NOT)
+  wchar_t    2 bytes -- -fshort-wchar    (uVision/ArmC6 projects default to this; gcc and bare armclang do NOT)
+  packing    default (nothing here is packed or aligned by hand)
+
+  If you get it wrong, mc.h stops the build:
+    sizeof(mc_t) must be 112 and sizeof(ctrl_mode_t) 1.
+
+WHAT THIS WAS BUILT WITH
+  For reference and support questions. You do NOT need to match these -- optimisation
+  and debug level change neither layout nor calling convention.
+
+  cc         C:/Keil_v5/ARM/ARMCLANG/bin/armclang.exe
+  cflags     --target=arm-arm-none-eabi -march=armv6-m -mthumb -mfloat-abi=soft -fshort-enums -fshort-wchar -ffunction-sections -fdata-sections -g3 -gdwarf-4 -O2
+  std        c99
+
+IDENTITY
+  abi_tag     mc_abi__armv6m_armclang__v0_1_0
+  core_hash   4671456610677d6d
+              SHA-256, TRUNCATED TO THE FIRST 16 HEX DIGITS -- 64 bits of the 256. Short
+              enough to read off a target and compare by eye, which is the only way it gets
+              used; nothing here defends against a crafted collision, only an accident.
+
+              Built from the OBJECT FILES that make up lib/libmc_core.a, NOT from the .a
+              itself: sha256(object) for each, sorted by path, concatenated as hex, and
+              hashed again. sha256sum on the archive gives a different answer, and a
+              different one after every rebuild, because ar stamps each member with the
+              object's mtime. arm-none-eabi-ar can be told not to (rcD writes mtime 0);
+              armar cannot, under any spelling -- so hashing the .a would be reproducible
+              on the gcc variants and not on the armclang ones, and the value would mean
+              different things depending on which variant you held. The members are stable
+              whatever the wrapper does, so the members are what this hashes.
+              The objects are not in this release, so you cannot recompute this -- it is
+              here to identify what you were sent.
+
+              It answers what the two checks above cannot. They catch a layout you did not
+              match, and headers from a different release than the library; neither notices a
+              library that is simply OLD -- rebuild a port against a stale core and it
+              compiles, links and runs. Read it back off a running target by compiling the
+              global from inc/mc_core_hash.h:
+
+                  const char g_mc_core_hash[] = MC_CORE_HASH;
+
+--- machine-readable (tools/check_dist.py reads this; the prose above says what it means) ---
+abi          = armv6m-armclang
+version      = 0.1.0
+cc           = C:/Keil_v5/ARM/ARMCLANG/bin/armclang.exe
+cflags       = --target=arm-arm-none-eabi -march=armv6-m -mthumb -mfloat-abi=soft -fshort-enums -fshort-wchar -ffunction-sections -fdata-sections -g3 -gdwarf-4 -O2
+sizeof_mc_t  = 112
+sizeof_enum  = 1
+sizeof_wchar = 2
+abi_tag      = mc_abi__armv6m_armclang__v0_1_0
+core_hash    = 4671456610677d6d

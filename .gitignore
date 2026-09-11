@@ -5,3 +5,4 @@
 *JlinkLog.txt*
 *.uvoptx
 *.log
+*.cmake

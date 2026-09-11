@@ -611,12 +611,12 @@
             <File>
               <FileName>libmc_core.a</FileName>
               <FileType>4</FileType>
-              <FilePath>..\Core\libmc_core.a</FilePath>
+              <FilePath>..\Core\lib\libmc_core.a</FilePath>
             </File>
             <File>
               <FileName>libmc_super.a</FileName>
               <FileType>4</FileType>
-              <FilePath>..\Core\libmc_super.a</FilePath>
+              <FilePath>..\Core\lib\libmc_super.a</FilePath>
             </File>
           </Files>
         </Group>

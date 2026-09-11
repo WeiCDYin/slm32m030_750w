@@ -46,14 +46,16 @@ typedef struct {
     dq_pu_t  idq_ref;    /* dq curr. ref.            */
 } mc_in_t;
 
-/* The speed below which the active-flux observer has too little back-EMF to be believed. Two things
- * read it, and they are the same statement from two directions: the transition never hands over INTO
- * a speed below this (mc.c), and a demand below it is not a speed the drive can be left holding once
- * sensorless (hsm.c). Both are SPEED questions -- one about a forced ramp, one about an operator
- * demand -- and neither has an estimate to ask about yet. Q15 pu -- ~0.03, comfortably under any
- * configured handover speed. A crude constant standing in for a real observability estimate; see
- * TODO.md. */
-#define MC_SPD_FLOOR_PU   1024
+/* The speed below which the active-flux observer has too little back-EMF to be believed, and so the
+ * demand below which a sensorless drive does not drive AT ALL: event_handler_foc_mode (hsm.c) reads
+ * it and nothing else does. Below it there is no run -- the PWM output stays off, the stage stays
+ * IDLE, and a running drive taken down through it stops -- so no later stage has to re-ask the
+ * question: by the time STARTUP is ramping, the demand is already above this, and what the handover
+ * is gated on is handover_spd, a different and larger number. Q15 pu -- ~0.03. A crude constant
+ * standing in for a real observability estimate; see TODO.md. */
+
+//[todo] to get rid of this, transit to i-f mode instead in low speed
+ #define MC_SPD_FLOOR_PU   1024
 
 /* RESYNC's back-EMF floor USED TO LIVE HERE. It is conv.c's CONV_EMF_MAG_MIN now, in the module that
  * grades the estimate -- because the level at which an angle can be VALIDATED and the level at
@@ -192,15 +194,7 @@ typedef struct mc_s {
                                      * the core reads it too, so it is latched from the ob_out_t
                                      * ob_step fills, once a tick rather than once per consumer
                                      * (ob.h). 0 when there is no observer */
-    spd_pu_t          handover_spd; /* where the forced I-f startup stops climbing and FOC takes over
-                                     * (electrical, per-unit Q15). A property of the OBSERVER and the
-                                     * machine -- how much back-EMF it needs to lock -- so it belongs
-                                     * to the drive, not to the I-f generator's config. It caps the
-                                     * demand during STARTUP: a demand above it hands over here and
-                                     * the speed loop climbs the rest; a demand BELOW it hands over
-                                     * at the demand, so a slow setpoint is never overshot just to
-                                     * start. Magnitude only -- the demand keeps its sign, so a
-                                     * reverse demand starts in reverse. 0 disables the cap. */
+    spd_pu_t          handover_spd; /* smaller than this, drive stays in i-f mode */ 
     uint16_t          transit_dwell_tick; /* */
     conv_t            conv;         /* has the observer's ANGLE arrived (conv.h)? By value and
                                      * owned HERE, not by the observer: the tolerance it grades
