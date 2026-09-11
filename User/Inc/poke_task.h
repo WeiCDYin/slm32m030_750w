@@ -5,12 +5,9 @@ extern "C"
 {
 #endif
 
-#include "mc.h" /* mc_in_t */
-
 void poke_task_init(void);
 void poke_task_poll(void);
 void poke_task_1ms(void);
-
 
 #ifdef __cplusplus
 }

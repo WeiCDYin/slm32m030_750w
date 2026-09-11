@@ -45,11 +45,11 @@ typedef enum
     MB_REG_MST_STATE    = 0x0001, // r main state machine: 0:INIT 1:IDLE(Stop) 2:RUNNING 3:CALI 4:FAULT
     MB_REG_FAULT_LATCH1 = 0x0002, // r sticky fault history, low 16 bits; cleared only by CTRL=3 (Recovery)
     MB_REG_FAULT_LATCH2 = 0x0003, // r sticky fault history, high 16 bits
-    MB_REG_REF_SPEED    = 0x0004, // rw
-    MB_REG_ACT_SPEED    = 0x0005, // r
-    MB_REG_REF_POWER    = 0x0006, // rw
-    MB_REG_ACT_POWER    = 0x0007, // r
-    MB_REG_ACT_TEMP     = 0x0008, // r signed NTC temperature [deg C]
+    MB_REG_REF_SPEED    = 0x0004, // rw [rpm]
+    MB_REG_ACT_SPEED    = 0x0005, // r  [rpm]
+    MB_REG_REF_POWER    = 0x0006, // rw [0.1w]
+    MB_REG_ACT_POWER    = 0x0007, // r  [0.1w]
+    MB_REG_ACT_TEMP     = 0x0008, // r  [deg C]
 
     // debug register, not for user api
     MB_REG_MODE   = 0x0010,

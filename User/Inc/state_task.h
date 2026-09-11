@@ -7,18 +7,9 @@ extern "C"
 
 #include <stdint.h>
 #include <stdbool.h>
-#include <stddef.h>      /* NULL */
-#include "mc.h"          /* mc_in_t, duties_t */
-#include "user_config.h" /* monitor_parameter_t */
-
-typedef struct
-{
-    q15_t ia_meas;
-    q15_t ib_meas;
-    q15_t ic_meas;
-    q15_t idc_meas;
-    q15_t udc_meas;
-} state_meas_t;
+#include <stddef.h>
+#include "mc.h"
+#include "user_config.h"
 
 /* All state-task runtime state is packed into one static instance. The type is
  * state_para_t (not state_t, which is the HSM leaf-state enum from foc.h). */
@@ -104,9 +95,6 @@ void state_task_isr();
 
 /* TIM1 hardware break: DC-bus over current latched by the break input. */
 void state_task_isr_break(void);
-
-/* Telemetry snapshot (monitoring only; values may lag their source by 1 ms). */
-extern monitor_parameter_t g_monitor_para;
 
 #ifdef __cplusplus
 }

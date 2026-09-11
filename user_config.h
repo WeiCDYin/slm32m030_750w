@@ -1,11 +1,6 @@
 #ifndef __USER_CONFIG_H__
 #define __USER_CONFIG_H__
 
-/* user_config.h -- project-wide numeric configuration + shared runtime data. HAL / register free: it
- * is consumed by Modules and User, and read by BSP drivers for the hardware-
- * tied values they need. Keep hardware values matched to the schematic / AFE
- * registers, since they feed conversions, protections and telemetry. */
-
 #ifdef __cplusplus
 extern "C"
 {
@@ -16,32 +11,33 @@ extern "C"
 #include "mc.h"
 
 /* ===== 0. input power ===== */
-#define AC_PEAK_WIN_MS         (200u) /* 10 x 50 Hz mains cycles */
+#define AC_PEAK_WIN_MS         (200u)
 #define AC_INPUT_VOLTAGE_RATED (381.0f)
 #define AC_INPUT_VOLTAGE_MIN   (AC_INPUT_VOLTAGE_RATED * 0.8f * 1.414f) /* 431 V */
 #define AC_INPUT_VOLTAGE_MAX   (AC_INPUT_VOLTAGE_RATED * 1.2f * 1.414f) /* 646 V */
 #define DC_VOLTAGE_MIN         (AC_INPUT_VOLTAGE_RATED * 0.7f * 1.414f) /* 377 V */
 #define DC_VOLTAGE_MAX         (AC_INPUT_VOLTAGE_RATED * 1.2f * 1.414f) /* 646 V */
-/* power-delay pin PB7: pin control only, no alarm */
+/* power-delay */
 #define DC_DELAY_PIN_ON_THRESH_MV ((uint32_t)(DC_VOLTAGE_MIN * 0.8f * 1000.0f)) /* raise at 0.8 * UV [mV] */
 #define DC_DELAY_PIN_HYST_MV      (30000u)                                      /* lower at ON threshold - 30 V [mV] */
 #define DC_DELAY_PIN_HOLD_MS      (30u)                                         /* confirm time before toggle [ms] */
 
 /* ===== 1. constants ===== */
 #define PI_F                       (3.14159265f)
-#define AUTO_RUN_MODE              (0) /* 0:normal; 1:free-running; 2:start-stop test */
-#define AUTO_RUN_SPD_RPM           (1200)
-#define AUTO_FREE_RUNNING_DELAY_MS (3000)  /* delay time after poweron */
-#define AUTO_TEST_START_TIME_MS    (45000) /* start-stop test start time */
-#define AUTO_TEST_STOP_TIME_MS     (15000) /* start-stop test stop time */
+#define AUTO_RUN_MODE              (0u)     /* 0:normal; 1:free-running; 2:start-stop test */
+#define AUTO_RUN_SPD_RPM           (1200u)  /* auto test spd [rpm] */
+#define AUTO_FREE_RUNNING_DELAY_MS (3000u)  /* delay time after poweron */
+#define AUTO_TEST_START_TIME_MS    (45000u) /* start-stop test start time */
+#define AUTO_TEST_STOP_TIME_MS     (15000u) /* start-stop test stop time */
 
 /* ===== 2. system clock ===== */
 #define SYSTEM_CORE_CLOCK_HZ (64000000ul) /* system clock [Hz] */
 
 /* ===== 3. timer / PWM config (Bsp tim.c) ===== */
-#define PWM_FREQ_HZ        (6000.0f) /* carrier frequency [Hz] */
-#define TIM_DEAD_TIME_NS   (1000.0f) /* dead time [ns], 0..7937.5 */
-#define TIM_PWM_RELOAD_CNT ((SYSTEM_CORE_CLOCK_HZ / (uint32_t)(2 * PWM_FREQ_HZ)) - 1)
+#define PWM_FREQ_HZ           (6000.0f) /* carrier frequency [Hz] */
+#define TIM_DEAD_TIME_NS      (1000.0f) /* dead time [ns], 0..7937.5 */
+#define TIM_PWM_RELOAD_CNT    ((SYSTEM_CORE_CLOCK_HZ / (uint32_t)(2 * PWM_FREQ_HZ)) - 1)
+#define CHARGE_CARRIER_CYCLES (5u) /* pre-charge: low-side on, per phase [carrier cycles] */
 
 /* ===== 4. analog front end ===== */
 /* 12-bit ADC: code [0,4095] -> [0, ANALOG_REF_VOLTAGE] V */
@@ -50,18 +46,15 @@ extern "C"
 #define SAMPLE_RESISTOR_IBUS      (0.03f) /* DC-bus current sense resistor [ohm] */
 #define SAMPLE_DIVISION_RATE_VBUS ((301 * 5 + 6.2f) / 6.2f)
 #define SAMPLE_DIVISION_RATE_AC   ((301 * 5 + 6.2f) / 6.2f)
-#define SAMPLE_DC_VOLTAGE_MAX     (ANALOG_REF_VOLTAGE * SAMPLE_DIVISION_RATE_VBUS)
-
 /* AFE current-sense PGA gain: numeric multiple only (convert.h scales by it);
  * the SATURN register enum derived from it lives in the BSP afe.h. 4/8/16/32 */
 #define AFE_PGA_GAIN_NUM (8u)
-
 /* post-conversion current gain compensation, applied to the pu phase/bus
  * currents in the ADC ISR (slm32m030_it.c). Float multiple: 1.2f = x1.2,
  * 1.0f = no extra gain. Implemented as Q8 fixed-point (x * N >> 8). */
-#define CURRENT_GAIN_COMP (1.2f)
-#define CURRENT_GAIN_Q8   ((int32_t)(CURRENT_GAIN_COMP * 256.0f + 0.5f))
-
+#define CURRENT_GAIN_COMP  (1.2f)
+#define CURRENT_GAIN_Q8    ((int32_t)(CURRENT_GAIN_COMP * 256.0f + 0.5f))
+#define CURRENT_GAIN_SHIFT (8u)
 /* DC-bus current (idc) source selection (ADC ISR, slm32m030_it.c):
  *   IDC_FROM_ADC        measure idc directly with the dedicated ADC channel
  *                       (current behaviour).
@@ -72,22 +65,19 @@ extern "C"
 #define IDC_FROM_PHASE_DUTY (1u)
 #define IDC_SOURCE          (IDC_FROM_PHASE_DUTY)
 
-/* CMDBUS_CHARGE bootstrap pre-charge: low-side on, per phase [carrier cycles] */
-#define CHARGE_CARRIER_CYCLES (5)
-
 /* ===== 5. motor electrical / mechanical parameters ===== */
 #define MOTOR_RS_OHM       (9.0f)    /* stator resistance [ohm]  */
 #define MOTOR_LD_H         (24e-3f)  /* d-axis inductance [H]    */
 #define MOTOR_LQ_H         (31e-3f)  /* q-axis inductance [H]    */
 #define MOTOR_LAMBDA_PM_WB (0.2197f) /* PM flux linkage [Wb]     */
-#define MOTOR_NPP          (7)       /* pole pairs               */
+#define MOTOR_NPP          (7u)      /* pole pairs               */
 #define MOTOR_J_KGM2       (0.06f)   /* rotor inertia [kg*m^2]   */
 #define MOTOR_B_NMS        (0.0f)    /* viscous friction [N*m*s] */
 
 /* ===== 6. FOC control-loop configuration ===== */
-#define SPEED_RATE_RPM    (1450)                               /* rate speed [rpm] */
-#define SPEED_BASE_RMP    (2000)                               /* pu speed, dueto feedback speed may over flow(negative) */
-#define SPEED_REF_DEFAULT (1260)                               /* default speed reference after start [rpm] */
+#define SPEED_RATE_RPM    (1450u)                              /* rate speed [rpm] */
+#define SPEED_BASE_RMP    (2000u)                              /* pu speed, dueto feedback speed may over flow(negative) */
+#define SPEED_REF_DEFAULT (1260u)                              /* default speed reference after start [rpm] */
 #define IQ_MAX_PU         (0.35f)                              /* q-axis current clamp [pu] */
 #define I_BASE_A          (10.0f)                              /* max current [A] */
 #define U_BASE_V          (2.0f * DC_VOLTAGE_MAX / PI_F)       /* max phase-voltage amplitude [V] */
@@ -122,21 +112,21 @@ extern "C"
  *                 by CTRL=3 Recovery, not gated by FAULT_POLL_DETECT_ALL_ENABLE.
  * bit8~31 poll: window *_LIMIT + *_DETECT_CNT / *_RECOVER_CNT (1 ms polls). */
 // poll fault enable/disable switcher
-#define FAULT_POLL_DETECT_ALL_ENABLE          (1)
-#define FAULT_POLL_DC_IN_OVER_VOLTAGE_ENABLE  (1)
-#define FAULT_POLL_DC_IN_UNDER_VOLTAGE_ENABLE (1)
-#define FAULT_POLL_POWER_OVER_LOAD_ENABLE     (1)
-#define FAULT_POLL_MOTOR_OVER_SPEED_ENABLE    (1)
-#define FAULT_POLL_TEMPERATURE_OVER_ENABLE    (1)
-#define FAULT_POLL_AC_IN_OVER_VOLTAGE_ENABLE  (1)
-#define FAULT_POLL_AC_IN_UNDER_VOLTAGE_ENABLE (1)
-#define FAULT_POLL_AC_IN_LOST_PHASE_ENABLE    (1)
+#define FAULT_POLL_DETECT_ALL_ENABLE          (1u)
+#define FAULT_POLL_DC_IN_OVER_VOLTAGE_ENABLE  (1u)
+#define FAULT_POLL_DC_IN_UNDER_VOLTAGE_ENABLE (1u)
+#define FAULT_POLL_POWER_OVER_LOAD_ENABLE     (1u)
+#define FAULT_POLL_MOTOR_OVER_SPEED_ENABLE    (1u)
+#define FAULT_POLL_TEMPERATURE_OVER_ENABLE    (1u)
+#define FAULT_POLL_AC_IN_OVER_VOLTAGE_ENABLE  (1u)
+#define FAULT_POLL_AC_IN_UNDER_VOLTAGE_ENABLE (1u)
+#define FAULT_POLL_AC_IN_LOST_PHASE_ENABLE    (1u)
 // one-shot fault enable/disable switcher
-#define FAULT_ONE_SHOT_HW_OVER_CURRENT_ENABLE  (1)
-#define FAULT_ONE_SHOT_SW_OVER_CURRENT_ENABLE  (1)
-#define FAULT_ONE_SHOT_MOTOR_LOST_PHASE_ENABLE (1)
-#define FAULT_ONE_SHOT_ZERO_OFFSET_ERR_ENABLE  (1)
-#define FAULT_ONE_SHOT_FOC_STARTUP_ERR_ENABLE  (0)
+#define FAULT_ONE_SHOT_HW_OVER_CURRENT_ENABLE  (1u)
+#define FAULT_ONE_SHOT_SW_OVER_CURRENT_ENABLE  (1u)
+#define FAULT_ONE_SHOT_MOTOR_LOST_PHASE_ENABLE (1u)
+#define FAULT_ONE_SHOT_ZERO_OFFSET_ERR_ENABLE  (1u)
+#define FAULT_ONE_SHOT_FOC_STARTUP_ERR_ENABLE  (0u)
 /***************** [one shot] fault threshold setting *****************/
 /* id 0: DC bus over current HW (DAC comparator; code built in BSP afe.h) */
 #define HW_OC_TRIP_A (8.0f) /* [A] */
@@ -151,45 +141,49 @@ extern "C"
  * todo
  */
 /* id 4: adc offset calibration error */
-#define ADC_OFFSET_CALI_DEFAULT    (2048) /* [lsb] */
-#define ADC_OFFSET_CALI_THRESHOLD  (100)
-#define ADC_OFFSET_CALI_SAMPLE_CNT (128)
+#define ADC_OFFSET_CALI_DEFAULT    (2048u) /* [lsb] */
+#define ADC_OFFSET_CALI_THRESHOLD  (100u)
+#define ADC_OFFSET_CALI_SAMPLE_CNT (128u)
 /* id 5: fault set by user protocol */
 /* id 6: FOC start timeout */
 #define FOC_STARTUP_TIMEOUT_MS (10000u) /* startup sequence (RESYNC/STARTUP -> sensorless FOC) */
 /***************** [poll] fault threshold setting *****************/
 /* id 8: DC bus over voltage (sample: udc_mv [mV]) */
 #define DC_IN_OVER_VOLTAGE_LIMIT       (DC_VOLTAGE_MAX * 1000.0f)
-#define DC_IN_OVER_VOLTAGE_DETECT_CNT  (1000)
-#define DC_IN_OVER_VOLTAGE_RECOVER_CNT (1000)
+#define DC_IN_OVER_VOLTAGE_DETECT_CNT  (1000u)
+#define DC_IN_OVER_VOLTAGE_RECOVER_CNT (1000u)
 /* id 9: DC bus under voltage (sample: udc_mv [mV]) */
 #define DC_IN_UNDER_VOLTAGE_LIMIT       (DC_VOLTAGE_MIN * 1000.0f)
-#define DC_IN_UNDER_VOLTAGE_DETECT_CNT  (1000)
-#define DC_IN_UNDER_VOLTAGE_RECOVER_CNT (1000)
+#define DC_IN_UNDER_VOLTAGE_DETECT_CNT  (1000u)
+#define DC_IN_UNDER_VOLTAGE_RECOVER_CNT (1000u)
 /* id 10: output over load (sample: Vdc x Idc [0.1 W]) */
-#define POWER_OVER_LOAD_LIMIT       (13000) /* [0.1 W] */
-#define POWER_OVER_LOAD_DETECT_CNT  (5000)
-#define POWER_OVER_LOAD_RECOVER_CNT (5000)
+#define POWER_OVER_LOAD_LIMIT       (13000u) /* [0.1 W] */
+#define POWER_OVER_LOAD_DETECT_CNT  (5000u)
+#define POWER_OVER_LOAD_RECOVER_CNT (5000u)
 /* id 11: motor over speed (sample: spd_rpm_fb [rpm]) */
-#define MOTOR_OVER_SPEED_LIMIT       (1600) /* [rpm] */
-#define MOTOR_OVER_SPEED_DETECT_CNT  (100)
-#define MOTOR_OVER_SPEED_RECOVER_CNT (100)
+#define MOTOR_OVER_SPEED_LIMIT       (1600u) /* [rpm] */
+#define MOTOR_OVER_SPEED_DETECT_CNT  (100u)
+#define MOTOR_OVER_SPEED_RECOVER_CNT (100u)
 /* id 12: over temperature (sample: NTC [C]) */
-#define TEMPERATURE_OVER_LIMIT       (95) /* [C]*/
-#define TEMPERATURE_OVER_DETECT_CNT  (1000)
-#define TEMPERATURE_OVER_RECOVER_CNT (1000)
+#define TEMPERATURE_OVER_LIMIT       (95u) /* [C]*/
+#define TEMPERATURE_OVER_DETECT_CNT  (1000u)
+#define TEMPERATURE_OVER_RECOVER_CNT (1000u)
 /* id 13: AC over voltage (sample: AC rectified HIGH peak [V]) */
 #define AC_IN_OVER_VOLTAGE_LIMIT       ((int)(AC_INPUT_VOLTAGE_MAX))
-#define AC_IN_OVER_VOLTAGE_DETECT_CNT  (500)
-#define AC_IN_OVER_VOLTAGE_RECOVER_CNT (500)
+#define AC_IN_OVER_VOLTAGE_DETECT_CNT  (500u)
+#define AC_IN_OVER_VOLTAGE_RECOVER_CNT (500u)
 /* id 14: AC under voltage (sample: AC HIGH peak [V]) */
 #define AC_IN_UNDER_VOLTAGE_LIMIT       ((int)(AC_INPUT_VOLTAGE_MIN))
-#define AC_IN_UNDER_VOLTAGE_DETECT_CNT  (500)
-#define AC_IN_UNDER_VOLTAGE_RECOVER_CNT (500)
+#define AC_IN_UNDER_VOLTAGE_DETECT_CNT  (500u)
+#define AC_IN_UNDER_VOLTAGE_RECOVER_CNT (500u)
 /* id 15: AC lost phase (sample: AC common-point LOW peak / valley [V]) */
 #define AC_IN_LOST_PHASE_LIMIT       ((int32_t)AC_INPUT_VOLTAGE_MIN >> 1)
-#define AC_IN_LOST_PHASE_DETECT_CNT  (500)
-#define AC_IN_LOST_PHASE_RECOVER_CNT (500)
+#define AC_IN_LOST_PHASE_DETECT_CNT  (500u)
+#define AC_IN_LOST_PHASE_RECOVER_CNT (500u)
+
+/* ===== 8. modbus configuration ===== */
+#define MB_SLAVE_ADDR (0x01u)
+#define MB_BAUD       (9600u)
 
 /* Telemetry snapshot. Monitoring only: refreshed by the 1 ms task; control /
  * fault code must not read it (values lag their source by up to 1 ms). */

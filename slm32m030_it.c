@@ -6,14 +6,14 @@
 #include "uart.h"
 #include "user_config.h"
 
+/******************************************************************************/
+/*           Cortex-M0+ Processor Interruption and Exception Handlers */
+/******************************************************************************/
+
 /* DMA sink for the SEQ1 conversions: one raw code per ADC_SEQ1_* channel,
  * filled by the ADC DMA every carrier frame (enum order == channel order). */
 volatile uint32_t g_adc_seq1_code[ADC_SEQ1_COUNT];
 
-extern state_para_t g_state;
-/******************************************************************************/
-/*           Cortex-M0+ Processor Interruption and Exception Handlers */
-/******************************************************************************/
 void NMI_Handler(void)
 {
 }
@@ -37,7 +37,8 @@ void PendSV_Handler(void)
 
 void SysTick_Handler(void)
 {
-    HAL_IncTick(); /* 1 ms tick base; the 1 ms task runs in main() */
+    /* 1 ms tick base; the 1 ms task runs in main() */
+    HAL_IncTick();
 }
 
 /**
@@ -62,6 +63,7 @@ void TIM1_BRK_UP_TRG_COM_IRQHandler(void)
  */
 extern volatile uint32_t g_isr_cyc;
 extern volatile uint32_t g_isr_cyc_max;
+extern state_para_t      g_state;
 
 void DMA1_Channel0_5_IRQHandler(void)
 {
@@ -83,27 +85,25 @@ void DMA1_Channel0_5_IRQHandler(void)
         int32_t ic = iphase_code_to_gain_pu((int32_t)adc_get_code(ADC_SEQ1_I_C), g_state.adc_off_ic);
         int32_t ia = q15_sat(-ib - ic);
 
-        g_state.ib_meas = (q15_t)ib;
-        g_state.ic_meas = (q15_t)ic;
-        g_state.ia_meas = (q15_t)ia;
+        g_state.ib_meas  = (q15_t)ib;
+        g_state.ic_meas  = (q15_t)ic;
+        g_state.ia_meas  = (q15_t)ia;
         g_state.udc_meas = udc_code_to_pu((int32_t)adc_get_code(ADC_SEQ1_V_DC));
 
 #if (IDC_SOURCE == IDC_FROM_ADC)
         g_state.idc_meas = idc_code_to_pu((int32_t)adc_get_code(ADC_SEQ1_I_DC), g_state.adc_off_idc);
-        g_state.idc_meas = (q15_t)(((int32_t)g_state.idc_meas * CURRENT_GAIN_Q8 >> 8));
+        g_state.idc_meas = (q15_t)(((int32_t)g_state.idc_meas * CURRENT_GAIN_Q8 >> CURRENT_GAIN_SHIFT));
 #else
-        /* telemetry-only bus current: weight THIS frame's measured currents by
-         * the PREVIOUS frame's applied duties (cached off the volatile struct). */
         q15_t da = g_state.duties_q15.a;
         q15_t db = g_state.duties_q15.b;
         q15_t dc = g_state.duties_q15.c;
-        int32_t idc_acc = (((ia * da) >> Q15_SHIFT) + ((ib * db) >> Q15_SHIFT) + ((ic * dc) >> Q15_SHIFT));
-        g_state.idc_meas = q15_sat(idc_acc);
+
+        g_state.idc_meas = q15_sat((((ia * da) >> Q15_SHIFT) + ((ib * db) >> Q15_SHIFT) + ((ic * dc) >> Q15_SHIFT)));
 #endif
 
         /* state task: cali/charge timing + (when RUNNING) OC, poke, FOC -> ccr */
         state_task_isr();
-            
+
         uint32_t t1 = tim_load_isr_get();
         g_isr_cyc   = t1 - t0;
         if (g_isr_cyc > g_isr_cyc_max)

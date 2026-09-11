@@ -5,17 +5,7 @@
 #include "mbport.h"
 #include "modbus_task.h"
 
-/* Slave configuration. */
-#define MB_SLAVE_ADDR (0x01u)
-#define MB_BAUD       (9600u)
-#define MB_PARITY     (MB_PAR_NONE)
-
 static uint16_t g_modbus_hold_regs[MB_REG_MAX];
-
-/* ------------------------------------------------------------------ */
-/* Command queue helpers (modbus -> main state machine)                */
-/* fill the per-command payload struct, then cmdbus_post(cmd, &struct, sizeof) */
-/* ------------------------------------------------------------------ */
 
 static void mb_post_ctrl(uint8_t v)
 {
@@ -147,23 +137,12 @@ static eMBErrorCode reg_write_apply(uint16_t addr, uint16_t val)
 /* Refresh the read-only "live" registers just before a read. */
 static void regs_refresh_live(void)
 {
-    /* Actual speed: mc->act_spd_fb (Q15 electrical pu) -> mechanical rpm.
-     *   rpm = spd * W_BASE_HZ * 60 / MOTOR_NPP / Q15_ONE = spd * SPEED_RATE_RPM / Q15_ONE */
-    g_modbus_hold_regs[MB_REG_ACT_SPEED] = (uint16_t)g_monitor_para.spd_rpm_fb;
-
-    /* Actual power: DC bus V (mV) * I (mA) -> W (main.c g_udc_mv / g_idc_ma). */
-    g_modbus_hold_regs[MB_REG_ACT_POWER] = (uint16_t)g_monitor_para.pwr_watt_fb;
-
-    /* Actual temperature: NTC, signed deg C. */
-    g_modbus_hold_regs[MB_REG_ACT_TEMP] = (uint16_t)(int16_t)g_monitor_para.temperature;
-
-    /* Sticky fault history, 32-bit across two registers (cleared only by
-     * CTRL=3 Recovery). */
-    g_modbus_hold_regs[MB_REG_FAULT_LATCH1] = (uint16_t)(g_monitor_para.fault_latch & 0xFFFFu);
-    g_modbus_hold_regs[MB_REG_FAULT_LATCH2] = (uint16_t)(g_monitor_para.fault_latch >> 16);
-
-    /* Main state machine: 0=INIT 1=IDLE(Stop) 2=RUNNING 3=FAULT. */
-    g_modbus_hold_regs[MB_REG_MST_STATE] = (uint16_t)g_monitor_para.state;
+    g_modbus_hold_regs[MB_REG_ACT_SPEED]    = (uint16_t)g_monitor_para.spd_rpm_fb;
+    g_modbus_hold_regs[MB_REG_ACT_POWER]    = (uint16_t)g_monitor_para.pwr_watt_fb;
+    g_modbus_hold_regs[MB_REG_ACT_TEMP]     = (uint16_t)g_monitor_para.temperature;
+    g_modbus_hold_regs[MB_REG_FAULT_LATCH1] = (uint16_t)g_monitor_para.fault_latch & 0xFFFFu;
+    g_modbus_hold_regs[MB_REG_FAULT_LATCH2] = (uint16_t)g_monitor_para.fault_latch >> 16;
+    g_modbus_hold_regs[MB_REG_MST_STATE]    = (uint16_t)g_monitor_para.state;
 }
 
 /* ------------------------------------------------------------------ */
@@ -221,10 +200,8 @@ void modbus_task_init(void)
     g_modbus_hold_regs[MB_REG_DUTY_C]    = 50;
     g_modbus_hold_regs[MB_REG_MAG]       = 0;
     g_modbus_hold_regs[MB_REG_ANG]       = 0;
-    /* ACT_SPEED / ACT_POWER / DEVICE_STATE are refreshed on read.
-     * Setpoint defaults are restored by the machine's INIT stage; no re-post here. */
 
-    eMBInit(MB_RTU, MB_SLAVE_ADDR, 0, MB_BAUD, MB_PARITY, 1);
+    eMBInit(MB_RTU, MB_SLAVE_ADDR, 0, MB_BAUD, MB_PAR_NONE, 1);
     eMBEnable();
 }
 

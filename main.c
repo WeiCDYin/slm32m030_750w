@@ -12,12 +12,12 @@
 #include "poke_task.h"
 #include "cmdbus.h"
 
-volatile uint32_t g_poll_cyc;     /* last loop run time [64 MHz ticks] */
-volatile uint32_t g_poll_cyc_max; /* peak loop run time */
+volatile uint32_t g_poll_cyc;
+volatile uint32_t g_poll_cyc_max;
 volatile uint32_t g_isr_cyc;
 volatile uint32_t g_isr_cyc_max;
-volatile uint32_t g_load_pct;     /* current CPU load [%], updated every 1 ms */
-volatile uint32_t g_load_pct_max; /* peak CPU load [%] */
+volatile uint32_t g_load_pct; 
+volatile uint32_t g_load_pct_max;
 
 /* Q24 reciprocal scale factors for the load formula
  *   load% = (poll_cyc*1000 + isr_cyc*PWM_FREQ_HZ) * 100 / SYSCLK
@@ -72,7 +72,7 @@ int main(void)
     tim_load_poll_init();
     afe_init();
 
-    /* App tasks: state_task owns foc/fault/ntc/poke/iwdg; modbus posts onto cmdbus */
+    /* App tasks */
     modbus_task_init();
     state_task_init();
     poke_task_init();
@@ -84,7 +84,7 @@ int main(void)
     uint8_t  auto_start_flag = 0;
     while (1)
     {
-        uint32_t t0 = tim_load_poll_get(); /* poll load measurement (TIM14) */
+        uint32_t t0 = tim_load_poll_get();
 
         /* realtime task */
         modbus_task_poll();
@@ -116,6 +116,7 @@ int main(void)
                 }
             }
 #elif AUTO_RUN_MODE == 2
+            // start-stop test
             restart_delay++;
             if (restart_delay == AUTO_TEST_STOP_TIME_MS)
             {

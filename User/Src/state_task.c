@@ -122,13 +122,10 @@ static void state_switch(uint8_t next)
         newo->entry();
 }
 
-/* ---- INIT: reset the run-mode latch then fall through to IDLE ---- */
 static void entry_init(void)
 {
 }
 
-/* User FAULT command (CTRL=2): latch a fault bit, then enter FAULT state.
- * Distinct from a live detected fault (fault_get) which already carries its id. */
 static void goto_user_fault(void)
 {
     fault_set(FAULT_ID_USER_SET_ERROR);
@@ -141,7 +138,6 @@ static void run_init(void)
     g_state.ctrl_req = CMDBUS_CTRL_NONE;
 }
 
-/* ---- IDLE: standby, waiting for START ---- */
 static void entry_idle(void)
 {
     foc_hsm_set(EV_TRAN, EV_FIELD_A, ST_IDLE, 0, 0);
@@ -160,7 +156,6 @@ static void run_idle(void)
     g_state.ctrl_req = CMDBUS_CTRL_NONE;
 }
 
-/* ---- CALI: two-phase current zero-offset averaging ---- */
 static void cali_start(void)
 {
     ENTER_CRITICAL_SECTION();
@@ -226,8 +221,8 @@ static void entry_charge(void)
 {
     ENTER_CRITICAL_SECTION();
     tim_pwm_update_ccr(0, 0, 0);
-    tim_pwm_charge_phase(0); /* enable only phase-A low-side (CCR=0) */
-    tim_pwm_enable();        /* MOE on -> phase-A low-side conducts */
+    tim_pwm_charge_phase(0);
+    tim_pwm_enable();
     g_state.charge_active = 1;
     EXIT_CRITICAL_SECTION();
 }
@@ -256,7 +251,6 @@ static void run_charge(void)
     g_state.ctrl_req = CMDBUS_CTRL_NONE;
 }
 
-/* ---- RUNNING: FOC holds the run command ---- */
 static void entry_running(void)
 {
     uint8_t mode = g_state.run_mode;
@@ -285,7 +279,6 @@ static void run_running(void)
     g_state.ctrl_req = CMDBUS_CTRL_NONE;
 }
 
-/* ---- FAULT: latched; RECOVERY or fault-clear returns to IDLE ---- */
 static void entry_fault(void)
 {
     hsm_pwm_disable(&g_hsm);
