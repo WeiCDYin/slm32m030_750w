@@ -34,7 +34,7 @@ extern "C"
 #define SYSTEM_CORE_CLOCK_HZ (64000000ul) /* system clock [Hz] */
 
 /* ===== 3. timer / PWM config (Bsp tim.c) ===== */
-#define PWM_FREQ_HZ           (6000.0f) /* carrier frequency [Hz] */
+#define PWM_FREQ_HZ           (10000.0f) /* carrier frequency [Hz] */
 #define TIM_DEAD_TIME_NS      (1000.0f) /* dead time [ns], 0..7937.5 */
 #define TIM_PWM_RELOAD_CNT    ((SYSTEM_CORE_CLOCK_HZ / (uint32_t)(2 * PWM_FREQ_HZ)) - 1)
 #define CHARGE_CARRIER_CYCLES (5u) /* pre-charge: low-side on, per phase [carrier cycles] */
@@ -55,15 +55,6 @@ extern "C"
 #define CURRENT_GAIN_COMP  (1.2f)
 #define CURRENT_GAIN_Q8    ((int32_t)(CURRENT_GAIN_COMP * 256.0f + 0.5f))
 #define CURRENT_GAIN_SHIFT (8u)
-/* DC-bus current (idc) source selection (ADC ISR, slm32m030_it.c):
- *   IDC_FROM_ADC        measure idc directly with the dedicated ADC channel
- *                       (current behaviour).
- *   IDC_FROM_PHASE_DUTY reconstruct idc from this frame's measured phase
- *                       currents weighted by the PREVIOUS frame's applied
- *                       phase duties: idc = ia*da + ib*db + ic*dc (pu). */
-#define IDC_FROM_ADC        (0u)
-#define IDC_FROM_PHASE_DUTY (1u)
-#define IDC_SOURCE          (IDC_FROM_PHASE_DUTY)
 
 /* ===== 5. motor electrical / mechanical parameters ===== */
 #define MOTOR_RS_OHM       (9.0f)    /* stator resistance [ohm]  */

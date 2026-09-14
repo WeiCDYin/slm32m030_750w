@@ -26,7 +26,7 @@ void adc_init(void)
     g_adc_handle.Init.Seq1_awd_lt_int  = ADC_INTRPT_DISABLE;
     g_adc_handle.Init.Seq1_awd_ht_int  = ADC_INTRPT_DISABLE;
     g_adc_handle.Init.Seq1_awd_reg_int = ADC_INTRPT_DISABLE;
-    g_adc_handle.Init.Seq1_1seq_int    = ADC_INTRPT_DISABLE; /* polled, no ISR */
+    g_adc_handle.Init.Seq1_1seq_int    = ADC_INTRPT_ENABLE; /* polled, no ISR */
     g_adc_handle.Init.Seq1_1ch_int     = ADC_INTRPT_DISABLE;
     g_adc_handle.Init.Seq1_all_int     = ADC_INTRPT_DISABLE;
     /* SEQ2 config: injected fast channels, TIM1_CC4 triggered, ISR-driven. */
@@ -54,8 +54,7 @@ void adc_init(void)
     uint8_t adc_seq2_chn[6] = {ADC_SQE_SEL_AIN3, /* [0] ADC_SEQ2_I_B  phase-B current,      PA3 */
                                ADC_SQE_SEL_AIN5, /* [1] ADC_SEQ2_I_C  phase-C current,      PA5 */
                                ADC_SQE_SEL_AIN0, /* [2] ADC_SEQ2_V_DC dc bus voltage,       PA0 */
-                               ADC_SQE_SEL_AIN6, /* [3] ADC_SEQ2_I_DC dc bus current,       PA6 */
-                               ADC_SQE_SEL_NULL, ADC_SQE_SEL_NULL};
+                               ADC_SQE_SEL_NULL, ADC_SQE_SEL_NULL, ADC_SQE_SEL_NULL};
 
     g_adc_handle.ChCfg.Seq1Ch         = adc_seq1_chn;
     g_adc_handle.ChCfg.Seq2Ch         = adc_seq2_chn;
@@ -75,14 +74,6 @@ void adc_init(void)
  * snapshotted into g_adc_seq1_code. Called by the 1 ms task. */
 void adc_seq1_sw_conv(void)
 {
-    uint32_t i;
-
-    if (__HAL_ADC_GET_FLAG(&g_adc_handle, ADC_INTR_SEQ1_1SEQ_STS) == SET)
-    {
-        __HAL_ADC_CLEAR_FLAG(&g_adc_handle, ADC_INTR_SEQ1_1SEQ_STS);
-        for (i = 0; i < ADC_SEQ1_COUNT; i++)
-            g_adc_seq1_code[i] = *(volatile uint32_t *)(ADC_SEQ1SR1_ADDR + i * 4u);
-    }
     CLEAR_BIT(ADC->CR, ADC_CR_SEQ1_START);
     SET_BIT(ADC->CR, ADC_CR_SEQ1_START);
 }

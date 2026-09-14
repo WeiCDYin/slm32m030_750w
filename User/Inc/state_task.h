@@ -37,7 +37,6 @@ typedef struct
      * reads these directly from g_state. */
     volatile int32_t adc_off_ib;
     volatile int32_t adc_off_ic;
-    volatile int32_t adc_off_idc;
 
     /* AC peak window (10 x 50 Hz cycles), refreshed by the 1 ms task. */
     uint16_t ac_peak_high_v;
@@ -49,7 +48,7 @@ typedef struct
     /* Charge state (sequential low-side bootstrap A -> B -> C). */
     volatile uint8_t charge_active;
     volatile uint8_t charge_phase; /* 0=A, 1=B, 2=C during sequential charge */
-    uint16_t         charge_cnt;
+    volatile uint8_t charge_cnt;
 
     /* Phase-current offset calibration (CMDBUS_CALI): the carrier ISR accumulates
      * raw I_B / I_C zero-current codes while cali_active==1; after ADC_OFFSET_CALI_SAMPLE_CNT
@@ -58,7 +57,6 @@ typedef struct
     volatile uint8_t  cali_active;
     volatile int32_t  cali_sum_ib;
     volatile int32_t  cali_sum_ic;
-    volatile int32_t  cali_sum_idc;
     volatile uint16_t cali_cnt;
 } state_para_t;
 

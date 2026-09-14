@@ -22,7 +22,6 @@ state_para_t g_state = {
     .spd_rpm_ref    = SPEED_REF_DEFAULT,
     .adc_off_ib     = ADC_OFFSET_CALI_DEFAULT,
     .adc_off_ic     = ADC_OFFSET_CALI_DEFAULT,
-    .adc_off_idc    = ADC_OFFSET_CALI_DEFAULT,
     .ac_peak_high_v = 220,
     .ac_peak_low_v  = 220,
 };
@@ -156,22 +155,19 @@ static void run_idle(void)
     g_state.ctrl_req = CMDBUS_CTRL_NONE;
 }
 
-static void cali_start(void)
+static void entry_cali(void)
 {
     ENTER_CRITICAL_SECTION();
     g_state.cali_active = 1;
+    g_state.cali_cnt    = 0;
     EXIT_CRITICAL_SECTION();
-}
-
-static void entry_cali(void)
-{
-    cali_start();
 }
 
 static void exit_cali(void)
 {
     ENTER_CRITICAL_SECTION();
     g_state.cali_active = 0;
+    g_state.cali_cnt    = 0;
     EXIT_CRITICAL_SECTION();
 }
 
@@ -179,12 +175,10 @@ static bool cali_offset_ok(void)
 {
     int32_t delta_offset_ib  = g_state.adc_off_ib - (int32_t)ADC_OFFSET_CALI_DEFAULT;
     int32_t delta_offset_ic  = g_state.adc_off_ic - (int32_t)ADC_OFFSET_CALI_DEFAULT;
-    int32_t delta_offset_idc = g_state.adc_off_idc - (int32_t)ADC_OFFSET_CALI_DEFAULT;
 
 #if FAULT_ONE_SHOT_ZERO_OFFSET_ERR_ENABLE
     if (delta_offset_ib < -(int32_t)ADC_OFFSET_CALI_THRESHOLD || delta_offset_ib > (int32_t)ADC_OFFSET_CALI_THRESHOLD ||
-        delta_offset_ic < -(int32_t)ADC_OFFSET_CALI_THRESHOLD || delta_offset_ic > (int32_t)ADC_OFFSET_CALI_THRESHOLD ||
-        delta_offset_idc < -(int32_t)ADC_OFFSET_CALI_THRESHOLD || delta_offset_idc > (int32_t)ADC_OFFSET_CALI_THRESHOLD)
+        delta_offset_ic < -(int32_t)ADC_OFFSET_CALI_THRESHOLD || delta_offset_ic > (int32_t)ADC_OFFSET_CALI_THRESHOLD)
         return false;
 #endif
     return true;
@@ -224,6 +218,8 @@ static void entry_charge(void)
     tim_pwm_charge_phase(0);
     tim_pwm_enable();
     g_state.charge_active = 1;
+    g_state.charge_phase  = 0;
+    g_state.charge_cnt    = 0;
     EXIT_CRITICAL_SECTION();
 }
 
@@ -565,18 +561,15 @@ void state_task_isr()
             {
                 g_state.cali_sum_ib += (int32_t)adc_get_seq2_code(ADC_SEQ2_I_B);
                 g_state.cali_sum_ic += (int32_t)adc_get_seq2_code(ADC_SEQ2_I_C);
-                g_state.cali_sum_idc += (int32_t)adc_get_seq2_code(ADC_SEQ2_I_DC);
 
                 if (++g_state.cali_cnt >= ADC_OFFSET_CALI_SAMPLE_CNT)
                 {
                     g_state.adc_off_ib   = g_state.cali_sum_ib / ADC_OFFSET_CALI_SAMPLE_CNT;
                     g_state.adc_off_ic   = g_state.cali_sum_ic / ADC_OFFSET_CALI_SAMPLE_CNT;
-                    g_state.adc_off_idc  = g_state.cali_sum_idc / ADC_OFFSET_CALI_SAMPLE_CNT;
                     g_state.cali_active  = 0;
                     g_state.cali_cnt     = 0;
                     g_state.cali_sum_ib  = 0;
                     g_state.cali_sum_ic  = 0;
-                    g_state.cali_sum_idc = 0;
                 }
             }
             break;

@@ -80,7 +80,6 @@ void ADC_IRQHandler(void)
         g_adc_seq2_code[ADC_SEQ2_I_B]  = *(volatile uint32_t *)(ADC_SEQ2SR1_ADDR);
         g_adc_seq2_code[ADC_SEQ2_I_C]  = *(volatile uint32_t *)(ADC_SEQ2SR2_ADDR);
         g_adc_seq2_code[ADC_SEQ2_V_DC] = *(volatile uint32_t *)(ADC_SEQ2SR3_ADDR);
-        g_adc_seq2_code[ADC_SEQ2_I_DC] = *(volatile uint32_t *)(ADC_SEQ2SR4_ADDR);
 
         uint32_t t0 = tim_load_isr_get();
 
@@ -95,17 +94,8 @@ void ADC_IRQHandler(void)
         g_state.ic_meas  = (q15_t)ic;
         g_state.ia_meas  = (q15_t)ia;
         g_state.udc_meas = udc_code_to_pu((int32_t)adc_get_seq2_code(ADC_SEQ2_V_DC));
-
-#if (IDC_SOURCE == IDC_FROM_ADC)
-        g_state.idc_meas = idc_code_to_pu((int32_t)adc_get_seq2_code(ADC_SEQ2_I_DC), g_state.adc_off_idc);
-        g_state.idc_meas = (q15_t)(((int32_t)g_state.idc_meas * CURRENT_GAIN_Q8 >> CURRENT_GAIN_SHIFT));
-#else
-        q15_t da = g_state.duties_q15.a;
-        q15_t db = g_state.duties_q15.b;
-        q15_t dc = g_state.duties_q15.c;
-
-        g_state.idc_meas = q15_sat((((ia * da) >> Q15_SHIFT) + ((ib * db) >> Q15_SHIFT) + ((ic * dc) >> Q15_SHIFT)));
-#endif
+        g_state.idc_meas = q15_sat(
+            (((ia * g_state.duties_q15.a) >> Q15_SHIFT) + ((ib * g_state.duties_q15.b) >> Q15_SHIFT) + ((ic * g_state.duties_q15.c) >> Q15_SHIFT)));
 
         /* state task: cali/charge timing + (when RUNNING) OC, poke, FOC -> ccr */
         state_task_isr();
@@ -114,6 +104,13 @@ void ADC_IRQHandler(void)
         g_isr_cyc   = t1 - t0;
         if (g_isr_cyc > g_isr_cyc_max)
             g_isr_cyc_max = g_isr_cyc;
+    }
+
+    if (__HAL_ADC_GET_FLAG(&g_adc_handle, ADC_INTR_SEQ1_1SEQ_STS) != RESET)
+    {
+        __HAL_ADC_CLEAR_FLAG(&g_adc_handle, ADC_INTR_SEQ1_1SEQ_STS);
+        for (uint32_t i = 0; i < ADC_SEQ1_COUNT; i++)
+            g_adc_seq1_code[i] = *(volatile uint32_t *)(ADC_SEQ1SR1_ADDR + i * 4u);
     }
 }
 

@@ -41,7 +41,6 @@ enum
     ADC_SEQ2_I_B,  /* [AIN3]-PA3, phase-B current */
     ADC_SEQ2_I_C,  /* [AIN5]-PA5, phase-C current */
     ADC_SEQ2_V_DC, /* [AIN0]-PA0, dc bus voltage */
-    ADC_SEQ2_I_DC, /* [AIN6]-PA6, dc bus current */
 
     ADC_SEQ2_COUNT
 };
