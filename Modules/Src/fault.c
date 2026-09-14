@@ -240,7 +240,7 @@ void fault_1ms_proc(void)
     fault_poll(FAULT_ID_OVER_TEMPERATURE, g_monitor_para.temperature);
 #endif
 #if FAULT_POLL_MOTOR_OVER_SPEED_ENABLE
-    fault_poll(FAULT_ID_OVER_SPEED, g_monitor_para.spd_rpm_fb);
+    fault_poll(FAULT_ID_OVER_SPEED, abs(g_monitor_para.spd_rpm_fb));
 #endif
 #endif
 }

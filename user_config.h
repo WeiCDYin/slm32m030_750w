@@ -152,7 +152,7 @@ extern "C"
 #define POWER_OVER_LOAD_DETECT_CNT  (5000u)
 #define POWER_OVER_LOAD_RECOVER_CNT (5000u)
 /* id 11: motor over speed (sample: spd_rpm_fb [rpm]) */
-#define MOTOR_OVER_SPEED_LIMIT       (1600u) /* [rpm] */
+#define MOTOR_OVER_SPEED_LIMIT       (1600) /* [rpm] */
 #define MOTOR_OVER_SPEED_DETECT_CNT  (100u)
 #define MOTOR_OVER_SPEED_RECOVER_CNT (100u)
 /* id 12: over temperature (sample: NTC [C]) */
