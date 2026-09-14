@@ -25,7 +25,7 @@ extern "C"
 /* ===== 1. constants ===== */
 #define PI_F                       (3.14159265f)
 #define AUTO_RUN_MODE              (0u)     /* 0:normal; 1:free-running; 2:start-stop test */
-#define AUTO_RUN_SPD_RPM           (1200)  /* auto test spd [rpm] */
+#define AUTO_RUN_SPD_RPM           (1200)   /* auto test spd [rpm] */
 #define AUTO_FREE_RUNNING_DELAY_MS (3000u)  /* delay time after poweron */
 #define AUTO_TEST_START_TIME_MS    (45000u) /* start-stop test start time */
 #define AUTO_TEST_STOP_TIME_MS     (15000u) /* start-stop test stop time */
@@ -35,7 +35,7 @@ extern "C"
 
 /* ===== 3. timer / PWM config (Bsp tim.c) ===== */
 #define PWM_FREQ_HZ           (10000.0f) /* carrier frequency [Hz] */
-#define TIM_DEAD_TIME_NS      (1000.0f) /* dead time [ns], 0..7937.5 */
+#define TIM_DEAD_TIME_NS      (1000.0f)  /* dead time [ns], 0..7937.5 */
 #define TIM_PWM_RELOAD_CNT    ((SYSTEM_CORE_CLOCK_HZ / (uint32_t)(2 * PWM_FREQ_HZ)) - 1)
 #define CHARGE_CARRIER_CYCLES (5u) /* pre-charge: low-side on, per phase [carrier cycles] */
 
@@ -66,9 +66,9 @@ extern "C"
 #define MOTOR_B_NMS        (0.0f)    /* viscous friction [N*m*s] */
 
 /* ===== 6. FOC control-loop configuration ===== */
-#define SPEED_RATE_RPM    (1450)                              /* rate speed [rpm] */
-#define SPEED_BASE_RMP    (2000)                              /* pu speed, dueto feedback speed may over flow(negative) */
-#define SPEED_REF_DEFAULT (1260)                              /* default speed reference after start [rpm] */
+#define SPEED_RATE_RPM    (1450)                               /* rate speed [rpm] */
+#define SPEED_BASE_RMP    (2000)                               /* pu speed, dueto feedback speed may over flow(negative) */
+#define SPEED_REF_DEFAULT (1260)                               /* default speed reference after start [rpm] */
 #define IQ_MAX_PU         (0.35f)                              /* q-axis current clamp [pu] */
 #define I_BASE_A          (10.0f)                              /* max current [A] */
 #define U_BASE_V          (2.0f * DC_VOLTAGE_MAX / PI_F)       /* max phase-voltage amplitude [V] */
