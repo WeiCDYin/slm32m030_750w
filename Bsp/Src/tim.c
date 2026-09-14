@@ -162,7 +162,7 @@ void HAL_TIM_Base_MspInit(TIM_HandleTypeDef *htim)
         GPIO_InitStruct.Alternate   = GPIO_AF4;
         HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-        HAL_NVIC_SetPriority(TIM1_BRK_UP_TRG_COM_IRQn, 0);
+        HAL_NVIC_SetPriority(TIM1_BRK_UP_TRG_COM_IRQn, NVIC_PRIORITY_TIM_BREAK);
         HAL_NVIC_EnableIRQ(TIM1_BRK_UP_TRG_COM_IRQn);
     }
     else if (htim->Instance == TIM3)

@@ -6,6 +6,7 @@
 #include "bsp_hal.h"
 #include "mb.h"
 #include "mbport.h"
+#include "user_config.h"
 
 #define TIM6_PRESCALER (64u - 1u) /* 64 MHz / 64 = 1 MHz -> 1 us per tick */
 
@@ -32,7 +33,7 @@ BOOL xMBPortTimersInit(USHORT usTimeOut50us)
     g_tim6_handle.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
     HAL_TIM_Base_Init(&g_tim6_handle);
 
-    HAL_NVIC_SetPriority(TIM6_IRQn, 3);
+    HAL_NVIC_SetPriority(TIM6_IRQn, NVIC_PRIORITY_TIM_MODBUS);
     HAL_NVIC_EnableIRQ(TIM6_IRQn);
 
     return TRUE;

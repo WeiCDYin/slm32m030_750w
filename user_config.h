@@ -29,6 +29,10 @@ extern "C"
 #define AUTO_FREE_RUNNING_DELAY_MS (3000u)  /* delay time after poweron */
 #define AUTO_TEST_START_TIME_MS    (45000u) /* start-stop test start time */
 #define AUTO_TEST_STOP_TIME_MS     (15000u) /* start-stop test stop time */
+#define NVIC_PRIORITY_TIM_BREAK    (0)
+#define NVIC_PRIORITY_UART         (1)
+#define NVIC_PRIORITY_ADC          (2)
+#define NVIC_PRIORITY_TIM_MODBUS   (3)
 
 /* ===== 2. system clock ===== */
 #define SYSTEM_CORE_CLOCK_HZ (64000000ul) /* system clock [Hz] */

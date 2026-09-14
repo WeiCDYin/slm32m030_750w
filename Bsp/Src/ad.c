@@ -1,6 +1,7 @@
 #include "slm32x030_hal.h"
 #include "bsp_hal.h"
 #include "ad.h"
+#include "user_config.h"
 
 ADC_HandleTypeDef g_adc_handle;
 
@@ -66,7 +67,7 @@ void adc_init(void)
     ADC_Enable(&g_adc_handle);
 
     /* Injected SEQ2 completion -> ADC IRQ (fast loop, it.c ADC_IRQHandler) */
-    HAL_NVIC_SetPriority(ADC_IRQn, 2);
+    HAL_NVIC_SetPriority(ADC_IRQn, NVIC_PRIORITY_ADC);
     HAL_NVIC_EnableIRQ(ADC_IRQn);
 }
 

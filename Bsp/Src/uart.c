@@ -1,5 +1,6 @@
 #include "slm32x030_hal.h"
 #include "uart.h"
+#include "user_config.h"
 
 USART_HandleTypeDef  g_uart2_handle;
 static volatile bool g_rx_en;
@@ -93,7 +94,7 @@ void HAL_USART_MspInit(USART_HandleTypeDef *husart)
         HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
         HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_RESET); /* start in receive */
 
-        HAL_NVIC_SetPriority(USART2_IRQn, 1);
+        HAL_NVIC_SetPriority(USART2_IRQn, NVIC_PRIORITY_UART);
         HAL_NVIC_EnableIRQ(USART2_IRQn);
     }
 }
