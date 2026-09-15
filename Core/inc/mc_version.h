@@ -37,7 +37,7 @@
 #define MC_VERSION_PATCH  0
 #define MC_VERSION_STR   "0.1.0"
 #define MC_ABI           "armv6m-armclang"
-#define MC_T_SIZE_EXPECTED 112
+#define MC_T_SIZE_EXPECTED 104
 
 /* CHECK 1 -- DID THESE .h FILES AND THAT .a FILE COME FROM THE SAME RELEASE? Asked at LINK time.
  *
@@ -56,7 +56,7 @@ void MC_ABI_TAG(void);
 
 /* CHECK 2 -- DOES YOUR COMPILER PUT THE FIELDS OF mc_t WHERE OURS DID? Asked at COMPILE time.
  *
- * sizeof(mc_t) was MEASURED when this variant was built (112 bytes), not assumed. The
+ * sizeof(mc_t) was MEASURED when this variant was built (104 bytes), not assumed. The
  * customer writes `static mc_t g_mc;` themselves, so their compiler decides the layout -- and the
  * axes that move it fail SILENTLY otherwise. Enum size is the live one here: nothing in this tree
  * sets -fshort-enums, so every build takes its toolchain's default, and the same headers give

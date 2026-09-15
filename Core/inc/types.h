@@ -11,7 +11,7 @@ typedef int32_t q31_t;
 #define Q15_SHIFT (15)
 #define Q15_ONE   (1 << Q15_SHIFT)                                   /* 32768  (== 1.0, not representable in q15_t) */
 /* WIDENING A Q15 INTO A WIDER ACCUMULATOR IS A MULTIPLY, NOT A LEFT SHIFT -- `v * Q15_ONE`, or
- * `v * Q15_16_SCALE` for the Q15.16 ramp accumulators (if.c, vf.c, rate_limiter.c). Every such value here
+ * `v * Q15_16_SCALE` for the Q15.16 ramp accumulators (if.c, vf.c, sc.c). Every such value here
  * is signed and goes NEGATIVE on reverse running, and C99 6.5.7p4 defines E1 << E2 only for a
  * nonnegative signed E1: a negative left operand is undefined, whatever the magnitude. The multiply
  * says the same thing in defined language and costs nothing -- q15_t bounds the product (-32768 *
@@ -49,7 +49,7 @@ typedef int32_t q31_t;
 #define Q31_MIN   (-2147483648)
 /* Q15.16: a Q15 value carried with 16 EXTRA fractional bits, so a per-tick increment far below one
  * Q15 LSB still accumulates instead of stalling -- the ramp accumulators of if.c, vf.c and
- * rate_limiter.c. Widen with a multiply by Q15_16_SCALE, narrow with a shift by Q15_16_SHIFT (see
+ * sc.c. Widen with a multiply by Q15_16_SCALE, narrow with a shift by Q15_16_SHIFT (see
  * the note above on why the two directions are not mirror images). */
 #define Q15_16_SHIFT  (16)
 #define Q15_16_SCALE  (1 << Q15_16_SHIFT)              /* 65536: one Q15 LSB, in Q15.16 counts */
@@ -77,7 +77,7 @@ typedef uint16_t angle_t;                                            /* electric
 #define DEG_BAM(deg)    ((angle_t)(DEG_Q32(deg) >> ANGLE_SHIFT))               /* degrees -> angle_t counts; DEG_BAM(90) is the quarter turn */
 #define PU_ONE_Q32      ((float)FULL_360DEG_Q32 / Q15_ONE)           /* 2^17: Q32 counts per Q15 speed LSB, i.e. what turns w_base*Ts/2pi (turns per tick at 1.0 pu) into the per-tick angle increment k_theta */
 typedef q15_t   spd_pu_t;                                            /* electrical speed, per-unit of base_t.w_base (Q15, see mc/base.h) */
-typedef int32_t udc_pu_t;                                            /* DC-link voltage, per-unit of base_t.u_base (Q13 -- NOT Q15: the bus exceeds 1.0 pu by construction, and further under regen pump-up). The NOMINAL bus is pi/2 pu == SVM_UDC_NOM, since u_base == 2*Udc_nom/pi (see mc/svm.h). */
+typedef int32_t udc_pu_t;                                            /* DC-link voltage, per-unit of base_t.u_base (Q13 -- NOT Q15: the bus exceeds 1.0 pu by construction, and further under regen pump-up). The NOMINAL bus is pi/2 pu == MOD_UDC_NOM, since u_base == 2*Udc_nom/pi (see mc/mod.h). */
 typedef struct { q15_t a, b, c; } abc_pu_t;                          /* per-unit phase quantities [-1,1) */
 typedef struct { q15_t afa, bet; } ab_pu_t;                          /* per-unit alpha/beta (stationary frame) [-1,1) */
 typedef struct { q15_t d, q; }    dq_pu_t;                           /* per-unit dq quantities         */

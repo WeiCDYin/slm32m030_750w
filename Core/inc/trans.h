@@ -22,11 +22,11 @@ extern "C" {
  * is ~60 cycles a tick paid to cross a boundary the compiler can simply see through.
  *
  * WHAT IT COSTS: +472 B of flash, because a body is duplicated at each of the ten call sites and
- * only four are on the hot tick -- prod_vf, prod_if, transition_to_foc and the two clamp-only
- * paths pay the size for no cycles. Whether that trade is net positive on THIS part is not settled
- * by counting: a bigger hot path competes for the G4's single-KB instruction cache, and a miss is
- * a flash fetch at four wait states (docs/CYCLES.md, and the CCM item in TODO.md). isr_budget.py
- * is what decides it.
+ * only four are on the hot tick -- prod_vf_mode, prod_if_mode, handover2foc and the
+ * two clamp-only paths pay the size for no cycles. Whether that trade is net positive on THIS part
+ * is not settled by counting: a bigger hot path competes for the G4's single-KB instruction cache,
+ * and a miss is a flash fetch at four wait states (docs/CYCLES.md, and the CCM item in TODO.md).
+ * isr_budget.py is what decides it.
  *
  * sincos_q15 stays OUT of line deliberately -- it is the seam a port swaps for CORDIC (below), and
  * a static inline in a header has no symbol left to replace. */
@@ -85,7 +85,7 @@ static inline abc_pu_t ab2abc(ab_pu_t x) {
  * An angle_t parameter hides the table lookup INSIDE the transform, so a caller that rotates
  * twice about one angle pays for two decodes with nothing at the call site saying so -- and
  * two of the seven call sites in this drive did exactly that (cc_step's forward/anti-windup
- * pair, transition_to_foc's current/voltage pair). Naming the decode makes the second one
+ * pair, handover2foc's current/voltage pair). Naming the decode makes the second one
  * visible; there is deliberately NO angle-taking form to fall back to, because the convenient
  * spelling is the one the next duplicate would be written in.
  *

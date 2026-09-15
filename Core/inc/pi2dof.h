@@ -10,8 +10,8 @@ extern "C" {
 /* THE LIMIT IS THE CALLER'S TOO -- this regulator never clamps its own output. It cannot: a
  * limit is a property of the ACTUATOR, and only the caller knows it.
  *   sc  -- the current limit i_max, which sc itself owns and applies.
- *   cc  -- whatever svm could actually synthesize, which is not a per-axis number at all: it is
- *          the hexagon, read back from the duties (svm_realized -> mc->uab_ref_lim). d and q
+ *   cc  -- whatever mod could actually synthesize, which is not a per-axis number at all: it is
+ *          the hexagon, read back from the duties (mod_realized_ref -> mc->uab_ref_lim). d and q
  *          spend ONE shared voltage budget, so no per-axis box could express it honestly.
  * So the step is SPLIT: pi2dof_output RETURNS the unlimited ask, the caller limits it, and
  * pi2dof_update_I TAKES BACK what that ask became once the limiter had its say -- the SAME tick,
@@ -64,12 +64,12 @@ static inline int32_t pi2dof_output(pi2dof_t *p, q15_t ref, q15_t fb) {
 /* Part 2 of the step: advance the integrator, same tick as the pi2dof_output that preceded it.
  *
  *   out_lim = what THIS tick's ask actually became after the caller limited it (sc: clamped to
- *             +-i_max; cc: ab2dq(svm_realized(...)) -- what svm really applied). The back-calc
+ *             +-i_max; cc: ab2dq(mod_realized_ref(...)) -- what mod really applied). The back-calc
  *             drains I by (out_lim - out), out being the ask pi2dof_output stashed in p->out.
  *             Pass the unlimited ask back unchanged when nothing limited it; the term is then 0.
  *
  * SAME-tick, not one step late: the split lets the limit of tick k's ask land in tick k's
- * integrator, because the caller limits BETWEEN output and update (for cc, svm runs there). ref
+ * integrator, because the caller limits BETWEEN output and update (for cc, mod runs there). ref
  * and fb must match the pi2dof_output call so err is this tick's. NULL-safe. */
 static inline void pi2dof_update_I(pi2dof_t *p, q15_t ref, q15_t fb, q15_t out_lim) {
     if(!p) return;

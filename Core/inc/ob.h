@@ -7,7 +7,7 @@ extern "C" {
 /* Generic OBSERVER interface -- the seam the control core talks to,
  * agnostic to which observer is behind it (sliding-mode, flux, ...). A function-
  * pointer vtable + the implementation's state pointer, exactly like the cold-path
- * mc_hw_if_t power-stage vtable. The core (prod_if_foc) and hsm only ever call the
+ * mc_hw_if_t power-stage vtable. The core (prod_if_foc_mode) and hsm only ever call the
  * NULL-safe dispatchers below on mc->ob; they never know the implementation.
  *
  * Compose it in the port: allocate the impl's state (e.g. smo_t) + an ob_t, tune the

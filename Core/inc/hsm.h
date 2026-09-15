@@ -17,7 +17,7 @@ extern "C" {
  * producing leaves (DUTY/VV/VF/CV/IF/IF_FOC) all hang directly off RUNNING, which owns the
  * power stage. The dq-PI/observer lifecycle that IF needs is seeded by IF's OWN entry
  * (shared with IF_FOC via reset_current_loop in hsm.c). Each producing leaf's entry
- * PUBLISHES its mode as its last action; every non-producing state publishes CTRL_MODE_SAFE. */
+ * PUBLISHES its mode as its last action; every non-producing state publishes CTRL_MODE_NONE. */
 typedef enum {
     ST_ROOT,             /* sentinel parent */
     ST_IDLE,             /* not running; PWM output off   */
@@ -46,7 +46,7 @@ typedef enum {
  * They publish the SAME ctrl_mode as their sibling (VV -> CTRL_MODE_VF, CV -> CTRL_MODE_IF): the
  * producer math is identical, only the setpoints differ. That is the mode projection doing its job
  * -- ctrl_mode names the hot-path producer, not the state -- exactly as IDLE and FAULT both project
- * onto CTRL_MODE_SAFE. Magnitude and angle stay the caller's to set, live, without re-entering
+ * onto CTRL_MODE_NONE. Magnitude and angle stay the caller's to set, live, without re-entering
  * (vf_set_vv_mag/vf_set_theta_offset, if_set_cv_mag/if_set_theta_offset).
  *
  * LIVE, but not PERMANENT: the generator reset on the NEXT entry undoes both, precisely so a
@@ -67,7 +67,16 @@ typedef enum {
  * TWO VOCABULARIES, and only one of them is a command alphabet. state_t remains the whole
  * TRANSITION vocabulary (5.1) -- EV_TRAN carries a state_t rather than re-spelling it. The
  * EV_SET_* ids name PARAMETERS, which no state_t can say, because a setpoint is not a place the
- * drive rests. That is the line the deleted mc_cmd_t was on the wrong side of. */
+ * drive rests. That is the line the deleted mc_cmd_t was on the wrong side of.
+ *
+ * EV_START / EV_STOP are neither, and that is why they are allowed to exist. They do not name a
+ * PLACE -- the drive is in ST_IF_FOC whether it is turning or not, which is the whole point of
+ * stopping without leaving the mode the operator selected -- and they do not name a PARAMETER,
+ * since "is the drive driving" is not a number anything sets. They are the SECOND DIMENSION: which
+ * producer runs is one question and whether the stage is energized is another, and state_t only
+ * answers the first (TODO.md; CiA 402 splits the same pair, `Switched on` vs `Operation enabled`,
+ * against a modes-of-operation field). Today only ST_IF_FOC handles them, because it is the only
+ * leaf that ever had the distinction -- it used to make it on a speed threshold. */
 typedef enum {
     EV_NONE,        /* 0: a zero-initialized event is inert */
     EV_TRAN,        /* a = target state_t                          (handled at ROOT) */
@@ -75,6 +84,10 @@ typedef enum {
     EV_SET_SPD,     /* a = forced speed, q15 pu                    (VF / IF) */
     EV_SET_VEC,     /* a = magnitude q15 pu, b = angle BAM         (VV / CV) */
     EV_SET_DUTY,    /* a,b,c = per-phase duty, q15                 (DUTY) */
+    EV_START,       /* no payload; energize and begin a run        (IF_FOC) */
+    EV_STOP,        /* no payload; de-energize, machine COASTS     (IF_FOC) */
+                    /* independent of EV_SET_SPD in both directions: a speed may be set before the
+                     * start (the run begins at it) or after, and a stop leaves it standing. */
 } ev_id_t;
 
 /* Which payload fields are PRESENT. A "leave this alone" sentinel is impossible here -- 0 is a
@@ -198,16 +211,15 @@ void mc_hsm_tran(hsm_t *h, state_t target, hsm_action_t action);
  *
  * The CALLER owns the ctrl_mode pairing, because the order differs by direction and only the caller
  * knows which producer mode to publish (hsm.c, top of file):
- *   enabling  -- publish CTRL_MODE_SAFE, enable, then publish the producer mode LAST
- *   disabling -- disable FIRST, then publish CTRL_MODE_SAFE, so the zero voltage vector (equal
- *                duties, which on a turning machine is a three-phase SHORT -- see SVM_DUTY_ZERO in
- *                svm.h) is never commanded into an enabled output
+ *   enabling  -- publish CTRL_MODE_NONE, enable, then publish the producer mode LAST
+ *   disabling -- disable FIRST, then publish CTRL_MODE_NONE, so the zero voltage vector (equal
+ *                duties, which on a turning machine is a three-phase SHORT -- see MOD_DUTY_ZERO in
+ *                mod.h) is never commanded into an enabled output
  *
  * Most callers never touch these: a leaf's entry handler enables if that leaf drives on arrival,
- * IF_FOC's demand handler enables and disables as the demand crosses the observability floor, and
- * leaving ST_RUNNING always disables. They are public for the case none of those covers -- a port
- * starting SENSORED FOC, which enters IF_FOC already handed over (docs/HSM.md 12) and so has no speed
- * demand to enable on. */
+ * IF_FOC's EV_START / EV_STOP handler enables and disables, and leaving ST_RUNNING always
+ * disables. They are public for the case none of those covers -- a port starting SENSORED FOC,
+ * which enters IF_FOC already handed over (docs/HSM.md 12) and so starts no run to enable on. */
 void hsm_pwm_enable(hsm_t *h);
 void hsm_pwm_disable(hsm_t *h);
 

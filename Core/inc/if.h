@@ -27,6 +27,12 @@ typedef struct {
                          * destination: where the ramp is going is the caller's per-tick argument
                          * to if_step, and the handover speed belongs to the drive (mc_t) rather
                          * than to this generator. */
+    float Ts;           /* the period the generator is STEPPED at [s]. In here rather than a
+                         * second argument because every field above is a RATE or a DURATION and
+                         * none of them means anything without it -- they only ever meet as a
+                         * per-step increment or a step count -- and because a caller that took
+                         * the period from the drive and the times from a header had two chances
+                         * to disagree. Matches cc_cfg_t / sc_cfg_t / vf_cfg_t. */
 } if_cfg_t;
 
 typedef struct {
@@ -36,7 +42,7 @@ typedef struct {
     int32_t  d_i;         /* current ramp increment per step (Q15.16)   */
     uint32_t hold_steps;
     q15_t    spd_tgt;     /* THIS TICK's target, as handed to if_step -- cached, not owned, so
-                           * if_ss_reached can answer against the target actually being chased */
+                           * if_in_steady_state can answer against the target actually being chased */
     q15_t    i_tgt;       /* the current-magnitude target the ramp chases. The LIVE value -- also the
                            * static current vector's magnitude, since at standstill the ramp settles
                            * ON it, so if_set_cv_mag aims at this field. */
@@ -59,7 +65,7 @@ typedef struct {
  * Requires |w_tgt|*Ts < pi (well under half an electrical rev per step).
  * Nonzero ramp rates are guaranteed to progress (increments round up to
  * >= 1 LSB). */
-void    if_tune(if_t *g, const base_t *b, const if_cfg_t *c, float Ts);
+void    if_tune(if_t *g, const base_t *b, const if_cfg_t *c);
 /* Reset only the RUNTIME ramp state to the startup point (current/frequency 0, alignment
  * hold pending, angle at the -90 deg d-axis start), keeping the derived coefficients.
  * The runtime half of if_tune; call on every I-f entry (hsm on_entry_if/on_entry_if_foc) so re-entry
@@ -79,6 +85,28 @@ void    if_init(if_t *g);
  * machine. ST_IF / ST_IF_FOC keep if_init, whose restored i_tgt is the startup current they need. */
 void    cv_init(if_t *g);
 void    if_set_theta_offset(if_t *g, angle_t offset);
+/* Seed the generator to a RUNNING point instead of the standstill one if_init gives it: forced
+ * angle and forced speed are set to what the drive is ALREADY doing, the current magnitude goes
+ * STRAIGHT TO ITS TARGET (i_tgt, the configured startup current), and the alignment hold is marked
+ * spent -- so the speed ramp is live on the very next step.
+ *
+ * The FOC -> I-f reverse transition (mc.c) is the only caller, and it is the mirror of
+ * cc_trans_set_I / sc_trans_set_I: a generator that restarted from standstill under a turning
+ * machine would command zero amps at a dead angle and drop the rotor. Cold-path state only, but it
+ * runs IN the carrier tick -- four stores, no arithmetic worth the name. NULL-safe.
+ *
+ * theta is the generator's OWN frame angle, not the rotor's: the caller places it, because where
+ * the forced current has to sit relative to the rotor is the transition's question and not this
+ * generator's (mc.c).
+ *
+ * THE MAGNITUDE IS NOT AN ARGUMENT, and that is the point. It is tempting to carry the current the
+ * drive was holding across for continuity -- and it is WRONG: open-loop torque is
+ * k_t*|i|*sin(delta), the load still needs the torque FOC was making, and FOC was making it at
+ * delta = 90 deg. Arriving with that same |i| therefore puts the only delta that balances the load
+ * AT 90 deg -- the pull-out edge. Margin is |i|: delta_eq = asin(T_load / (k_t*|i|)) is only a few
+ * degrees when |i| is the full startup current, which is what that current is FOR. So there is
+ * nothing for a caller to choose here. */
+void    if_trans_set(if_t *g, angle_t theta, spd_pu_t spd);
 /* Set the current vector magnitude target the ramp chases (per-unit Q15), live. Lets the
  * static "current vector" mode slew magnitude without resetting the generator. LIVE only:
  * i_tgt_cfg is untouched, so the next if_init puts the configured magnitude back. */
@@ -99,7 +127,7 @@ dq_pu_t    if_get_idq_ref(const if_t *g);
 angle_t    if_get_theta(const if_t *g);
 spd_pu_t   if_get_spd(const if_t *g);
 /* i-f control (current and speed reference) reached steady state */
-bool       if_ss_reached(const if_t *g);
+bool       if_in_steady_state(const if_t *g);
 
 #ifdef __cplusplus
 }

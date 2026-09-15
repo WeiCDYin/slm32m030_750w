@@ -12,5 +12,5 @@
  * that cannot be inverted. */
 #ifndef MC_CORE_HASH_H
 #define MC_CORE_HASH_H
-#define MC_CORE_HASH "4671456610677d6d"
+#define MC_CORE_HASH "137c2984c2ad8a3d"
 #endif

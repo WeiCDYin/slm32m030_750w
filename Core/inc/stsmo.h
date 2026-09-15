@@ -55,24 +55,6 @@ typedef struct {
     pll_t    pll;       /* Stage 2, by value -- the same loop smo_t embeds (pll.h)     */
 } stsmo_t;
 
-/* The COLD half of stsmo_t: exactly what stsmo_tune writes, Stage 2's block included, and
- * nothing a step touches. Its own type for the same reason smo_gains_t is one -- deriving the
- * coefficients and loading them are separate acts (cf. pi2dof.h). */
-typedef struct {
-    q15_t       f_decay;   /* F = 1 - Ts*Rs/Lq                                      [Q15] */
-    q15_t       g_volt;    /* G = Ts*u_base/(Lq*i_base)                             [Q15] */
-    int32_t     k1;        /* sqrt-term gain         [pu-V per sqrt(pu-A), Q12, < 8.0] */
-    q15_t       k2_ts;     /* integral-term gain, Ts folded in: k2*Ts         [pu-V, Q15] */
-    int32_t     inv_eps;   /* 1/eps for the smoothed sgn     [1/pu-A, Q8]; 0 -> exact sgn */
-    bool        pll_on_w;  /* feed Stage 2 the integral state w instead of the full z     */
-    pll_gains_t pll;       /* Stage 2, the shared tracking loop (pll.h)                   */
-} stsmo_gains_t;
-
-/* Load a gain set and clear the runtime state, Stage 2 included -- what stsmo_tune does once
- * it has computed one. NULL gains -> INERT: every coefficient zero, so the current model never
- * moves and the loop reports angle 0. NULL-safe. */
-void       stsmo_set_gains(stsmo_t *o, const stsmo_gains_t *g);
-
 /* Tuning knobs the app chooses (cf. smo_cfg_t). k1 and k2 bound the EMF's RATE rather than its
  * amplitude -- the structural advantage over smo_cfg_t.k_slide. Both are per-unit voltages; k1
  * additionally carries 1/sqrt(pu-A).
@@ -95,15 +77,21 @@ typedef struct {
     bool  pll_on_w;  /* true: Stage 2 tracks w (smoother); false: the full z (faster) */
     float bw_pll;    /* PLL tracking bandwidth                             [rad/s]    */
     float zeta_pll;  /* PLL damping (~1)                                      [-]     */
+    float Ts;        /* the period the observer is STEPPED at                   [s]. In here
+                      * rather than a second argument because nothing above survives without it
+                      * -- F is 1 - Ts*Rs/Lq, G is Ts*u_base/(Lq*i_base), k2 has it folded in,
+                      * and BOTH of k1's bounds move with it (the block above) -- and because a
+                      * caller that took the period from the drive and the gains from a header
+                      * had two chances to disagree. Matches smo_cfg_t and the rest.       */
 } stsmo_cfg_t;
 
 /* Derive the Q12/Q15/Q30 coefficients from the SI machine + bases + tuning cfg (float,
  * COLD PATH -- call once at composition, like smo_tune). Uses Rs and Lq (the active-flux
- * series inductance); Ld/lam never enter, exactly as in smo.c. Zeroes the whole object
- * first, so it also clears state. NULL-safe / inert on a bad cfg (Ts <= 0, Lq <= 0,
- * NULL m/b/c). */
-void       stsmo_tune(stsmo_t *o, const motor_cfg_t *m, const base_t *b,
-                      const stsmo_cfg_t *c, float Ts);
+ * series inductance); Ld/lam never enter, exactly as in smo.c. Zeroes the whole object first,
+ * so it also clears state, Stage 2 included -- it tunes the embedded pll_t itself (pll.h), so
+ * there is no second call and no gain block in between. NULL-safe / inert on a bad cfg
+ * (c->Ts <= 0, Lq <= 0, NULL m/b/c). */
+void       stsmo_tune(stsmo_t *o, const motor_cfg_t *m, const base_t *b, const stsmo_cfg_t *c);
 /* Reset runtime STATE only (estimates, integral states, PLL), PRESERVING the
  * coefficients stsmo_tune set -- runs on every IF/IF_FOC entry (via ob_init, hsm.c). */
 void       stsmo_init(stsmo_t *o);

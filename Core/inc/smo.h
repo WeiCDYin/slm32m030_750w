@@ -64,25 +64,8 @@ typedef struct {
     pll_t    pll;
 } smo_t;
 
-/* The COLD half of smo_t: exactly what smo_tune writes, Stage 2's block included, and nothing
- * a step touches. Its own type so DERIVING the coefficients and LOADING them are separable
- * (cf. pi2dof.h) -- smo_set_gains takes one of these however it was produced. */
-typedef struct {
-    q15_t       f_decay;  /* F = 1 - Ts*Rs/Lq                                       [Q15] */
-    q15_t       g_volt;   /* G = Ts*u_base/(Lq*i_base)                              [Q15] */
-    q15_t       k_slide;  /* sliding gain (switching amplitude)                 [pu, Q15] */
-    int32_t     sig_a;    /* sigmoid steepness a                              [1/pu, Q8] */
-    q15_t       k_emf;    /* pu EMF per pu speed -- the diagnostic constant only    [Q15] */
-    pll_gains_t pll;      /* Stage 2, the shared tracking loop (pll.h)                   */
-} smo_gains_t;
-
-/* Load a gain set and clear the runtime state, Stage 2 included -- what smo_tune does once it
- * has computed one. NULL gains -> INERT: every coefficient zero, so the current model never
- * moves and the loop reports angle 0. NULL-safe. */
-void smo_set_gains(smo_t *smo, const smo_gains_t *g);
-
 /* Tuning knobs the app chooses (cf. if_cfg_t): pu/SI design parameters that
- * smo_tune turns into the Q15/Q31 coefficients of smo_gains_t. */
+ * smo_tune turns into the observer's Q15/Q31 coefficients. */
 typedef struct {
     float k_slide;   /* sliding gain -- must exceed the max back-EMF seen     [pu] */
     float sig_a;     /* sigmoid steepness [1/pu]: larger -> sharper, closer to sign. Bounded
@@ -91,15 +74,21 @@ typedef struct {
                       * machines; the bound itself is derived in smo.c. */
     float bw_pll;    /* PLL tracking bandwidth                             [rad/s] */
     float zeta_pll;  /* PLL damping (~1)                                      [-]  */
+    float Ts;        /* the period the observer is STEPPED at                   [s]. In here
+                      * rather than a second argument because nothing above survives without
+                      * it -- F is 1 - Ts*Rs/Lq, G is Ts*u_base/(Lq*i_base), the PLL's Ki has
+                      * it folded in -- and because a caller that took the period from the
+                      * drive and the bandwidths from a header had two chances to disagree.
+                      * Matches cc_cfg_t / sc_cfg_t / if_cfg_t / vf_cfg_t / pll_cfg_t. */
 } smo_cfg_t;
 
 /* Derive Q15/Q31 coefficients from the SI machine + bases + tuning cfg (float,
  * COLD PATH -- call once at composition, like cc_tune). Uses Rs, Lq (series
  * inductance), and Ld/lam for the active flux; SPM (Ld==Lq) zeroes the saliency term.
- * Zeroes the whole object first, so it also clears state. NULL-safe / inert on a
- * bad cfg (Ts <= 0, Lq <= 0, NULL m/b/c). */
-void smo_tune(smo_t *smo, const motor_cfg_t *m, const base_t *b,
-              const smo_cfg_t *c, float Ts);
+ * Zeroes the whole object first, so it also clears state, Stage 2 included -- it tunes the
+ * embedded pll_t itself (pll.h), so there is no second call and no gain block in between.
+ * NULL-safe / inert on a bad cfg (c->Ts <= 0, Lq <= 0, NULL m/b/c). */
+void smo_tune(smo_t *smo, const motor_cfg_t *m, const base_t *b, const smo_cfg_t *c);
 /* Reset runtime STATE only (estimates, integrators, accumulators), PRESERVING the
  * coefficients smo_tune set -- runs on every IF/IF_FOC entry (via ob_init, hsm.c). */
 void smo_init(smo_t *smo);

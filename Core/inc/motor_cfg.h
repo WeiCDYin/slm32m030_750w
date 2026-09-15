@@ -15,10 +15,10 @@ typedef struct {
     /* Machine parameters, SI units, from datasheet. */
     float Rs;        /* phase resistance               [ohm]     */
     float Ld, Lq;    /* dq-axes inductances            [H]       */
-    float lambda_pm; /* PM flux linkage (lambda_pm)    [V s]     */
+    float lambda_pm; /* PM flux linkage (lambda_pm)    [V*s]      */
     int   npp;       /* number of pole pairs           [-]       */
-    float J;         /* rotor inertia                  [kg m^2]  */
-    float B;         /* viscous friction coefficient   [N m s]   */
+    float J;         /* rotor inertia                  [kg*m^2]  */
+    float B;         /* viscous friction coefficient   [N*m*s]   */
     float Udc;       /* DC bus voltage                 [V]       */
 } motor_cfg_t;
 #ifdef __cplusplus

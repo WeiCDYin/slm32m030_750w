@@ -19,11 +19,24 @@ static ob_t  g_ob;
 mc_t         g_mc;
 hsm_t        g_hsm, *g_hsm_ptr;
 
+static cc_cfg_t g_cc_cfg = {
+    .alpha_c = CC_BW_RAD_S,
+    .Ts      = TS_FAST,
+};
+
+static sc_cfg_t g_sc_cfg = {
+    .alpha_s   = SC_BW_RAD_S,
+    .i_max_pu  = IQ_MAX_PU,
+    .ramp_pu_s = SC_ACCEL_PU_S,
+    .Ts        = TS_FAST,
+};
+
 static if_cfg_t g_if_cfg = {
     .i_mag_pu     = IF_I_MAG_PU,
     .i_ramp_ms    = IF_I_RAMP_MS,
     .i_hold_ms    = IF_I_HOLD_MS,
     .w_accel_pu_s = IF_W_ACCEL_PU_S,
+    .Ts           = TS_FAST,
 };
 
 static smo_cfg_t g_smo_cfg = {
@@ -31,12 +44,14 @@ static smo_cfg_t g_smo_cfg = {
     .sig_a    = SMO_SIG_A,
     .bw_pll   = SMO_BW_PLL_RAD_S,
     .zeta_pll = SMO_ZETA_PLL,
+    .Ts       = TS_FAST,
 };
 
 static vf_cfg_t g_vf_cfg = {
     .v_boost_pu = VF_V_BOOST_PU,
     .v_rated_pu = VF_V_RATED_PU,
     .w_ramp_ms  = VF_W_RAMP_MS,
+    .Ts         = TS_FAST,
 };
 
 static motor_cfg_t g_motor_cfg = {
@@ -76,28 +91,22 @@ void foc_init(void)
     g_mc.sc  = &g_sc;
     g_mc.ifg = &g_ifg;
     g_mc.vf  = &g_vf;
+    g_mc.ob  = &g_ob;
     smo_bind(&g_ob, &g_smo);
-    g_mc.ob = &g_ob;
 
-    cc_tune(&g_cc, &g_motor_cfg, &g_pu_base, CC_BW_RAD_S, TS_FAST);
-    if_tune(&g_ifg, &g_pu_base, &g_if_cfg, TS_FAST);
-    vf_tune(&g_vf, &g_pu_base, &g_vf_cfg, TS_FAST);
-    smo_tune(&g_smo, &g_motor_cfg, &g_pu_base, &g_smo_cfg, TS_FAST);
-    sc_tune(&g_sc, &g_motor_cfg, &g_pu_base, SC_BW_RAD_S, IQ_MAX_PU, TS_SLOW);
+    if_tune(&g_ifg, &g_pu_base, &g_if_cfg);
+    vf_tune(&g_vf, &g_pu_base, &g_vf_cfg);
+    smo_tune(&g_smo, &g_motor_cfg, &g_pu_base, &g_smo_cfg);
+    cc_tune(&g_cc, &g_motor_cfg, &g_pu_base, &g_cc_cfg);
+    sc_tune(&g_sc, &g_motor_cfg, &g_pu_base, &g_sc_cfg);
     sc_init(&g_sc);
-
-    rate_limiter_tune(&g_mc.spd_ramp, SC_ACCEL_PU_S, TS_SLOW);
-
-    /* Observer convergence check: EMF threshold derived from the floor speed
-     * (conv.c). Without this the verdict never passes (ticks_req stays 0). */
     conv_tune(&g_mc.conv, &g_motor_cfg, &g_pu_base, CONV_FLOOR_SPD_PU);
 
-    g_mc.transit_en   = true;
-    g_mc.handover_spd = (spd_pu_t)(IF_HANDOVER_PU * (float)Q15_ONE);
-
-    g_hsm.mc  = &g_mc;
-    g_hsm.hw  = &g_pwm_hw_if;
-    g_hsm_ptr = &g_hsm;
+    g_mc.tr_enable           = true;
+    g_mc.if2foc_handover_spd = (spd_pu_t)(IF_HANDOVER_PU * (float)Q15_ONE);
+    g_hsm.mc                 = &g_mc;
+    g_hsm.hw                 = &g_pwm_hw_if;
+    g_hsm_ptr                = &g_hsm;
     foc_hsm_set(EV_TRAN, EV_FIELD_A, ST_IDLE, 0, 0);
 }
 
@@ -132,7 +141,7 @@ void foc_1ms_proc(void)
 
 void foc_poll_proc(uint8_t state)
 {
-    static ctrl_mode_t pre_ctrl_mode = CTRL_MODE_SAFE;
+    static ctrl_mode_t pre_ctrl_mode = CTRL_MODE_NONE;
     // machine state
     hsm_run(g_hsm_ptr);
 
@@ -145,7 +154,7 @@ void foc_poll_proc(uint8_t state)
             cmdbus_post(CMDBUS_CMD_CTRL, &ctrl, sizeof(ctrl));
         }
     }
-    else if (g_hsm_ptr->mc->ctrl_mode == CTRL_MODE_SAFE && pre_ctrl_mode >= CTRL_MODE_DUTY)
+    else if (g_hsm_ptr->mc->ctrl_mode == CTRL_MODE_NONE && pre_ctrl_mode >= CTRL_MODE_DUTY)
     {
         // stop by foc internal
         cmdbus_ctrl_t ctrl = {.ctrl_type = CMDBUS_CTRL_STOP};

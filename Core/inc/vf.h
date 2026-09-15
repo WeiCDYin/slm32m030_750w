@@ -22,6 +22,11 @@ typedef struct {
     float v_boost_pu;   /* voltage at zero speed (low-speed boost)    [pu] */
     float v_rated_pu;   /* voltage at rated speed (|w_pu| == 1)       [pu] */
     float w_ramp_ms;    /* accel: time to slew speed across full pu   [ms] */
+    float Ts;           /* the period the generator is STEPPED at     [s]. In here rather than a
+                         * second argument because w_ramp_ms is meaningless without it -- the two
+                         * only ever meet as the per-step increment -- and because a caller that
+                         * took the period from the drive and the ramp from a header had two
+                         * chances to disagree. Matches cc_cfg_t / sc_cfg_t. */
 } vf_cfg_t;
 
 typedef struct {
@@ -48,7 +53,7 @@ typedef struct {
 /* Cold path: derive Q15/Q31 coefficients from SI config + per-unit bases + Ts
  * (like if_tune). Needs only the bases, no machine parameters. Requires
  * w_base*Ts < pi (under half an electrical rev per step at rated speed). */
-void    vf_tune(vf_t *g, const base_t *b, const vf_cfg_t *c, float Ts);
+void    vf_tune(vf_t *g, const base_t *b, const vf_cfg_t *c);
 /* Reset only the RUNTIME state to standstill (working speed 0, angle accumulator 0), keeping the
  * derived coefficients. The runtime half of vf_tune; call on VF entry (hsm on_entry_vf) so entry
  * starts a clean ramp instead of resuming a stale working speed. NULL-safe.

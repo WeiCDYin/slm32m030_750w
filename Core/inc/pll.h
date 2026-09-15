@@ -34,7 +34,7 @@ extern "C" {
  * i_q_ref on -i_q, inverting torque and closing the speed loop with POSITIVE feedback.
  * That was a real bug: reverse startups stalled on one of our machines and ran away to the
  * voltage ceiling on the other, gated only by rotor inertia. See core.py's
- * test_if_foc_transition_negative_speed.
+ * test_if2foc_negative_speed.
  *
  * dir comes from spd_est, and that is sound rather than circular: the analysis above puts
  * BOTH roots at dtheta_est/dt = w, so the integrator tracks the true speed WITH THE RIGHT
@@ -158,28 +158,24 @@ typedef struct {
                          * a setting -- pll_init puts it at +1. See the block above.   */
 } pll_t;
 
-/* The COLD half of pll_t: exactly the three coefficients pll_tune writes. Its own type so an
- * observer that embeds a pll_t can carry Stage 2's numbers inside its own gain block rather
- * than tuning the embedded loop as a separate act (smo.h, stsmo.h). */
+/* What a PERSON sets: the authored half, floats. Ts rides along with the two loop numbers rather
+ * than arriving as its own argument because neither means anything without it -- ki is w_pll^2*Ts
+ * and k_theta is w_base*Ts/2pi -- and because a caller that took the period from the drive and the
+ * bandwidth from a header had two chances to disagree. Matches cc_cfg_t / sc_cfg_t / if_cfg_t /
+ * vf_cfg_t. An observer that embeds a pll_t fills one of these from its OWN cfg (smo.c). */
 typedef struct {
-    q15_t    kp;        /* proportional gain                                   [Q15] */
-    q15_t    ki;        /* integral gain (Ts folded in)                        [Q15] */
-    int32_t  k_theta;   /* angle increment per speed LSB: w_base*Ts/2pi * 2^17       */
-} pll_gains_t;
+    float w_pll;    /* tracking-loop bandwidth [rad/s]                     */
+    float zeta;     /* damping; 1.0 is the critically damped default       */
+    float Ts;       /* the period the loop is STEPPED at [s]               */
+} pll_cfg_t;
 
-/* Load a gain set and clear the runtime state (accumulator, integrator, speed, dir) -- what
- * pll_tune does once it has computed one. NULL gains -> INERT: zero gains, so the loop holds
- * angle 0 and never moves. dir starts at +1 either way; 0 is not a valid sign. NULL-safe. */
-void       pll_set_gains(pll_t *pll, const pll_gains_t *g);
-/* Derive the Q15/Q31 coefficients from the bases + bandwidth/damping (float, COLD PATH
- * -- call once at composition, from the owning observer's *_tune). The derivation is in pll.c.
- * Zeroes the whole object first, so it also clears state. NULL-safe / inert on a bad
- * cfg (Ts <= 0, NULL b, w_base <= 0). */
-void       pll_tune(pll_t *pll, const base_t *b, float w_pll, float zeta, float Ts);
-/* The same derivation, into a gain block instead of into a loop -- so an observer building one
- * block for its whole object can fill Stage 2's part without owning a pll_t to tune. Zeroed on
- * the same bad cfg pll_tune goes inert on. NULL-safe. */
-void       pll_tune_gains(pll_gains_t *g, const base_t *b, float w_pll, float zeta, float Ts);
+/* Derive the Q15/Q31 coefficients from the bases + cfg and load them (float, COLD PATH -- call
+ * once at composition; an observer that EMBEDS a pll_t calls this on it from its own *_tune,
+ * smo.c). The derivation is in pll.c. Zeroes the whole object first, so it also clears state, and
+ * dir lands at +1 either way -- 0 is not a valid sign. The only way into the loop: no separate
+ * load step. NULL-safe / inert on a bad cfg (NULL c, c->Ts <= 0, NULL b, w_base <= 0), which
+ * leaves a loop that holds angle 0 and never moves. */
+void       pll_tune(pll_t *pll, const base_t *b, const pll_cfg_t *c);
 /* Reset runtime STATE only (accumulator, integrator, speed), PRESERVING coefficients --
  * runs on every observer re-entry (via ob_init, hsm.c). */
 void       pll_init(pll_t *pll);

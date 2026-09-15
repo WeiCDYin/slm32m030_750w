@@ -9,7 +9,7 @@ extern "C" {
  * Owned by the composition root next to its motor_cfg_t; everything that crosses
  * the numeric boundary (ADC -> pu, tuning, pu commands -> volts) shares one instance.
  * Float here is config-only -- it does not put float math on the hot path.
- * Convention: u_base = six-step fundamental 2*Udc_nom/pi, the inverter ceiling (see svm.c). */
+ * Convention: u_base = six-step fundamental 2*Udc_nom/pi, the inverter ceiling (see mod.c). */
 typedef struct {
     float i_base;   /* current base      [A]           */
     float u_base;   /* voltage base      [V]           */

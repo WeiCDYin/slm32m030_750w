@@ -38,7 +38,7 @@ extern "C" {
  * number pending the bench sweep (TODO.md, "low-side sampling window"); 0 is the floor a board
  * with no minimum-pulse requirement wants. svm() stays correct for any accepted pair -- see
  * svm.c on why its clamp flag can only over-report, never miss. */
-#define SVM_DUTY_MAX_DEFAULT    ((q15_t)((Q15_ONE * 0.95f)))   /* 0.95 duty: 31129 */
+#define SVM_DUTY_MAX_DEFAULT    ((q15_t)((Q15_ONE * 0.90f)))   /* 0.95 duty: 31129 */
 #define SVM_DUTY_MIN_DEFAULT    ((q15_t)0)
 #define SVM_DUTY_ZERO   ((duties_t){ SVM_DUTY_MID, SVM_DUTY_MID, SVM_DUTY_MID })
 typedef int32_t svm_gain_t;
