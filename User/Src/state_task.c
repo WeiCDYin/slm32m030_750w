@@ -297,9 +297,7 @@ static void run_fault(void)
 
 static angle_t vec_bam(uint16_t ang_deg)
 {
-    angle_t off = deg_to_bam((int16_t)ang_deg);
-
-    return (g_state.run_mode == CMDBUS_RUN_MODE_CV) ? off : (angle_t)(off - 16384);
+    return deg_to_bam((int16_t)ang_deg);
 }
 
 static void cmd_ctrl(const void *payload)
