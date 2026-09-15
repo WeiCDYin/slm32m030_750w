@@ -1,100 +1,100 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <lksscope appVersion="v1.4.8">
     <params>
-        <param name="linkType" value="0"/>
-        <param name="jClock" value="2000000"/>
-        <param name="uClock" value="1000000"/>
-        <param name="commPort" value="COM4"/>
-        <param name="commBaud" value="9600"/>
-        <param name="bleName" value=""/>
-        <param name="localIP" value=""/>
-        <param name="localPort" value=""/>
-        <param name="remoteIP" value=""/>
-        <param name="remotePort" value=""/>
-        <param name="rttAddr" value="20000000"/>
-        <param name="rttFreq" value="16000"/>
-        <param name="sampleInterval" value="2"/>
-        <param name="uiInterval" value="50"/>
-        <param name="maxPoint" value="100"/>
-        <param name="checkAxf" value="1"/>
+        <param value="0" name="linkType"/>
+        <param value="2000000" name="jClock"/>
+        <param value="1000000" name="uClock"/>
+        <param value="COM4" name="commPort"/>
+        <param value="9600" name="commBaud"/>
+        <param value="" name="bleName"/>
+        <param value="" name="localIP"/>
+        <param value="" name="localPort"/>
+        <param value="" name="remoteIP"/>
+        <param value="" name="remotePort"/>
+        <param value="20000000" name="rttAddr"/>
+        <param value="16000" name="rttFreq"/>
+        <param value="2" name="sampleInterval"/>
+        <param value="50" name="uiInterval"/>
+        <param value="100" name="maxPoint"/>
+        <param value="1" name="checkAxf"/>
     </params>
     <layouts>
-        <param name="geometry" value="AdnQywADAAD/////////+AAAB4AAAAQIAAAAAQAAAB8AAAO+AAACzgAAAAACAAAAB4AAAAAAAAAAFwAAB38AAAQH"/>
-        <param name="state" value="AAAA/wAAAAD9AAAAAgAAAAAAAAGJAAADf/wCAAAAAvsAAAAIepdT41v8gioBAAAAUgAAAcAAAAAAAAAAAPwAAAIWAAABuwAAAAAA////+gAAAAACAAAAAvsAAAAIW/xRZVPYkc8BAAAAAP////8AAAAAAAAAAPsAAAAKgepbmk5JU9iRzwEAAAAA/////wAAAAAAAAAAAAAAAQAABfMAAAN//AIAAAAH+wAAAAZbxFtYVmgAAAAAAP////8AAAAAAAAAAPwAAABOAAADhQAAAAAA/////AEAAAAC+wAAAAZm8n6/ADABAAAByQAABAcAAAAAAAAAAPsAAAAGZXBQPAAwAQAABdQAAAGsAAAAAAAAAAD7AAAACGVwY25mPnk6AQAAAFIAAAN/AAAAAAAAAAD7AAAACHU1Zzpjp1I2AAAAAAD/////AAAArAD////7AAAADABSAFQAVFR9TuSITAAAAAAA/////wAAAMAA////+wAAAAiP0IhMZeVf1wAAAAAA/////wAAAF0A////+wAAAAoAUgBUAFRlcGNuAAAAAAD/////AAABDwD///8AAAeAAAADiAAAAAQAAAAEAAAACAAAAAj8AAAAAQAAAAIAAAADAAAADgB0AG8AbwBsAEIAYQByAQAAAAD/////AAAAAAAAAAAAAAASAHQAbwBvAGwAQgBhAHIAXwAyAQAAAMT/////AAAAAAAAAAAAAAAWAHQAbwBvAGwAQgBhAHIATABvAGcAbwEAAAJ//////wAAAAAAAAAA"/>
+        <param value="AdnQywADAAAAAAPAAAAAAAAAB38AAAQHAAADwQAAAB8AAAd+AAAEBgAAAAAAAAAAB4AAAAPBAAAAHwAAB34AAAQG" name="geometry"/>
+        <param value="AAAA/wAAAAD9AAAAAgAAAAAAAAGJAAADf/wCAAAAAvsAAAAIepdT41v8gioBAAAAUgAAAcAAAAAAAAAAAPwAAAIWAAABuwAAAAAA////+gAAAAACAAAAAvsAAAAIW/xRZVPYkc8BAAAAAP////8AAAAAAAAAAPsAAAAKgepbmk5JU9iRzwEAAAAA/////wAAAAAAAAAAAAAAAQAABfMAAAN//AIAAAAH+wAAAAZbxFtYVmgAAAAAAP////8AAAAAAAAAAPwAAABOAAADhQAAAAAA/////AEAAAAC+wAAAAZm8n6/ADABAAAByQAABAcAAAAAAAAAAPsAAAAGZXBQPAAwAQAABdQAAAGsAAAAAAAAAAD7AAAACGVwY25mPnk6AQAAAFIAAAN/AAAAAAAAAAD7AAAACHU1Zzpjp1I2AAAAAAD/////AAAArAD////7AAAADABSAFQAVFR9TuSITAAAAAAA/////wAAAMAA////+wAAAAiP0IhMZeVf1wAAAAAA/////wAAAF0A////+wAAAAoAUgBUAFRlcGNuAAAAAAD/////AAABDwD///8AAAO+AAADfwAAAAQAAAAEAAAACAAAAAj8AAAAAQAAAAIAAAADAAAADgB0AG8AbwBsAEIAYQByAQAAAAD/////AAAAAAAAAAAAAAASAHQAbwBvAGwAQgBhAHIAXwAyAQAAAMT/////AAAAAAAAAAAAAAAWAHQAbwBvAGwAQgBhAHIATABvAGcAbwEAAAJ//////wAAAAAAAAAA" name="state"/>
     </layouts>
     <tabs curPage="0">
-        <tab geometry="AdnQywADAAAAAAAAAAAAAAAABYgAAANZAAAAAAAAAAD//////////wAAAAAAAAAAB4AAAAAAAAAAAAAABYgAAANZ" state="AAAA/wAAAAD9AAAAAgAAAAAAAAITAAADWvwCAAAAA/sAAAAGZvJ+vwAxAAAAAAAAAAFRAAAASAD////7AAAABmbyfr8AMAAAAAAAAAADWgAAAEgA////+wAAAAZm8n6/ADMAAAAAAAAAA1EAAABIAP///wAAAAEAAAWJAAADWvwCAAAAAfsAAAAGZXBQPAAwAQAAAAAAAANaAAAAXQD///8AAAAAAAADWgAAAAQAAAAEAAAACAAAAAj8AAAAAA==" title="标签页0" checked="1"/>
+        <tab geometry="AdnQywADAAAAAAAAAAAAAAAAAgkAAANQAAAAAAAAAAD//////////wAAAAAAAAAAB4AAAAAAAAAAAAAAAgkAAANQ" checked="1" state="AAAA/wAAAAD9AAAAAgAAAAAAAAITAAADWvwCAAAAA/sAAAAGZvJ+vwAxAAAAAAAAAAFRAAAASAD////7AAAABmbyfr8AMAAAAAAAAAADWgAAAEgA////+wAAAAZm8n6/ADMAAAAAAAAAA1EAAABIAP///wAAAAEAAAIKAAADUfwCAAAAAfsAAAAGZXBQPAAwAQAAAAAAAANRAAAAXQD///8AAAAAAAACMgAAAAQAAAAEAAAACAAAAAj8AAAAAA==" title="标签页0"/>
     </tabs>
     <forms>
         <form type="0" title="Form"/>
-        <form lv-width="150,100,100,100,100,100,100,100,100,100" type="1" title="自定义变量"/>
-        <form lv-width="150,100,100,100,100,100,100,100,100,100" type="13" title="寄存器变量" chip=""/>
-        <form lv-width="175,54,80,100,170,100,70,92,100,100" type="2" mapFile="./MDK/Objects/slm32m030_750w.axf" title="代码变量"/>
-        <form type="3" floating="0" visible="0" page="-1" title="运行日志"/>
-        <form type="4" floating="0" sync2File="0" visible="0" encode="GBK" page="-1" title="RTT命令行" checkTStamp="0" syncFilePath=""/>
-        <form trigValue="0" type="5" xCount="1000" scrollType="0" floating="0" visible="0" page="-1" subMode="0" min="-500" autoRange="1" lineStyle="1" title="RTT数据" max="500" scatterStyle="1" trigType="0" xTag="0" trigName=""/>
-        <form lv-width="150,100,100,100,100" type="12" floating="0" visible="0" page="-1" title="电机控制">
-            <var step="1" upper="100" name="" lower="0" desc="速度设定"/>
-            <var step="1" upper="100" name="" lower="0" desc="电流设定"/>
-            <var step="1" upper="100" name="" lower="0" desc="功率设定"/>
-            <var step="1" upper="1" name="" lower="0" desc="电机启停"/>
+        <form type="1" title="自定义变量" lv-width="150,100,100,100,100,100,100,100,100,100"/>
+        <form type="13" chip="" title="寄存器变量" lv-width="150,100,100,100,100,100,100,100,100,100"/>
+        <form type="2" mapFile="./MDK/Objects/slm32m030_750w.axf" title="代码变量" lv-width="175,54,80,100,170,100,70,92,100,100"/>
+        <form type="3" floating="0" visible="0" title="运行日志" page="-1"/>
+        <form type="4" encode="GBK" sync2File="0" floating="0" visible="0" checkTStamp="0" title="RTT命令行" page="-1" syncFilePath=""/>
+        <form type="5" min="-500" subMode="0" max="500" xCount="1000" xTag="0" scatterStyle="1" trigName="" trigValue="0" autoRange="1" scrollType="0" lineStyle="1" floating="0" visible="0" title="RTT数据" page="-1" trigType="0"/>
+        <form type="12" floating="0" visible="0" title="电机控制" lv-width="150,100,100,100,100" page="-1">
+            <var upper="100" desc="速度设定" lower="0" name="" step="1"/>
+            <var upper="100" desc="电流设定" lower="0" name="" step="1"/>
+            <var upper="100" desc="功率设定" lower="0" name="" step="1"/>
+            <var upper="1" desc="电机启停" lower="0" name="" step="1"/>
         </form>
-        <form type="6" floating="0" visible="0" page="-1" title="Form" chip="0"/>
-        <form lv-width="199,134,100,100,100,100,100,100,100,120,100,342" type="7" floating="0" visible="1" page="0" lv-hidden="" title="数值0">
-            <var color="" name="g_isr_cyc" desc="g_isr_cyc" addr="0x200009dc" formula="" interval="2" unit="" showType="Unsigned" subvar="0"/>
-            <var color="" name="g_isr_cyc_max" desc="g_isr_cyc_max" addr="0x200009ec" formula="" interval="2" unit="" showType="Unsigned" subvar="0"/>
-            <var color="" name="g_poll_cyc_max" desc="g_poll_cyc_max" addr="0x200009e8" formula="" interval="2" unit="" showType="Unsigned" subvar="0"/>
-            <var color="" name="g_poll_cyc" desc="g_poll_cyc" addr="0x200009d8" formula="" interval="2" unit="" showType="Unsigned" subvar="0"/>
-            <var color="" name="g_load_pct" desc="g_load_pct" addr="0x200009e0" formula="" interval="2" unit="" showType="Unsigned" subvar="0"/>
-            <var color="" name="g_load_pct_max" desc="g_load_pct_max" addr="0x200009e4" formula="" interval="2" unit="" showType="Unsigned" subvar="0"/>
-            <var color="" name="g_mc.ctrl_mode" desc="g_mc.ctrl_mode" addr="0x20000768" formula="" interval="2" unit="" showType="Enum" subvar="0"/>
-            <var color="" name="g_poke.run_mode" desc="g_poke.run_mode" addr="0x20000968" formula="" interval="2" unit="" showType="Unsigned" subvar="0"/>
-            <var color="" name="g_poke.spd_rpm" desc="g_poke.spd_rpm" addr="0x20000972" formula="" interval="2" unit="" showType="Signed" subvar="0"/>
-            <var color="" name="g_poke.vv_mag_pct" desc="g_poke.vv_mag_pct" addr="0x2000097a" formula="" interval="2" unit="" showType="Signed" subvar="0"/>
-            <var color="" name="g_poke.cv_mag_pct" desc="g_poke.cv_mag_pct" addr="0x2000097c" formula="" interval="2" unit="" showType="Signed" subvar="0"/>
-            <var color="" name="g_poke.vec_ang_deg" desc="g_poke.vec_ang_deg" addr="0x2000097e" formula="" interval="2" unit="" showType="Signed" subvar="0"/>
-            <var color="" name="g_poke.da_pct" desc="g_poke.da_pct" addr="0x20000974" formula="" interval="2" unit="" showType="Signed" subvar="0"/>
-            <var color="" name="g_poke.db_pct" desc="g_poke.db_pct" addr="0x20000976" formula="" interval="2" unit="" showType="Signed" subvar="0"/>
-            <var color="" name="g_poke.dc_pct" desc="g_poke.dc_pct" addr="0x20000978" formula="" interval="2" unit="" showType="Signed" subvar="0"/>
-            <var color="" name="g_monitor_para.state" desc="g_monitor_para.state" addr="0x20000990" formula="" interval="2" unit="" showType="Unsigned" subvar="0"/>
-            <var color="" name="g_monitor_para.run_mode" desc="g_monitor_para.run_mode" addr="0x20000991" formula="" interval="2" unit="" showType="Unsigned" subvar="0"/>
-            <var color="" name="g_monitor_para.idc_ma" desc="g_monitor_para.idc_ma" addr="0x200009a4" formula="" interval="2" unit="" showType="Unsigned" subvar="0"/>
-            <var color="" name="g_monitor_para.udc_mv" desc="g_monitor_para.udc_mv" addr="0x200009a0" formula="" interval="2" unit="" showType="Unsigned" subvar="0"/>
-            <var color="" name="g_monitor_para.temperature" desc="g_monitor_para.temperature" addr="0x200009a6" formula="" interval="2" unit="" showType="Signed" subvar="0"/>
-            <var color="" name="g_monitor_para.spd_rpm_ref" desc="g_monitor_para.spd_rpm_ref" addr="0x200009a8" formula="" interval="2" unit="" showType="Signed" subvar="0"/>
-            <var color="" name="g_monitor_para.spd_rpm_fb" desc="g_monitor_para.spd_rpm_fb" addr="0x200009aa" formula="" interval="2" unit="" showType="Signed" subvar="0"/>
-            <var color="" name="g_monitor_para.pwr_watt_ref" desc="g_monitor_para.pwr_watt_ref" addr="0x200009ac" formula="" interval="2" unit="" showType="Unsigned" subvar="0"/>
-            <var color="" name="g_monitor_para.pwr_watt_fb" desc="g_monitor_para.pwr_watt_fb" addr="0x200009ae" formula="" interval="2" unit="" showType="Unsigned" subvar="0"/>
-            <var color="" name="g_monitor_para.ac_peak_high_v" desc="g_monitor_para.ac_peak_high_v" addr="0x2000099e" formula="" interval="2" unit="" showType="Unsigned" subvar="0"/>
-            <var color="" name="g_monitor_para.ac_peak_low_v" desc="g_monitor_para.ac_peak_low_v" addr="0x2000099c" formula="" interval="2" unit="" showType="Unsigned" subvar="0"/>
-            <var color="" name="g_fault.fault_curr" desc="g_fault.fault_curr" addr="0x200005f8" formula="" interval="2" unit="" showType="Hex" subvar="0"/>
-            <var color="" name="g_fault.fault_latch" desc="g_fault.fault_latch" addr="0x200005fc" formula="" interval="2" unit="" showType="Hex" subvar="0"/>
-            <var color="" name="g_hsm.state" desc="g_hsm.state" addr="0x200007d8" formula="" interval="2" unit="" showType="Enum" subvar="0"/>
-            <var color="" name="g_mc.if_foc_stage" desc="g_mc.if_foc_stage" addr="0x20000769" formula="" interval="2" unit="" showType="Enum" subvar="0"/>
-            <var color="" name="g_state.idc_ma" desc="g_state.idc_ma" addr="0x200000e4" formula="" interval="2" unit="" showType="Unsigned" subvar="0"/>
-            <var color="" name="g_state.idc_meas" desc="g_state.idc_meas" addr="0x200000da" formula="" interval="2" unit="" showType="" subvar="0"/>
-            <var color="" name="g_state.spd_rpm_ref" desc="g_state.spd_rpm_ref" addr="0x200000d0" formula="" interval="2" unit="" showType="Signed" subvar="0"/>
-            <var color="" name="g_tim1_handle.Instance->CCR4" desc="g_tim1_handle.Instance->CCR4" addr="0x20000358" formula="" interval="2" unit="" showType="Unsigned" subvar="0"/>
-            <var color="" name="g_tim1_handle.Instance->ARR" desc="g_tim1_handle.Instance->ARR" addr="0x20000358" formula="" interval="2" unit="" showType="Unsigned" subvar="0"/>
-            <var color="" name="g_auto_test_flag" desc="g_auto_test_flag" addr="0x200009d4" formula="" interval="2" unit="" showType="Unsigned" subvar="0"/>
-            <var color="" name="g_adc_handle.Instance->INTR" desc="g_adc_handle.Instance->INTR" addr="0x2000029c" formula="" interval="2" unit="" showType="Hex" subvar="0"/>
-            <var color="" name="g_state.main_state" desc="g_state.main_state" addr="0x200000cc" formula="" interval="2" unit="" showType="Unsigned" subvar="0"/>
-            <var color="" name="g_state.ctrl_req" desc="g_state.ctrl_req" addr="0x200000cd" formula="" interval="2" unit="" showType="Unsigned" subvar="0"/>
-            <var color="" name="g_tim1_handle.Instance->CCR2" desc="g_tim1_handle.Instance->CCR2" addr="0x20000358" formula="" interval="2" unit="" showType="Unsigned" subvar="0"/>
-            <var color="" name="g_tim1_handle.Instance->CCR3" desc="g_tim1_handle.Instance->CCR3" addr="0x20000358" formula="" interval="2" unit="" showType="Unsigned" subvar="0"/>
-            <var color="" name="g_tim1_handle.Instance->CCR1" desc="g_tim1_handle.Instance->CCR1" addr="0x20000358" formula="" interval="2" unit="" showType="Unsigned" subvar="0"/>
+        <form type="6" chip="0" floating="0" visible="0" title="Form" page="-1"/>
+        <form lv-hidden="" type="7" floating="0" visible="1" title="数值0" lv-width="199,134,100,100,100,100,100,100,100,120,100,342" page="0">
+            <var interval="2" showType="Unsigned" color="" desc="g_isr_cyc" formula="" subvar="0" name="g_isr_cyc" unit="" addr="0x20000a04"/>
+            <var interval="2" showType="Unsigned" color="" desc="g_isr_cyc_max" formula="" subvar="0" name="g_isr_cyc_max" unit="" addr="0x20000a14"/>
+            <var interval="2" showType="Unsigned" color="" desc="g_poll_cyc_max" formula="" subvar="0" name="g_poll_cyc_max" unit="" addr="0x20000a10"/>
+            <var interval="2" showType="Unsigned" color="" desc="g_poll_cyc" formula="" subvar="0" name="g_poll_cyc" unit="" addr="0x20000a00"/>
+            <var interval="2" showType="Unsigned" color="" desc="g_load_pct" formula="" subvar="0" name="g_load_pct" unit="" addr="0x20000a08"/>
+            <var interval="2" showType="Unsigned" color="" desc="g_load_pct_max" formula="" subvar="0" name="g_load_pct_max" unit="" addr="0x20000a0c"/>
+            <var interval="2" showType="Enum" color="" desc="g_mc.ctrl_mode" formula="" subvar="0" name="g_mc.ctrl_mode" unit="" addr="0x20000790"/>
+            <var interval="2" showType="Unsigned" color="" desc="g_poke.run_mode" formula="" subvar="0" name="g_poke.run_mode" unit="" addr="0x20000990"/>
+            <var interval="2" showType="Signed" color="" desc="g_poke.spd_rpm" formula="" subvar="0" name="g_poke.spd_rpm" unit="" addr="0x2000099a"/>
+            <var interval="2" showType="Signed" color="" desc="g_poke.vv_mag_pct" formula="" subvar="0" name="g_poke.vv_mag_pct" unit="" addr="0x200009a2"/>
+            <var interval="2" showType="Signed" color="" desc="g_poke.cv_mag_pct" formula="" subvar="0" name="g_poke.cv_mag_pct" unit="" addr="0x200009a4"/>
+            <var interval="2" showType="Signed" color="" desc="g_poke.vec_ang_deg" formula="" subvar="0" name="g_poke.vec_ang_deg" unit="" addr="0x200009a6"/>
+            <var interval="2" showType="Signed" color="" desc="g_poke.da_pct" formula="" subvar="0" name="g_poke.da_pct" unit="" addr="0x2000099c"/>
+            <var interval="2" showType="Signed" color="" desc="g_poke.db_pct" formula="" subvar="0" name="g_poke.db_pct" unit="" addr="0x2000099e"/>
+            <var interval="2" showType="Signed" color="" desc="g_poke.dc_pct" formula="" subvar="0" name="g_poke.dc_pct" unit="" addr="0x200009a0"/>
+            <var interval="2" showType="Unsigned" color="" desc="g_monitor_para.state" formula="" subvar="0" name="g_monitor_para.state" unit="" addr="0x200009b8"/>
+            <var interval="2" showType="Unsigned" color="" desc="g_monitor_para.run_mode" formula="" subvar="0" name="g_monitor_para.run_mode" unit="" addr="0x200009b9"/>
+            <var interval="2" showType="Unsigned" color="" desc="g_monitor_para.idc_ma" formula="" subvar="0" name="g_monitor_para.idc_ma" unit="" addr="0x200009cc"/>
+            <var interval="2" showType="Unsigned" color="" desc="g_monitor_para.udc_mv" formula="" subvar="0" name="g_monitor_para.udc_mv" unit="" addr="0x200009c8"/>
+            <var interval="2" showType="Signed" color="" desc="g_monitor_para.temperature" formula="" subvar="0" name="g_monitor_para.temperature" unit="" addr="0x200009ce"/>
+            <var interval="2" showType="Signed" color="" desc="g_monitor_para.spd_rpm_ref" formula="" subvar="0" name="g_monitor_para.spd_rpm_ref" unit="" addr="0x200009d0"/>
+            <var interval="2" showType="Signed" color="" desc="g_monitor_para.spd_rpm_fb" formula="" subvar="0" name="g_monitor_para.spd_rpm_fb" unit="" addr="0x200009d2"/>
+            <var interval="2" showType="Unsigned" color="" desc="g_monitor_para.pwr_watt_ref" formula="" subvar="0" name="g_monitor_para.pwr_watt_ref" unit="" addr="0x200009d4"/>
+            <var interval="2" showType="Unsigned" color="" desc="g_monitor_para.pwr_watt_fb" formula="" subvar="0" name="g_monitor_para.pwr_watt_fb" unit="" addr="0x200009d6"/>
+            <var interval="2" showType="Unsigned" color="" desc="g_monitor_para.ac_peak_high_v" formula="" subvar="0" name="g_monitor_para.ac_peak_high_v" unit="" addr="0x200009c6"/>
+            <var interval="2" showType="Unsigned" color="" desc="g_monitor_para.ac_peak_low_v" formula="" subvar="0" name="g_monitor_para.ac_peak_low_v" unit="" addr="0x200009c4"/>
+            <var interval="2" showType="Hex" color="" desc="g_fault.fault_curr" formula="" subvar="0" name="g_fault.fault_curr" unit="" addr="0x20000620"/>
+            <var interval="2" showType="Hex" color="" desc="g_fault.fault_latch" formula="" subvar="0" name="g_fault.fault_latch" unit="" addr="0x20000624"/>
+            <var interval="2" showType="Enum" color="" desc="g_hsm.state" formula="" subvar="0" name="g_hsm.state" unit="" addr="0x200007f8"/>
+            <var interval="2" showType="Enum" color="" desc="g_mc.if_foc_stage" formula="" subvar="0" name="g_mc.if_foc_stage" unit="" addr="0x20000791"/>
+            <var interval="2" showType="Unsigned" color="" desc="g_state.idc_ma" formula="" subvar="0" name="g_state.idc_ma" unit="" addr="0x20000108"/>
+            <var interval="2" showType="" color="" desc="g_state.idc_meas" formula="" subvar="0" name="g_state.idc_meas" unit="" addr="0x200000fe"/>
+            <var interval="2" showType="Signed" color="" desc="g_state.spd_rpm_ref" formula="" subvar="0" name="g_state.spd_rpm_ref" unit="" addr="0x200000f4"/>
+            <var interval="2" showType="Unsigned" color="" desc="g_tim1_handle.Instance->CCR4" formula="" subvar="0" name="g_tim1_handle.Instance->CCR4" unit="" addr="0x20000380"/>
+            <var interval="2" showType="Unsigned" color="" desc="g_tim1_handle.Instance->ARR" formula="" subvar="0" name="g_tim1_handle.Instance->ARR" unit="" addr="0x20000380"/>
+            <var interval="2" showType="Unsigned" color="" desc="g_auto_test_flag" formula="" subvar="0" name="g_auto_test_flag" unit="" addr="0x200009fc"/>
+            <var interval="2" showType="Hex" color="" desc="g_adc_handle.Instance->INTR" formula="" subvar="0" name="g_adc_handle.Instance->INTR" unit="" addr="0x200002c4"/>
+            <var interval="2" showType="Unsigned" color="" desc="g_state.main_state" formula="" subvar="0" name="g_state.main_state" unit="" addr="0x200000f0"/>
+            <var interval="2" showType="Unsigned" color="" desc="g_state.ctrl_req" formula="" subvar="0" name="g_state.ctrl_req" unit="" addr="0x200000f1"/>
+            <var interval="2" showType="Unsigned" color="" desc="g_tim1_handle.Instance->CCR2" formula="" subvar="0" name="g_tim1_handle.Instance->CCR2" unit="" addr="0x20000380"/>
+            <var interval="2" showType="Unsigned" color="" desc="g_tim1_handle.Instance->CCR3" formula="" subvar="0" name="g_tim1_handle.Instance->CCR3" unit="" addr="0x20000380"/>
+            <var interval="2" showType="Unsigned" color="" desc="g_tim1_handle.Instance->CCR1" formula="" subvar="0" name="g_tim1_handle.Instance->CCR1" unit="" addr="0x20000380"/>
         </form>
-        <form type="8" floating="0" lineStyle="1" trigType="0" xTag="0" page="0" subMode="0" min="-500" trigName="" trigValue="0" autoRange="1" refType="0" refValue="0" filterType="1" refName="" scatterStyle="1" title="曲线0" visible="0" scrollType="0" max="500" xCount="5526.56">
-            <var color="#ff0000" subPlot="0" name="g_state.idc_ma" desc="g_state.idc_ma"/>
+        <form scrollType="0" filterType="1" page="0" trigValue="0" refType="0" xCount="5526.56" scatterStyle="1" floating="0" max="500" refValue="0" subMode="0" visible="0" trigName="" lineStyle="1" xTag="0" trigType="0" autoRange="1" min="-500" title="曲线0" refName="" type="8">
+            <var color="#ff0000" desc="g_state.idc_ma" subPlot="0" name="g_state.idc_ma"/>
         </form>
-        <form type="8" floating="0" lineStyle="1" trigType="0" xTag="0" page="0" subMode="0" min="-500" trigName="" trigValue="0" autoRange="1" refType="0" refValue="0" filterType="1" refName="" scatterStyle="1" title="曲线1" visible="0" scrollType="0" max="500" xCount="251.679">
-            <var color="#00ffff" subPlot="0" name="g_mc.act_theta" desc="g_mc.act_theta"/>
-            <var color="#ff00ff" subPlot="0" name="g_mc.theta_est" desc="g_mc.theta_est"/>
+        <form scrollType="0" filterType="1" page="0" trigValue="0" refType="0" xCount="251.679" scatterStyle="1" floating="0" max="500" refValue="0" subMode="0" visible="0" trigName="" lineStyle="1" xTag="0" trigType="0" autoRange="1" min="-500" title="曲线1" refName="" type="8">
+            <var color="#00ffff" desc="g_mc.act_theta" subPlot="0" name="g_mc.act_theta"/>
+            <var color="#ff00ff" desc="g_mc.theta_est" subPlot="0" name="g_mc.theta_est"/>
         </form>
-        <form type="8" floating="0" lineStyle="1" trigType="0" xTag="0" page="0" subMode="0" min="-500" trigName="" trigValue="0" autoRange="1" refType="0" refValue="0" filterType="1" refName="" scatterStyle="1" title="曲线3" visible="0" scrollType="0" max="500" xCount="1000">
-            <var color="#ff0000" subPlot="0" name="g_mc.iabc_meas.a" desc="g_mc.iabc_meas.a"/>
-            <var color="#00ff00" subPlot="0" name="g_mc.iabc_meas.b" desc="g_mc.iabc_meas.b"/>
-            <var color="#00ffff" subPlot="0" name="g_mc.iabc_meas.c" desc="g_mc.iabc_meas.c"/>
+        <form scrollType="0" filterType="1" page="0" trigValue="0" refType="0" xCount="1000" scatterStyle="1" floating="0" max="500" refValue="0" subMode="0" visible="0" trigName="" lineStyle="1" xTag="0" trigType="0" autoRange="1" min="-500" title="曲线3" refName="" type="8">
+            <var color="#ff0000" desc="g_mc.iabc_meas.a" subPlot="0" name="g_mc.iabc_meas.a"/>
+            <var color="#00ff00" desc="g_mc.iabc_meas.b" subPlot="0" name="g_mc.iabc_meas.b"/>
+            <var color="#00ffff" desc="g_mc.iabc_meas.c" subPlot="0" name="g_mc.iabc_meas.c"/>
         </form>
     </forms>
 </lksscope>

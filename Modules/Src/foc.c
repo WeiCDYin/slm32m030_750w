@@ -28,7 +28,7 @@ static sc_cfg_t g_sc_cfg = {
     .alpha_s   = SC_BW_RAD_S,
     .i_max_pu  = IQ_MAX_PU,
     .ramp_pu_s = SC_ACCEL_PU_S,
-    .Ts        = TS_FAST,
+    .Ts        = TS_SLOW,
 };
 
 static if_cfg_t g_if_cfg = {

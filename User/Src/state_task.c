@@ -254,6 +254,7 @@ static void entry_running(void)
     {
         foc_hsm_set(EV_TRAN, EV_FIELD_A, g_mode_to_hsm[mode], 0, 0);
         foc_hsm_set(EV_SET_SPD, EV_FIELD_A, rpm_to_pu(g_state.spd_rpm_ref), 0, 0);
+        foc_hsm_set(EV_START, 0, 0, 0, 0);
     }
     else
     {
