@@ -1,6 +1,5 @@
 #include "ad.h"
 #include "bsp_hal.h"
-#include "convert.h"
 #include "main_task.h"
 #include "tim.h"
 #include "uart.h"
@@ -62,13 +61,12 @@ void TIM1_BRK_UP_TRG_COM_IRQHandler(void)
 
 /**
  * @brief ADC global interrupt: injected SEQ2 frame done -> carrier step.
- *        Reads the four injected results (I_B, I_C, V_DC, I_DC) straight from
- *        the SEQ2 result registers, converts them to pu, and hands the frame
- *        to the state task. Nothing else runs here.
+ *        Reads the injected results (I_B, I_C, V_DC) straight from the SEQ2
+ *        result registers and hands the raw codes to the state task, which does
+ *        the code -> pu conversion. Nothing else runs here.
  */
 extern volatile uint32_t g_isr_cyc;
 extern volatile uint32_t g_isr_cyc_max;
-extern main_para_t       g_main_para;
 
 void ADC_IRQHandler(void)
 {
@@ -83,22 +81,17 @@ void ADC_IRQHandler(void)
 
         uint32_t t0 = tim_load_isr_get();
 
-        /* raw code -> gain-compensated Q15 in one fused multiply (inline);
-         * offsets read directly, ia = -(ib+ic) derived from register caches to
-         * avoid bouncing the volatile meas fields. */
-        int32_t ib = iphase_code_to_gain_pu((int32_t)adc_get_seq2_code(ADC_SEQ2_I_B), g_main_para.adc_off_ib);
-        int32_t ic = iphase_code_to_gain_pu((int32_t)adc_get_seq2_code(ADC_SEQ2_I_C), g_main_para.adc_off_ic);
-        int32_t ia = q15_sat(-ib - ic);
+        /* Sample only: hand the raw codes to the state task, which converts.
+         * Dual-shunt board (I_B / I_C measured): derive phase A, zero-current
+         * code = ADC_OFFSET_CALI_DEFAULT. A three-shunt board would pass the
+         * sampled A code instead -- main_task_isr stays topology-agnostic. */
+        int32_t ib_code  = (int32_t)adc_get_seq2_code(ADC_SEQ2_I_B);
+        int32_t ic_code  = (int32_t)adc_get_seq2_code(ADC_SEQ2_I_C);
+        int32_t ia_code  = 3 * (int32_t)ADC_OFFSET_CALI_DEFAULT - ib_code - ic_code;
+        int32_t udc_code = (int32_t)adc_get_seq2_code(ADC_SEQ2_V_DC);
 
-        g_main_para.ib_meas  = (q15_t)ib;
-        g_main_para.ic_meas  = (q15_t)ic;
-        g_main_para.ia_meas  = (q15_t)ia;
-        g_main_para.udc_meas = udc_code_to_pu((int32_t)adc_get_seq2_code(ADC_SEQ2_V_DC));
-        g_main_para.idc_meas = q15_sat(
-            (((ia * g_main_para.duties_q15.a) >> Q15_SHIFT) + ((ib * g_main_para.duties_q15.b) >> Q15_SHIFT) + ((ic * g_main_para.duties_q15.c) >> Q15_SHIFT)));
-
-        /* state task: cali/charge timing + (when RUNNING) OC, poke, FOC -> ccr */
-        main_task_isr();
+        /* state task: code->pu, cali/charge timing + (when RUNNING) OC, FOC -> ccr */
+        main_task_isr(ia_code, ib_code, ic_code, udc_code);
 
         uint32_t t1 = tim_load_isr_get();
         g_isr_cyc   = t1 - t0;

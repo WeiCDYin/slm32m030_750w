@@ -139,8 +139,8 @@ static inline q15_t iphase_code_to_gain_pu(int32_t count, int32_t offset)
 }
 
 /* IIR state lives in a function-local static, so this header-inline form must
- * be called from ONE translation unit only (the carrier ISR in it.c); a second
- * caller would get its own disconnected filter state. */
+ * be called from ONE translation unit only (main_task_isr in main_task.c); a
+ * second caller would get its own disconnected filter state. */
 static inline q15_t idc_code_to_pu(int32_t count, int32_t offset)
 {
 #define IDC_IIT_SHIFT 4
@@ -166,7 +166,7 @@ static inline uint32_t idc_pu_to_ma(q15_t idc_pu)
 }
 
 /* Same single-translation-unit caveat as idc_code_to_pu: the IIR state is a
- * function-local static, today owned solely by the carrier ISR in it.c. */
+ * function-local static, today owned solely by main_task_isr in main_task.c. */
 static inline int32_t udc_code_to_pu(int32_t count)
 {
 #define UDC_IIR_SHIFT 4

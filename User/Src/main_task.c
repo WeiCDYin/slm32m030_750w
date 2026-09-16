@@ -20,6 +20,7 @@ main_para_t g_main_para = {
     .run_mode       = CMDBUS_RUN_MODE_IF_FOC,
     .ctrl_req       = CMDBUS_CTRL_NONE,
     .spd_rpm_ref    = SPEED_REF_DEFAULT,
+    .adc_off_ia     = ADC_OFFSET_CALI_DEFAULT,
     .adc_off_ib     = ADC_OFFSET_CALI_DEFAULT,
     .adc_off_ic     = ADC_OFFSET_CALI_DEFAULT,
     .ac_peak_high_v = 220,
@@ -160,6 +161,10 @@ static void entry_cali(void)
     ENTER_CRITICAL_SECTION();
     g_main_para.cali_active = 1;
     g_main_para.cali_cnt    = 0;
+    /* clear any partial sums left by an aborted calibration (STOP / FAULT) */
+    g_main_para.cali_sum_ia = 0;
+    g_main_para.cali_sum_ib = 0;
+    g_main_para.cali_sum_ic = 0;
     EXIT_CRITICAL_SECTION();
 }
 
@@ -519,17 +524,31 @@ void main_task_isr_break(void)
     fault_set(FAULT_ID_HW_IDC_OVER_CURRENT);
 }
 
-void main_task_isr()
+void main_task_isr(int32_t ia_code, int32_t ib_code, int32_t ic_code, int32_t udc_code)
 {
+    /* raw ADC code -> pu: the ONE conversion point. The ADC ISR only samples and
+     * hands over the three phase codes + udc, so dual- vs three-shunt sampling
+     * stays entirely in the ISR. */
+    q15_t ia = iphase_code_to_gain_pu(ia_code, g_main_para.adc_off_ia);
+    q15_t ib = iphase_code_to_gain_pu(ib_code, g_main_para.adc_off_ib);
+    q15_t ic = iphase_code_to_gain_pu(ic_code, g_main_para.adc_off_ic);
+
+    g_main_para.ia_meas  = ia;
+    g_main_para.ib_meas  = ib;
+    g_main_para.ic_meas  = ic;
+    g_main_para.udc_meas = udc_code_to_pu(udc_code);
+    g_main_para.idc_meas = q15_sat((((ia * g_main_para.duties_q15.a) >> Q15_SHIFT) + ((ib * g_main_para.duties_q15.b) >> Q15_SHIFT) +
+                                    ((ic * g_main_para.duties_q15.c) >> Q15_SHIFT)));
+
     switch (g_main_para.main_state)
     {
         case CMDBUS_RUNNING:
         {
-            g_isr_foc_in.iabc_meas.a = g_main_para.ia_meas;
-            g_isr_foc_in.iabc_meas.b = g_main_para.ib_meas;
-            g_isr_foc_in.iabc_meas.c = g_main_para.ic_meas;
+            g_isr_foc_in.iabc_meas.a = ia;
+            g_isr_foc_in.iabc_meas.b = ib;
+            g_isr_foc_in.iabc_meas.c = ic;
             g_isr_foc_in.udc_meas    = g_main_para.udc_meas;
-            fault_isr_proc(g_main_para.ia_meas, g_main_para.ib_meas, g_main_para.ic_meas);
+            fault_isr_proc(ia, ib, ic);
             foc_isr_proc(&g_isr_foc_in, &g_main_para.duties_q15);
             tim_pwm_update_ccr(duty_to_ccr_arr(g_main_para.duties_q15.a), duty_to_ccr_arr(g_main_para.duties_q15.b), duty_to_ccr_arr(g_main_para.duties_q15.c));
             break;
@@ -558,17 +577,23 @@ void main_task_isr()
         {
             if (g_main_para.cali_active)
             {
-                g_main_para.cali_sum_ib += (int32_t)adc_get_seq2_code(ADC_SEQ2_I_B);
-                g_main_para.cali_sum_ic += (int32_t)adc_get_seq2_code(ADC_SEQ2_I_C);
+                /* accumulate the codes handed in by the ISR: raw for the shunted
+                 * phases, ISR-derived for the missing one -- no re-read, no
+                 * dual/three-shunt knowledge here. */
+                g_main_para.cali_sum_ia += ia_code;
+                g_main_para.cali_sum_ib += ib_code;
+                g_main_para.cali_sum_ic += ic_code;
 
                 if (++g_main_para.cali_cnt >= ADC_OFFSET_CALI_SAMPLE_CNT)
                 {
-                    g_main_para.adc_off_ib   = g_main_para.cali_sum_ib / ADC_OFFSET_CALI_SAMPLE_CNT;
-                    g_main_para.adc_off_ic   = g_main_para.cali_sum_ic / ADC_OFFSET_CALI_SAMPLE_CNT;
-                    g_main_para.cali_active  = 0;
-                    g_main_para.cali_cnt     = 0;
-                    g_main_para.cali_sum_ib  = 0;
-                    g_main_para.cali_sum_ic  = 0;
+                    g_main_para.adc_off_ia  = g_main_para.cali_sum_ia / ADC_OFFSET_CALI_SAMPLE_CNT;
+                    g_main_para.adc_off_ib  = g_main_para.cali_sum_ib / ADC_OFFSET_CALI_SAMPLE_CNT;
+                    g_main_para.adc_off_ic  = g_main_para.cali_sum_ic / ADC_OFFSET_CALI_SAMPLE_CNT;
+                    g_main_para.cali_active = 0;
+                    g_main_para.cali_cnt    = 0;
+                    g_main_para.cali_sum_ia = 0;
+                    g_main_para.cali_sum_ib = 0;
+                    g_main_para.cali_sum_ic = 0;
                 }
             }
             break;

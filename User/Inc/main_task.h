@@ -33,8 +33,10 @@ typedef struct
     volatile uint16_t idc_ma;
 
     /* Phase-current zero offsets; default mid-scale so the ISR sees ~zero current
-     * from boot; CMDBUS_CALI re-measures on every START. The carrier ISR (it.c)
-     * reads these directly from g_main_para. */
+     * from boot; CMDBUS_CALI re-measures the two shunted phases on every START.
+     * The derived phase keeps the mid-scale default. main_task_isr reads these
+     * directly from g_main_para when converting the raw codes. */
+    volatile int32_t adc_off_ia;
     volatile int32_t adc_off_ib;
     volatile int32_t adc_off_ic;
 
@@ -50,11 +52,13 @@ typedef struct
     volatile uint8_t charge_phase; /* 0=A, 1=B, 2=C during sequential charge */
     volatile uint8_t charge_cnt;
 
-    /* Phase-current offset calibration (CMDBUS_CALI): the carrier ISR accumulates
-     * raw I_B / I_C zero-current codes while cali_active==1; after ADC_OFFSET_CALI_SAMPLE_CNT
-     * frames it publishes the averaged offsets into adc_off_ib/ic and clears
+    /* Phase-current offset calibration (CMDBUS_CALI): while cali_active==1
+     * main_task_isr accumulates the three codes it receives (raw for the shunted
+     * phases, ISR-derived for the missing phase); after ADC_OFFSET_CALI_SAMPLE_CNT
+     * frames it publishes the averaged offsets into adc_off_ia/ib/ic and clears
      * cali_active. */
     volatile uint8_t  cali_active;
+    volatile int32_t  cali_sum_ia;
     volatile int32_t  cali_sum_ib;
     volatile int32_t  cali_sum_ic;
     volatile uint16_t cali_cnt;
@@ -85,11 +89,12 @@ void main_task_init(void);
 void main_task_poll(void);
 void main_task_1ms(void);
 
-/* Carrier frame. mc_in is already filled with the measured phase currents /
- * dc voltage (pu) by the ISR. When the machine is RUNNING this writes the new
- * PWM CCR ticks into ccr[0..2] and returns true; otherwise it returns false
- * (cali / charge timing handled internally, no CCR update). */
-void main_task_isr();
+/* Carrier frame. The ADC ISR only samples: it hands over the raw codes of the
+ * three phase currents (ia/ib/ic) and the dc bus voltage (udc). This is the ONE
+ * place that converts code -> pu, so dual- vs three-shunt sampling stays in the
+ * ISR. When the machine is RUNNING this writes the new PWM CCR ticks; otherwise
+ * only the cali / charge timing runs. */
+void main_task_isr(int32_t ia_code, int32_t ib_code, int32_t ic_code, int32_t udc_code);
 
 /* TIM1 hardware break: DC-bus over current latched by the break input. */
 void main_task_isr_break(void);
