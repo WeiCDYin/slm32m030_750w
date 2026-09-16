@@ -7,7 +7,7 @@
 #include "tim.h"
 #include "afe.h"
 #include "iwdg.h"
-#include "state_task.h"
+#include "main_task.h"
 #include "modbus_task.h"
 #include "poke_task.h"
 #include "cmdbus.h"
@@ -75,7 +75,7 @@ int main(void)
 
     /* App tasks */
     modbus_task_init();
-    state_task_init();
+    main_task_init();
     poke_task_init();
 
     iwdg_init();
@@ -90,7 +90,7 @@ int main(void)
         /* realtime task */
         modbus_task_poll();
         poke_task_poll();
-        state_task_poll();
+        main_task_poll();
 
         /* 1 ms period task */
         uint32_t now = systick_get();
@@ -98,7 +98,7 @@ int main(void)
         {
             last_1ms = now;
             poke_task_1ms();
-            state_task_1ms();
+            main_task_1ms();
 
             iwdg_refresh();
 

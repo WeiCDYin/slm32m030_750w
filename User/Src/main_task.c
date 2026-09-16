@@ -1,4 +1,4 @@
-#include "state_task.h"
+#include "main_task.h"
 #include "cmdbus.h"
 #include "user_config.h"
 #include "poke_task.h"
@@ -15,7 +15,7 @@
 /* Charge state: three low-side phases pumped in turn. */
 #define CHARGE_PHASE_NUM 3u
 
-state_para_t g_state = {
+main_para_t g_main_para = {
     .main_state     = CMDBUS_INIT,
     .run_mode       = CMDBUS_RUN_MODE_IF_FOC,
     .ctrl_req       = CMDBUS_CTRL_NONE,
@@ -107,14 +107,14 @@ static const state_t g_mode_to_hsm[CMDBUS_RUN_MODE_COUNT] = {
  * chain (entry_running may fall back to IDLE). */
 static void state_switch(uint8_t next)
 {
-    if (next >= CMDBUS_STATE_COUNT || next == g_state.main_state)
+    if (next >= CMDBUS_STATE_COUNT || next == g_main_para.main_state)
         return;
 
-    const state_ops_t *old = &g_state_poll_cb[g_state.main_state];
+    const state_ops_t *old = &g_state_poll_cb[g_main_para.main_state];
     if (old->exit)
         old->exit();
 
-    g_state.main_state = next; /* set before entry so a nested switch sees the current state */
+    g_main_para.main_state = next; /* set before entry so a nested switch sees the current state */
 
     const state_ops_t *newo = &g_state_poll_cb[next];
     if (newo->entry)
@@ -134,7 +134,7 @@ static void goto_user_fault(void)
 static void run_init(void)
 {
     state_switch(CMDBUS_IDLE);
-    g_state.ctrl_req = CMDBUS_CTRL_NONE;
+    g_main_para.ctrl_req = CMDBUS_CTRL_NONE;
 }
 
 static void entry_idle(void)
@@ -146,35 +146,35 @@ static void run_idle(void)
 {
     if (fault_get() != 0)
         state_switch(CMDBUS_FAULT);
-    else if (g_state.ctrl_req == CMDBUS_CTRL_FAULT)
+    else if (g_main_para.ctrl_req == CMDBUS_CTRL_FAULT)
         goto_user_fault();
-    else if (g_state.ctrl_req == CMDBUS_CTRL_START)
+    else if (g_main_para.ctrl_req == CMDBUS_CTRL_START)
         state_switch(CMDBUS_CALI);
-    else if (g_state.ctrl_req == CMDBUS_CTRL_RECOVERY)
+    else if (g_main_para.ctrl_req == CMDBUS_CTRL_RECOVERY)
         fault_latch_clr(); /* clear sticky history while live faults stay handled */
-    g_state.ctrl_req = CMDBUS_CTRL_NONE;
+    g_main_para.ctrl_req = CMDBUS_CTRL_NONE;
 }
 
 static void entry_cali(void)
 {
     ENTER_CRITICAL_SECTION();
-    g_state.cali_active = 1;
-    g_state.cali_cnt    = 0;
+    g_main_para.cali_active = 1;
+    g_main_para.cali_cnt    = 0;
     EXIT_CRITICAL_SECTION();
 }
 
 static void exit_cali(void)
 {
     ENTER_CRITICAL_SECTION();
-    g_state.cali_active = 0;
-    g_state.cali_cnt    = 0;
+    g_main_para.cali_active = 0;
+    g_main_para.cali_cnt    = 0;
     EXIT_CRITICAL_SECTION();
 }
 
 static bool cali_offset_ok(void)
 {
-    int32_t delta_offset_ib  = g_state.adc_off_ib - (int32_t)ADC_OFFSET_CALI_DEFAULT;
-    int32_t delta_offset_ic  = g_state.adc_off_ic - (int32_t)ADC_OFFSET_CALI_DEFAULT;
+    int32_t delta_offset_ib  = g_main_para.adc_off_ib - (int32_t)ADC_OFFSET_CALI_DEFAULT;
+    int32_t delta_offset_ic  = g_main_para.adc_off_ic - (int32_t)ADC_OFFSET_CALI_DEFAULT;
 
 #if FAULT_ONE_SHOT_ZERO_OFFSET_ERR_ENABLE
     if (delta_offset_ib < -(int32_t)ADC_OFFSET_CALI_THRESHOLD || delta_offset_ib > (int32_t)ADC_OFFSET_CALI_THRESHOLD ||
@@ -188,13 +188,13 @@ static void run_cali(void)
 {
     if (fault_get() != 0)
         state_switch(CMDBUS_FAULT); /* exit_cali runs via state_switch */
-    else if (g_state.ctrl_req == CMDBUS_CTRL_FAULT)
+    else if (g_main_para.ctrl_req == CMDBUS_CTRL_FAULT)
         goto_user_fault();
-    else if (g_state.ctrl_req == CMDBUS_CTRL_STOP)
+    else if (g_main_para.ctrl_req == CMDBUS_CTRL_STOP)
         state_switch(CMDBUS_IDLE);
-    else if (g_state.ctrl_req == CMDBUS_CTRL_RECOVERY)
+    else if (g_main_para.ctrl_req == CMDBUS_CTRL_RECOVERY)
         fault_latch_clr();
-    else if (!g_state.cali_active)
+    else if (!g_main_para.cali_active)
     {
         if (cali_offset_ok())
         {
@@ -206,7 +206,7 @@ static void run_cali(void)
             state_switch(CMDBUS_FAULT);
         }
     }
-    g_state.ctrl_req = CMDBUS_CTRL_NONE;
+    g_main_para.ctrl_req = CMDBUS_CTRL_NONE;
 }
 
 /* ---- CHARGE: pump each bootstrap cap, one phase (low-side) at a time,
@@ -217,16 +217,16 @@ static void entry_charge(void)
     tim_pwm_update_ccr(0, 0, 0);
     tim_pwm_charge_phase(0);
     tim_pwm_enable();
-    g_state.charge_active = 1;
-    g_state.charge_phase  = 0;
-    g_state.charge_cnt    = 0;
+    g_main_para.charge_active = 1;
+    g_main_para.charge_phase  = 0;
+    g_main_para.charge_cnt    = 0;
     EXIT_CRITICAL_SECTION();
 }
 
 static void exit_charge(void)
 {
     ENTER_CRITICAL_SECTION();
-    g_state.charge_active = 0;
+    g_main_para.charge_active = 0;
     tim_pwm_disable();
     tim_pwm_restore();
     EXIT_CRITICAL_SECTION();
@@ -236,24 +236,24 @@ static void run_charge(void)
 {
     if (fault_get() != 0)
         state_switch(CMDBUS_FAULT);
-    else if (g_state.ctrl_req == CMDBUS_CTRL_FAULT)
+    else if (g_main_para.ctrl_req == CMDBUS_CTRL_FAULT)
         goto_user_fault();
-    else if (g_state.ctrl_req == CMDBUS_CTRL_STOP)
+    else if (g_main_para.ctrl_req == CMDBUS_CTRL_STOP)
         state_switch(CMDBUS_IDLE);
-    else if (g_state.ctrl_req == CMDBUS_CTRL_RECOVERY)
+    else if (g_main_para.ctrl_req == CMDBUS_CTRL_RECOVERY)
         fault_latch_clr();
-    else if (!g_state.charge_active)
+    else if (!g_main_para.charge_active)
         state_switch(CMDBUS_RUNNING);
-    g_state.ctrl_req = CMDBUS_CTRL_NONE;
+    g_main_para.ctrl_req = CMDBUS_CTRL_NONE;
 }
 
 static void entry_running(void)
 {
-    uint8_t mode = g_state.run_mode;
+    uint8_t mode = g_main_para.run_mode;
     if (mode >= CMDBUS_RUN_MODE_DUTY && mode <= CMDBUS_RUN_MODE_IF_FOC)
     {
         foc_hsm_set(EV_TRAN, EV_FIELD_A, g_mode_to_hsm[mode], 0, 0);
-        foc_hsm_set(EV_SET_SPD, EV_FIELD_A, rpm_to_pu(g_state.spd_rpm_ref), 0, 0);
+        foc_hsm_set(EV_SET_SPD, EV_FIELD_A, rpm_to_pu(g_main_para.spd_rpm_ref), 0, 0);
         foc_hsm_set(EV_START, 0, 0, 0, 0);
     }
     else
@@ -267,13 +267,13 @@ static void run_running(void)
 {
     if (fault_get() != 0)
         state_switch(CMDBUS_FAULT);
-    else if (g_state.ctrl_req == CMDBUS_CTRL_FAULT)
+    else if (g_main_para.ctrl_req == CMDBUS_CTRL_FAULT)
         goto_user_fault();
-    else if (g_state.ctrl_req == CMDBUS_CTRL_STOP)
+    else if (g_main_para.ctrl_req == CMDBUS_CTRL_STOP)
         state_switch(CMDBUS_IDLE);
-    else if (g_state.ctrl_req == CMDBUS_CTRL_RECOVERY)
+    else if (g_main_para.ctrl_req == CMDBUS_CTRL_RECOVERY)
         fault_latch_clr();
-    g_state.ctrl_req = CMDBUS_CTRL_NONE;
+    g_main_para.ctrl_req = CMDBUS_CTRL_NONE;
 }
 
 static void entry_fault(void)
@@ -284,7 +284,7 @@ static void entry_fault(void)
 
 static void run_fault(void)
 {
-    if (g_state.ctrl_req == CMDBUS_CTRL_RECOVERY)
+    if (g_main_para.ctrl_req == CMDBUS_CTRL_RECOVERY)
     {
         fault_clr_all();
         state_switch(CMDBUS_IDLE);
@@ -293,7 +293,7 @@ static void run_fault(void)
     {
         state_switch(CMDBUS_IDLE);
     }
-    g_state.ctrl_req = CMDBUS_CTRL_NONE;
+    g_main_para.ctrl_req = CMDBUS_CTRL_NONE;
 }
 
 static angle_t vec_bam(uint16_t ang_deg)
@@ -303,14 +303,14 @@ static angle_t vec_bam(uint16_t ang_deg)
 
 static void cmd_ctrl(const void *payload)
 {
-    /* g_state.ctrl_req is always consumed (cleared) at the end of the previous
+    /* g_main_para.ctrl_req is always consumed (cleared) at the end of the previous
      * run_*, so a freshly latched CTRL cannot be overwritten. */
     const cmdbus_ctrl_t *p = (const cmdbus_ctrl_t *)payload;
 
     uint8_t v = p->ctrl_type;
 
     if (v <= CMDBUS_CTRL_RECOVERY)
-        g_state.ctrl_req = v;
+        g_main_para.ctrl_req = v;
 }
 
 static void cmd_mode(const void *payload)
@@ -318,7 +318,7 @@ static void cmd_mode(const void *payload)
     /* remembered for the next START; only a known mode is accepted */
     const cmdbus_mode_t *p = (const cmdbus_mode_t *)payload;
     if (p->run_mode <= CMDBUS_RUN_MODE_IF_FOC)
-        g_state.run_mode = p->run_mode;
+        g_main_para.run_mode = p->run_mode;
 }
 
 static void cmd_speed(const void *payload)
@@ -332,12 +332,12 @@ static void cmd_speed(const void *payload)
         rpm = (int16_t)-SPEED_RATE_RPM;
 
     foc_hsm_set(EV_SET_SPD, EV_FIELD_A, rpm_to_pu(rpm), 0, 0);
-    g_state.spd_rpm_ref = rpm;
+    g_main_para.spd_rpm_ref = rpm;
 }
 
 static void cmd_duty(const void *payload)
 {
-    if (g_state.main_state == CMDBUS_RUNNING)
+    if (g_main_para.main_state == CMDBUS_RUNNING)
     {
         const cmdbus_duty_t *p = (const cmdbus_duty_t *)payload;
         foc_hsm_set(EV_SET_DUTY, EV_FIELD_A | EV_FIELD_B | EV_FIELD_C, percent_to_q15(p->duty_a), percent_to_q15(p->duty_b),
@@ -347,7 +347,7 @@ static void cmd_duty(const void *payload)
 
 static void cmd_vec(const void *payload)
 {
-    if (g_state.main_state == CMDBUS_RUNNING)
+    if (g_main_para.main_state == CMDBUS_RUNNING)
     {
         const cmdbus_vec_t *p = (const cmdbus_vec_t *)payload;
 
@@ -355,9 +355,9 @@ static void cmd_vec(const void *payload)
         uint16_t mag_max;
         uint16_t mag = p->mag_pct;
 
-        if (g_state.run_mode == CMDBUS_RUN_MODE_VV)
+        if (g_main_para.run_mode == CMDBUS_RUN_MODE_VV)
             mag_max = VV_MAG_PCT_MAX;
-        else if (g_state.run_mode == CMDBUS_RUN_MODE_CV)
+        else if (g_main_para.run_mode == CMDBUS_RUN_MODE_CV)
             mag_max = CV_MAG_PCT_MAX;
         else
             mag_max = 100u;
@@ -373,7 +373,7 @@ static void cmd_power(const void *payload)
 {
     /* power W, consumed by the application layer (no FOC event) */
     const cmdbus_power_t *p = (const cmdbus_power_t *)payload;
-    g_state.pwr_watt_ref    = p->power_w;
+    g_main_para.pwr_watt_ref    = p->power_w;
 }
 
 /* ------------------------------------------------------------------ */
@@ -391,13 +391,13 @@ static void dc_delay_1ms_proc(void)
     static uint8_t  pin_high = 0;
     static uint16_t hold_cnt = 0;
 
-    /* pin control only, no UV alarm; g_state.udc_mv comes from the carrier ISR */
+    /* pin control only, no UV alarm; g_main_para.udc_mv comes from the carrier ISR */
     uint32_t on_thresh  = DC_DELAY_PIN_ON_THRESH_MV;
     uint32_t off_thresh = DC_DELAY_PIN_ON_THRESH_MV - DC_DELAY_PIN_HYST_MV;
 
     if (pin_high == 0)
     {
-        if (g_state.udc_mv >= on_thresh)
+        if (g_main_para.udc_mv >= on_thresh)
         {
             if (++hold_cnt >= DC_DELAY_PIN_HOLD_MS)
             {
@@ -411,7 +411,7 @@ static void dc_delay_1ms_proc(void)
     }
     else
     {
-        if (g_state.udc_mv <= off_thresh)
+        if (g_main_para.udc_mv <= off_thresh)
         {
             if (++hold_cnt >= DC_DELAY_PIN_HOLD_MS)
             {
@@ -439,8 +439,8 @@ static void ac_peak_1ms_proc(void)
 
     if (++cnt >= AC_PEAK_WIN_MS)
     {
-        g_state.ac_peak_high_v = (uint16_t)hi_v;
-        g_state.ac_peak_low_v  = (uint16_t)lo_v;
+        g_main_para.ac_peak_high_v = (uint16_t)hi_v;
+        g_main_para.ac_peak_low_v  = (uint16_t)lo_v;
 
         cnt  = 0;
         hi_v = 0;
@@ -451,7 +451,7 @@ static void ac_peak_1ms_proc(void)
 /* ------------------------------------------------------------------ */
 /* Public task API                                                     */
 /* ------------------------------------------------------------------ */
-void state_task_init(void)
+void main_task_init(void)
 {
     state_register_cmds();
     cmdbus_reset();
@@ -459,23 +459,23 @@ void state_task_init(void)
     fault_init();
 }
 
-void state_task_poll(void)
+void main_task_poll(void)
 {
     /* Consume at most ONE queued command (dispatches to the registered
      * handler), then run the state handler so each command gets a full machine
-     * step before the next applies (g_state.ctrl_req is never overwritten). */
+     * step before the next applies (g_main_para.ctrl_req is never overwritten). */
     cmdbus_dispatch();
 
-    uint8_t st = g_state.main_state;
+    uint8_t st = g_main_para.main_state;
     if (st < CMDBUS_STATE_COUNT && g_state_poll_cb[st].run)
         g_state_poll_cb[st].run();
 
     /* background engine processing */
-    foc_poll_proc(g_state.main_state);
+    foc_poll_proc(g_main_para.main_state);
 }
 
 /* 1 ms tick: telemetry + slow loops + housekeeping. */
-void state_task_1ms(void)
+void main_task_1ms(void)
 {
     int16_t temperature, spd_rpm_fb, pwr_watt_fb;
 
@@ -484,11 +484,11 @@ void state_task_1ms(void)
     adc_seq1_sw_conv();
 
     /* DC bus V/I telemetry + protection feed (reconstruct idc from last duties). */
-    g_state.udc_mv = udc_pu_to_mv(g_state.udc_meas);
-    g_state.idc_ma = idc_pu_to_ma(g_state.idc_meas);
+    g_main_para.udc_mv = udc_pu_to_mv(g_main_para.udc_meas);
+    g_main_para.idc_ma = idc_pu_to_ma(g_main_para.idc_meas);
     temperature    = ntc_temp_c((uint16_t)adc_get_seq1_code(ADC_SEQ1_NTC));
     spd_rpm_fb     = pu_to_rpm(g_mc.act_spd_fb);
-    pwr_watt_fb    = udc_idc_to_pwr_x10(g_state.udc_mv, g_state.idc_ma);
+    pwr_watt_fb    = udc_idc_to_pwr_x10(g_main_para.udc_mv, g_main_para.idc_ma);
 
     ac_peak_1ms_proc();
     dc_delay_1ms_proc();
@@ -497,58 +497,58 @@ void state_task_1ms(void)
     fault_1ms_proc();
 
     /* monitoring snapshot only -- values may lag their source by up to 1 ms */
-    g_monitor_para.state          = g_state.main_state;
-    g_monitor_para.run_mode       = g_state.run_mode;
+    g_monitor_para.state          = g_main_para.main_state;
+    g_monitor_para.run_mode       = g_main_para.run_mode;
     g_monitor_para.fault_curr     = fault_get();
     g_monitor_para.fault_latch    = fault_get_latch();
-    g_monitor_para.ac_peak_high_v = g_state.ac_peak_high_v;
-    g_monitor_para.ac_peak_low_v  = g_state.ac_peak_low_v;
-    g_monitor_para.udc_mv         = g_state.udc_mv;
-    g_monitor_para.idc_ma         = g_state.idc_ma;
+    g_monitor_para.ac_peak_high_v = g_main_para.ac_peak_high_v;
+    g_monitor_para.ac_peak_low_v  = g_main_para.ac_peak_low_v;
+    g_monitor_para.udc_mv         = g_main_para.udc_mv;
+    g_monitor_para.idc_ma         = g_main_para.idc_ma;
     g_monitor_para.temperature    = temperature;
-    g_monitor_para.spd_rpm_ref    = g_state.spd_rpm_ref;
+    g_monitor_para.spd_rpm_ref    = g_main_para.spd_rpm_ref;
     g_monitor_para.spd_rpm_fb     = spd_rpm_fb;
-    g_monitor_para.pwr_watt_ref   = g_state.pwr_watt_ref;
+    g_monitor_para.pwr_watt_ref   = g_main_para.pwr_watt_ref;
     g_monitor_para.pwr_watt_fb    = pwr_watt_fb;
 }
 
 /* Hardware break (TIM1): DC-bus over current latched by the break input. */
-void state_task_isr_break(void)
+void main_task_isr_break(void)
 {
     tim_pwm_disable();
     fault_set(FAULT_ID_HW_IDC_OVER_CURRENT);
 }
 
-void state_task_isr()
+void main_task_isr()
 {
-    switch (g_state.main_state)
+    switch (g_main_para.main_state)
     {
         case CMDBUS_RUNNING:
         {
-            g_isr_foc_in.iabc_meas.a = g_state.ia_meas;
-            g_isr_foc_in.iabc_meas.b = g_state.ib_meas;
-            g_isr_foc_in.iabc_meas.c = g_state.ic_meas;
-            g_isr_foc_in.udc_meas    = g_state.udc_meas;
-            fault_isr_proc(g_state.ia_meas, g_state.ib_meas, g_state.ic_meas);
-            foc_isr_proc(&g_isr_foc_in, &g_state.duties_q15);
-            tim_pwm_update_ccr(duty_to_ccr_arr(g_state.duties_q15.a), duty_to_ccr_arr(g_state.duties_q15.b), duty_to_ccr_arr(g_state.duties_q15.c));
+            g_isr_foc_in.iabc_meas.a = g_main_para.ia_meas;
+            g_isr_foc_in.iabc_meas.b = g_main_para.ib_meas;
+            g_isr_foc_in.iabc_meas.c = g_main_para.ic_meas;
+            g_isr_foc_in.udc_meas    = g_main_para.udc_meas;
+            fault_isr_proc(g_main_para.ia_meas, g_main_para.ib_meas, g_main_para.ic_meas);
+            foc_isr_proc(&g_isr_foc_in, &g_main_para.duties_q15);
+            tim_pwm_update_ccr(duty_to_ccr_arr(g_main_para.duties_q15.a), duty_to_ccr_arr(g_main_para.duties_q15.b), duty_to_ccr_arr(g_main_para.duties_q15.c));
             break;
         }
         case CMDBUS_CHARGE:
         {
-            if (g_state.charge_active)
+            if (g_main_para.charge_active)
             {
-                if (++g_state.charge_cnt >= CHARGE_CARRIER_CYCLES)
+                if (++g_main_para.charge_cnt >= CHARGE_CARRIER_CYCLES)
                 {
-                    g_state.charge_cnt = 0;
-                    if (++g_state.charge_phase >= CHARGE_PHASE_NUM)
+                    g_main_para.charge_cnt = 0;
+                    if (++g_main_para.charge_phase >= CHARGE_PHASE_NUM)
                     {
-                        g_state.charge_active = 0;
-                        g_state.charge_phase  = 0;
+                        g_main_para.charge_active = 0;
+                        g_main_para.charge_phase  = 0;
                     }
                     else
                     {
-                        tim_pwm_charge_phase(g_state.charge_phase);
+                        tim_pwm_charge_phase(g_main_para.charge_phase);
                     }
                 }
             }
@@ -556,19 +556,19 @@ void state_task_isr()
         }
         case CMDBUS_CALI:
         {
-            if (g_state.cali_active)
+            if (g_main_para.cali_active)
             {
-                g_state.cali_sum_ib += (int32_t)adc_get_seq2_code(ADC_SEQ2_I_B);
-                g_state.cali_sum_ic += (int32_t)adc_get_seq2_code(ADC_SEQ2_I_C);
+                g_main_para.cali_sum_ib += (int32_t)adc_get_seq2_code(ADC_SEQ2_I_B);
+                g_main_para.cali_sum_ic += (int32_t)adc_get_seq2_code(ADC_SEQ2_I_C);
 
-                if (++g_state.cali_cnt >= ADC_OFFSET_CALI_SAMPLE_CNT)
+                if (++g_main_para.cali_cnt >= ADC_OFFSET_CALI_SAMPLE_CNT)
                 {
-                    g_state.adc_off_ib   = g_state.cali_sum_ib / ADC_OFFSET_CALI_SAMPLE_CNT;
-                    g_state.adc_off_ic   = g_state.cali_sum_ic / ADC_OFFSET_CALI_SAMPLE_CNT;
-                    g_state.cali_active  = 0;
-                    g_state.cali_cnt     = 0;
-                    g_state.cali_sum_ib  = 0;
-                    g_state.cali_sum_ic  = 0;
+                    g_main_para.adc_off_ib   = g_main_para.cali_sum_ib / ADC_OFFSET_CALI_SAMPLE_CNT;
+                    g_main_para.adc_off_ic   = g_main_para.cali_sum_ic / ADC_OFFSET_CALI_SAMPLE_CNT;
+                    g_main_para.cali_active  = 0;
+                    g_main_para.cali_cnt     = 0;
+                    g_main_para.cali_sum_ib  = 0;
+                    g_main_para.cali_sum_ic  = 0;
                 }
             }
             break;

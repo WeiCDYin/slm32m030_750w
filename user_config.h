@@ -200,10 +200,10 @@ typedef struct
 } monitor_parameter_t;
 
 /* ===== shared application runtime data =====
- * g_mc is defined in foc.c; g_monitor_para in state_task.c. The state-task's
+ * g_mc is defined in foc.c; g_monitor_para in main_task.c. The main-task's
  * internal state (machine state, offsets, V/I telemetry, cali/charge counters)
- * is packed into a static block in state_task.c; the carrier ISR reads the
- * zero offsets directly from g_state.adc_off_ib/ic/idc. */
+ * is packed into a static block in main_task.c; the carrier ISR reads the
+ * zero offsets directly from g_main_para.adc_off_ib/ic/idc. */
 extern mc_t                g_mc;
 extern monitor_parameter_t g_monitor_para;
 

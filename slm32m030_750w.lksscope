@@ -71,21 +71,21 @@
             <var interval="2" showType="Hex" color="" desc="g_fault.fault_latch" formula="" subvar="0" name="g_fault.fault_latch" unit="" addr="0x20000624"/>
             <var interval="2" showType="Enum" color="" desc="g_hsm.state" formula="" subvar="0" name="g_hsm.state" unit="" addr="0x200007f8"/>
             <var interval="2" showType="Enum" color="" desc="g_mc.if_foc_stage" formula="" subvar="0" name="g_mc.if_foc_stage" unit="" addr="0x20000791"/>
-            <var interval="2" showType="Unsigned" color="" desc="g_state.idc_ma" formula="" subvar="0" name="g_state.idc_ma" unit="" addr="0x20000108"/>
-            <var interval="2" showType="" color="" desc="g_state.idc_meas" formula="" subvar="0" name="g_state.idc_meas" unit="" addr="0x200000fe"/>
-            <var interval="2" showType="Signed" color="" desc="g_state.spd_rpm_ref" formula="" subvar="0" name="g_state.spd_rpm_ref" unit="" addr="0x200000f4"/>
+            <var interval="2" showType="Unsigned" color="" desc="g_main_para.idc_ma" formula="" subvar="0" name="g_main_para.idc_ma" unit="" addr="0x20000108"/>
+            <var interval="2" showType="" color="" desc="g_main_para.idc_meas" formula="" subvar="0" name="g_main_para.idc_meas" unit="" addr="0x200000fe"/>
+            <var interval="2" showType="Signed" color="" desc="g_main_para.spd_rpm_ref" formula="" subvar="0" name="g_main_para.spd_rpm_ref" unit="" addr="0x200000f4"/>
             <var interval="2" showType="Unsigned" color="" desc="g_tim1_handle.Instance->CCR4" formula="" subvar="0" name="g_tim1_handle.Instance->CCR4" unit="" addr="0x20000380"/>
             <var interval="2" showType="Unsigned" color="" desc="g_tim1_handle.Instance->ARR" formula="" subvar="0" name="g_tim1_handle.Instance->ARR" unit="" addr="0x20000380"/>
             <var interval="2" showType="Unsigned" color="" desc="g_auto_test_flag" formula="" subvar="0" name="g_auto_test_flag" unit="" addr="0x200009fc"/>
             <var interval="2" showType="Hex" color="" desc="g_adc_handle.Instance->INTR" formula="" subvar="0" name="g_adc_handle.Instance->INTR" unit="" addr="0x200002c4"/>
-            <var interval="2" showType="Unsigned" color="" desc="g_state.main_state" formula="" subvar="0" name="g_state.main_state" unit="" addr="0x200000f0"/>
-            <var interval="2" showType="Unsigned" color="" desc="g_state.ctrl_req" formula="" subvar="0" name="g_state.ctrl_req" unit="" addr="0x200000f1"/>
+            <var interval="2" showType="Unsigned" color="" desc="g_main_para.main_state" formula="" subvar="0" name="g_main_para.main_state" unit="" addr="0x200000f0"/>
+            <var interval="2" showType="Unsigned" color="" desc="g_main_para.ctrl_req" formula="" subvar="0" name="g_main_para.ctrl_req" unit="" addr="0x200000f1"/>
             <var interval="2" showType="Unsigned" color="" desc="g_tim1_handle.Instance->CCR2" formula="" subvar="0" name="g_tim1_handle.Instance->CCR2" unit="" addr="0x20000380"/>
             <var interval="2" showType="Unsigned" color="" desc="g_tim1_handle.Instance->CCR3" formula="" subvar="0" name="g_tim1_handle.Instance->CCR3" unit="" addr="0x20000380"/>
             <var interval="2" showType="Unsigned" color="" desc="g_tim1_handle.Instance->CCR1" formula="" subvar="0" name="g_tim1_handle.Instance->CCR1" unit="" addr="0x20000380"/>
         </form>
         <form scrollType="0" filterType="1" page="0" trigValue="0" refType="0" xCount="5526.56" scatterStyle="1" floating="0" max="500" refValue="0" subMode="0" visible="0" trigName="" lineStyle="1" xTag="0" trigType="0" autoRange="1" min="-500" title="曲线0" refName="" type="8">
-            <var color="#ff0000" desc="g_state.idc_ma" subPlot="0" name="g_state.idc_ma"/>
+            <var color="#ff0000" desc="g_main_para.idc_ma" subPlot="0" name="g_main_para.idc_ma"/>
         </form>
         <form scrollType="0" filterType="1" page="0" trigValue="0" refType="0" xCount="251.679" scatterStyle="1" floating="0" max="500" refValue="0" subMode="0" visible="0" trigName="" lineStyle="1" xTag="0" trigType="0" autoRange="1" min="-500" title="曲线1" refName="" type="8">
             <var color="#00ffff" desc="g_mc.act_theta" subPlot="0" name="g_mc.act_theta"/>

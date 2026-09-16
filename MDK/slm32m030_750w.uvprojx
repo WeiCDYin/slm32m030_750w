@@ -724,9 +724,9 @@
               <FilePath>..\User\Src\poke_task.c</FilePath>
             </File>
             <File>
-              <FileName>state_task.c</FileName>
+              <FileName>main_task.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Src\state_task.c</FilePath>
+              <FilePath>..\User\Src\main_task.c</FilePath>
             </File>
           </Files>
         </Group>

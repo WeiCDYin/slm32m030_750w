@@ -1,5 +1,5 @@
-#ifndef __STATE_TASK_H__
-#define __STATE_TASK_H__
+#ifndef __MAIN_TASK_H__
+#define __MAIN_TASK_H__
 #ifdef __cplusplus
 extern "C"
 {
@@ -11,8 +11,8 @@ extern "C"
 #include "mc.h"
 #include "user_config.h"
 
-/* All state-task runtime state is packed into one static instance. The type is
- * state_para_t (not state_t, which is the HSM leaf-state enum from foc.h). */
+/* All main-task runtime state is packed into one static instance. The type is
+ * main_para_t (not state_t, which is the HSM leaf-state enum from foc.h). */
 typedef struct
 {
     uint8_t  main_state;
@@ -34,7 +34,7 @@ typedef struct
 
     /* Phase-current zero offsets; default mid-scale so the ISR sees ~zero current
      * from boot; CMDBUS_CALI re-measures on every START. The carrier ISR (it.c)
-     * reads these directly from g_state. */
+     * reads these directly from g_main_para. */
     volatile int32_t adc_off_ib;
     volatile int32_t adc_off_ic;
 
@@ -58,41 +58,41 @@ typedef struct
     volatile int32_t  cali_sum_ib;
     volatile int32_t  cali_sum_ic;
     volatile uint16_t cali_cnt;
-} state_para_t;
+} main_para_t;
 
-/* state_task -- the top application task. It owns the main state machine
+/* main_task -- the top application task. It owns the main state machine
  * (INIT/IDLE/CALI/CHARGE/RUNNING/FAULT, held on the command bus) and is the
  * ONE place that drives the control engine: it orchestrates foc, poke, fault
  * and ntc. The other two tasks (modbus_task, poke_task) and the ISR never call
  * foc/fault/ntc directly -- they only post commands on cmdbus, which this task
  * consumes.
  *
- *   state_task_init()  power-on: tune FOC, init fault table + ntc, register
+ *   main_task_init()  power-on: tune FOC, init fault table + ntc, register
  *                      command handlers on the bus, reset machine state.
- *   state_task_poll()  main loop: drain one bus command, run FOC hsm + poke,
+ *   main_task_poll()  main loop: drain one bus command, run FOC hsm + poke,
  *                      advance the state machine.
- *   state_task_1ms()   1 ms tick: FOC slow loop, fault poll, poke resync,
+ *   main_task_1ms()   1 ms tick: FOC slow loop, fault poll, poke resync,
  *                      ntc temperature, telemetry snapshot.
- *   state_task_isr()   carrier ISR: offset calibration / bootstrap while not
+ *   main_task_isr()   carrier ISR: offset calibration / bootstrap while not
  *                      running; while RUNNING, software OC check, poke force,
  *                      FOC fast step; writes the new PWM duties into *dabc_ccr.
- *   state_task_isr_break()  TIM1 hardware break (DC over current).
+ *   main_task_isr_break()  TIM1 hardware break (DC over current).
  *
- * Telemetry: state_task owns the monitor snapshot g_monitor_para; the 1 ms
+ * Telemetry: main_task owns the monitor snapshot g_monitor_para; the 1 ms
  * task refreshes it and the ISR refreshes the fast V/I fields. */
 
-void state_task_init(void);
-void state_task_poll(void);
-void state_task_1ms(void);
+void main_task_init(void);
+void main_task_poll(void);
+void main_task_1ms(void);
 
 /* Carrier frame. mc_in is already filled with the measured phase currents /
  * dc voltage (pu) by the ISR. When the machine is RUNNING this writes the new
  * PWM CCR ticks into ccr[0..2] and returns true; otherwise it returns false
  * (cali / charge timing handled internally, no CCR update). */
-void state_task_isr();
+void main_task_isr();
 
 /* TIM1 hardware break: DC-bus over current latched by the break input. */
-void state_task_isr_break(void);
+void main_task_isr_break(void);
 
 #ifdef __cplusplus
 }

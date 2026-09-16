@@ -1,7 +1,7 @@
 #include "ad.h"
 #include "bsp_hal.h"
 #include "convert.h"
-#include "state_task.h"
+#include "main_task.h"
 #include "tim.h"
 #include "uart.h"
 #include "user_config.h"
@@ -55,7 +55,7 @@ void TIM1_BRK_UP_TRG_COM_IRQHandler(void)
         if (__HAL_TIM_GET_IT_SOURCE(&g_tim1_handle, TIM_IT_BREAK) != RESET)
         {
             __HAL_TIM_CLEAR_IT(&g_tim1_handle, TIM_IT_BREAK);
-            state_task_isr_break();
+            main_task_isr_break();
         }
     }
 }
@@ -68,7 +68,7 @@ void TIM1_BRK_UP_TRG_COM_IRQHandler(void)
  */
 extern volatile uint32_t g_isr_cyc;
 extern volatile uint32_t g_isr_cyc_max;
-extern state_para_t      g_state;
+extern main_para_t       g_main_para;
 
 void ADC_IRQHandler(void)
 {
@@ -86,19 +86,19 @@ void ADC_IRQHandler(void)
         /* raw code -> gain-compensated Q15 in one fused multiply (inline);
          * offsets read directly, ia = -(ib+ic) derived from register caches to
          * avoid bouncing the volatile meas fields. */
-        int32_t ib = iphase_code_to_gain_pu((int32_t)adc_get_seq2_code(ADC_SEQ2_I_B), g_state.adc_off_ib);
-        int32_t ic = iphase_code_to_gain_pu((int32_t)adc_get_seq2_code(ADC_SEQ2_I_C), g_state.adc_off_ic);
+        int32_t ib = iphase_code_to_gain_pu((int32_t)adc_get_seq2_code(ADC_SEQ2_I_B), g_main_para.adc_off_ib);
+        int32_t ic = iphase_code_to_gain_pu((int32_t)adc_get_seq2_code(ADC_SEQ2_I_C), g_main_para.adc_off_ic);
         int32_t ia = q15_sat(-ib - ic);
 
-        g_state.ib_meas  = (q15_t)ib;
-        g_state.ic_meas  = (q15_t)ic;
-        g_state.ia_meas  = (q15_t)ia;
-        g_state.udc_meas = udc_code_to_pu((int32_t)adc_get_seq2_code(ADC_SEQ2_V_DC));
-        g_state.idc_meas = q15_sat(
-            (((ia * g_state.duties_q15.a) >> Q15_SHIFT) + ((ib * g_state.duties_q15.b) >> Q15_SHIFT) + ((ic * g_state.duties_q15.c) >> Q15_SHIFT)));
+        g_main_para.ib_meas  = (q15_t)ib;
+        g_main_para.ic_meas  = (q15_t)ic;
+        g_main_para.ia_meas  = (q15_t)ia;
+        g_main_para.udc_meas = udc_code_to_pu((int32_t)adc_get_seq2_code(ADC_SEQ2_V_DC));
+        g_main_para.idc_meas = q15_sat(
+            (((ia * g_main_para.duties_q15.a) >> Q15_SHIFT) + ((ib * g_main_para.duties_q15.b) >> Q15_SHIFT) + ((ic * g_main_para.duties_q15.c) >> Q15_SHIFT)));
 
         /* state task: cali/charge timing + (when RUNNING) OC, poke, FOC -> ccr */
-        state_task_isr();
+        main_task_isr();
 
         uint32_t t1 = tim_load_isr_get();
         g_isr_cyc   = t1 - t0;
