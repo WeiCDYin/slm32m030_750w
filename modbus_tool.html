@@ -168,6 +168,11 @@
         <button id="btnCtrl" class="primary">发送</button>
         <button id="btnReadCtrl">读</button>
       </div>
+      <div class="row" style="margin:0">
+        <button id="btnCtrlStop" class="danger">停止</button>
+        <button id="btnCtrlStart" class="primary">启动</button>
+        <button id="btnCtrlRecovery">恢复</button>
+      </div>
     </div>
     <div class="reg">
       <div>
@@ -432,6 +437,20 @@
     </div>
   </section>
 
+  <section id="secTest">
+    <h2>循环启动测试</h2>
+    <div class="row">
+      <button id="btnTestStart" class="primary">开启测试</button>
+      <button id="btnTestStop" class="danger">停止测试</button>
+    </div>
+    <div class="row">
+      <label>运行时间s</label><input type="number" id="testRunS" value="10" min="1" max="3600" style="width:80px;">
+      <label>停机时间s</label><input type="number" id="testStopS" value="10" min="1" max="3600" style="width:80px;">
+    </div>
+    <div class="row">
+      <span class="t-dim">已完成循环次数</span><span id="testCount">0</span>
+    </div>
+  </section>
   <section id="secLog">
     <h2>通信日志 <button id="btnClearLog" class="small">清除日志</button></h2>
     <div id="log"></div>
@@ -827,7 +846,7 @@ $('pollEnable').onchange = () => {
 
 /* ---------------- Connection management ---------------- */
 function setConnected(on) {
-  ['btnConnect','btnDisconnect','btnRead','btnWrite','btnCtrl','btnRefSpeed','btnRefPower','btnMode',
+  ['btnConnect','btnDisconnect','btnRead','btnWrite','btnCtrl','btnCtrlStop','btnCtrlStart','btnCtrlRecovery','btnTestStart','btnTestStop','btnRefSpeed','btnRefPower','btnMode',
    'btnDutyA','btnDutyB','btnDutyC','btnMag','btnAng'].forEach(id => {
     const el = $(id);
     if (el) el.disabled = (id === 'btnConnect') ? on : !on;
@@ -864,6 +883,7 @@ async function connect() {
 }
 
 async function disconnect() {
+  testAbort();
   pollStop();
   $('pollEnable').checked = false;
   try {
@@ -961,6 +981,61 @@ $('btnAng').onclick     = async () => { await setReg(0x0015, parseInt($('angVal'
 
 $('btnClearLog').onclick = () => { $('log').innerHTML = ''; log('日志已清除', 't-dim'); };
 
+/* ---------------- Cyclic start/stop test ---------------- */
+let testTimer   = null;   /* setTimeout handle */
+let testRunning = false;  /* test loop active */
+let testCount   = 0;      /* completed start/stop cycles */
+
+function testSetCount(n) {
+  testCount = n;
+  const el = $('testCount');
+  if (el) el.textContent = String(n);
+}
+
+function testAbort() {
+  testRunning = false;
+  if (testTimer) { clearTimeout(testTimer); testTimer = null; }
+}
+
+async function testLoop() {
+  if (!testRunning) return;
+  const runS  = Math.max(1, parseInt($('testRunS').value, 10)  || 1);
+  const stopS = Math.max(1, parseInt($('testStopS').value, 10) || 1);
+
+  try { await writeRegQ(0x0000, 1); log('循环测试: 发送启动 CTRL=1', 't-ok'); }
+  catch (e) { log('循环测试启动失败: ' + e.message, 't-err'); }
+
+  if (!testRunning) return;
+  testTimer = setTimeout(async () => {
+    if (!testRunning) return;
+    try { await writeRegQ(0x0000, 0); log('循环测试: 发送停止 CTRL=0', 't-ok'); }
+    catch (e) { log('循环测试停止失败: ' + e.message, 't-err'); }
+    testSetCount(testCount + 1);              /* one start/stop cycle done */
+    testTimer = setTimeout(testLoop, stopS * 1000);
+  }, runS * 1000);
+}
+
+$('btnTestStart').onclick = () => {
+  if (testRunning) return;
+  if (!port) { log('未连接串口', 't-warn'); return; }
+  testRunning = true;
+  testSetCount(0);                            /* counter resets on each start */
+  log('循环启动测试开始', 't-ok');
+  testLoop();
+};
+
+$('btnTestStop').onclick = async () => {
+  if (!testRunning) return;
+  testAbort();
+  try { await writeRegQ(0x0000, 0); log('循环测试: 退出前发送停止 CTRL=0', 't-ok'); }
+  catch (e) { log('循环测试停止失败: ' + e.message, 't-err'); }
+  log('循环启动测试已停止', 't-warn');
+};
+
+/* CTRL (0x0000) shortcut buttons */
+$('btnCtrlStop').onclick     = async () => { await setReg(0x0000, 0, '', 'CTRL', 0, 3); };
+$('btnCtrlStart').onclick    = async () => { await setReg(0x0000, 1, '', 'CTRL', 0, 3); };
+$('btnCtrlRecovery').onclick = async () => { await setReg(0x0000, 3, '', 'CTRL', 0, 3); };
 setConnected(false);
 log('就绪。请点击「连接串口」选择设备（Chrome/Edge，https 或 localhost 打开）。', 't-dim');
 </script>
