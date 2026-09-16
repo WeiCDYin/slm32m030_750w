@@ -25,12 +25,13 @@ extern "C"
 /* Machine states. */
 typedef enum
 {
-    CMDBUS_INIT    = 0, /* power-on / recovery: auto -> IDLE */
-    CMDBUS_IDLE    = 1, /* standby: waiting for START */
-    CMDBUS_CALI    = 2, /* start calibration: two-phase current offset averaging */
-    CMDBUS_CHARGE  = 3, /* pre-charge bootstrap */
-    CMDBUS_RUNNING = 4, /* running: FOC holds the run command */
-    CMDBUS_FAULT   = 5, /* fault: latched; RECOVERY or fault-clear returns to IDLE */
+    CMDBUS_INIT      = 0, /* power-on / recovery: auto -> IDLE */
+    CMDBUS_IDLE      = 1, /* standby: waiting for START */
+    CMDBUS_CALI      = 2, /* start calibration: two-phase current offset averaging */
+    CMDBUS_CHARGE    = 3, /* pre-charge bootstrap */
+    CMDBUS_SELFCHECK = 4, /* device self-check, including phase-lost... */
+    CMDBUS_RUNNING   = 5, /* running: FOC holds the run command */
+    CMDBUS_FAULT     = 6, /* fault: latched; RECOVERY or fault-clear returns to IDLE */
     CMDBUS_STATE_COUNT
 } cmdbus_state_t;
 

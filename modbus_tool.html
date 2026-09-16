@@ -11,7 +11,7 @@
   Register map matches firmware modbus.h (mb_register_id):
     0x0000 CTRL         rw  0:Stop  1:Start  2:Fault  3:Recovery(clear faults + reset)
     0x0001 MST_STATE    r   main state machine: 0=INIT 1=IDLE(Stop)
-                            2=CALI 3=CHARGE 4=RUNNING 5=FAULT (latched, needs CTRL=3)
+                            2=CALI 3=CHARGE 4=SELFCHECK 5=RUNNING 6=FAULT (latched, needs CTRL=3)
     0x0002 FAULT_LATCH1 r   sticky fault history, LOW 16 bits; every fault
                             id that ever tripped; NOT cleared when the fault
                             recovers, only by CTRL=3 (Recovery)
@@ -373,9 +373,10 @@
       <tr><td class="b">0</td><td>INIT</td><td>上电初始化，自动进入 IDLE</td></tr>
       <tr><td class="b">1</td><td>IDLE</td><td>待机，等待启动命令</td></tr>
       <tr><td class="b">2</td><td>CALI</td><td>启动前两相电流零点标定（约 128 载波周期），合格转 CHARGE，不合格转 FAULT</td></tr>
-      <tr><td class="b">3</td><td>CHARGE</td><td>自举预充电：三相下管导通若干载波周期（期间屏蔽过流保护），完成转 RUNNING</td></tr>
-      <tr><td class="b">4</td><td>RUNNING</td><td>运行中</td></tr>
-      <tr><td class="b">5</td><td>FAULT</td><td>故障锁存，需 CTRL=3 恢复</td></tr>
+      <tr><td class="b">3</td><td>CHARGE</td><td>自举预充电：三相下管导通若干载波周期（期间屏蔽过流保护），完成转 SELFCHECK</td></tr>
+      <tr><td class="b">4</td><td>SELFCHECK</td><td>设备自检（预留，直接通过）</td></tr>
+      <tr><td class="b">5</td><td>RUNNING</td><td>运行中</td></tr>
+      <tr><td class="b">6</td><td>FAULT</td><td>故障锁存，需 CTRL=3 恢复</td></tr>
     </table>
     </div>
     <div class="ref-scroll">
@@ -386,7 +387,7 @@
       <tr><td class="b">0</td><td>HW_DC_OVER_CURRENT</td><td>硬件母线过流（TIM1 Break / DAC 比较器）</td></tr>
       <tr><td class="b">1</td><td>SW_DC_OVER_CURRENT</td><td>软件母线过流（预留）</td></tr>
       <tr><td class="b">2</td><td>SW_PHASE_OVER_CURRENT</td><td>软件相电流过流（载波 ISR）</td></tr>
-      <tr><td class="b">3</td><td>MOTOR_LOST_PHASE</td><td>电机缺相（预留）</td></tr>
+      <tr><td class="b">3</td><td>MOTOR_LOST_PHASE</td><td>电机缺相（运行期三相电流不平衡或过低）</td></tr>
       <tr><td class="b">4</td><td>ZERO_OFFSET_ERROR</td><td>电流零点标定超差（偏移远离 2048）</td></tr>
       <tr><td class="b">5</td><td>USER_SET_ERROR</td><td>用户下发故障指令（CTRL=2）</td></tr>
       <tr><td class="b">6–7</td><td>—</td><td>保留</td></tr>
@@ -724,11 +725,11 @@ function renderReg(r, v) {
   if (r.addr === 0x0007) txt = String(v); /* ACT_POWER: unsigned decimal */
   if (r.addr === 0x0008) { const s = v >= 0x8000 ? v - 0x10000 : v; txt = String(s); } /* ACT_TEMP: signed decimal */
   if (r.addr === 0x0001) { /* MST_STATE: main state machine */
-    const names = ['INIT 初始化', 'IDLE 待机', 'CALI 零点标定', 'CHARGE 预充电', 'RUNNING 运行', 'FAULT 故障'];
+    const names = ['INIT 初始化', 'IDLE 待机', 'CALI 零点标定', 'CHARGE 预充电', 'SELFCHECK 自检', 'RUNNING 运行', 'FAULT 故障'];
     txt = '0x' + v.toString(16).padStart(4, '0') + '  [' + ((v < names.length) ? names[v] : '未知') + ']';
   }
   let warn = (v !== 0);
-  if (r.addr === 0x0001) warn = (v === 5); /* MST_STATE: only FAULT is alarming */
+  if (r.addr === 0x0001) warn = (v === 6); /* MST_STATE: only FAULT is alarming */
   if (el) {
     el.value = txt;
     el.className = 'val-in' + (warn ? ' t-warn' : '');

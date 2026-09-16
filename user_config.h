@@ -132,9 +132,12 @@ extern "C"
 #define SW_PHASE_OC_TRIP_A  (8.0f) /* [A] */
 #define SW_PHASE_OC_TRIP_PU ((q15_t)((SW_PHASE_OC_TRIP_A / I_BASE_A) * Q15_ONE + 0.5f))
 /* id 3: motor phase lost error */
-/*
- * todo
- */
+#define PHASE_LOSS_WIN_SHIFT   (13u)   /* averaging window = 2^13 carrier frames (~0.8 s @10 kHz) */
+#define PHASE_LOSS_RATIO_PCT   (50u)   /* min/max below this = imbalanced [%] */
+#define PHASE_LOSS_HOLD_WINS   (4u)    /* consecutive bad windows before the fault (~3 s) */
+#define PHASE_LOSS_MIN_A       (0.05f) /* per-phase |i| below this = lost phase [A] */
+#define PHASE_LOSS_MIN_PU      ((uint16_t)(PHASE_LOSS_MIN_A / I_BASE_A * Q15_ONE + 0.5f))
+#define PHASE_LOSS_WIN_SAMPLES (1u << PHASE_LOSS_WIN_SHIFT)
 /* id 4: adc offset calibration error */
 #define ADC_OFFSET_CALI_DEFAULT    (2048) /* [lsb] */
 #define ADC_OFFSET_CALI_THRESHOLD  (100)

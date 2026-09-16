@@ -58,6 +58,8 @@ static void exit_cali(void);
 static void entry_charge(void);
 static void run_charge(void);
 static void exit_charge(void);
+static void entry_selfcheck(void);
+static void run_selfcheck(void);
 static void entry_running(void);
 static void run_running(void);
 static void entry_fault(void);
@@ -66,12 +68,13 @@ static void state_switch(uint8_t next);
 /* One ops row per cmdbus_state_t (index == state value); exit NULL when a state
  * needs no teardown. Transitions run exit(old) -> entry(new). */
 static const state_ops_t g_state_poll_cb[CMDBUS_STATE_COUNT] = {
-    [CMDBUS_INIT]    = {entry_init, run_init, NULL},            // CMDBUS_INIT
-    [CMDBUS_IDLE]    = {entry_idle, run_idle, NULL},            // CMDBUS_IDLE
-    [CMDBUS_CALI]    = {entry_cali, run_cali, exit_cali},       // CMDBUS_CALI
-    [CMDBUS_CHARGE]  = {entry_charge, run_charge, exit_charge}, // CMDBUS_CHARGE
-    [CMDBUS_RUNNING] = {entry_running, run_running, NULL},      // CMDBUS_RUNNING
-    [CMDBUS_FAULT]   = {entry_fault, run_fault, NULL},          // CMDBUS_FAULT
+    [CMDBUS_INIT]      = {entry_init, run_init, NULL},            // CMDBUS_INIT
+    [CMDBUS_IDLE]      = {entry_idle, run_idle, NULL},            // CMDBUS_IDLE
+    [CMDBUS_CALI]      = {entry_cali, run_cali, exit_cali},       // CMDBUS_CALI
+    [CMDBUS_CHARGE]    = {entry_charge, run_charge, exit_charge}, // CMDBUS_CHARGE
+    [CMDBUS_SELFCHECK] = {entry_selfcheck, run_selfcheck, NULL},  // CMDBUS_SELFCHECK
+    [CMDBUS_RUNNING]   = {entry_running, run_running, NULL},      // CMDBUS_RUNNING
+    [CMDBUS_FAULT]     = {entry_fault, run_fault, NULL},          // CMDBUS_FAULT
 };
 
 static void cmd_ctrl(const void *payload);
@@ -248,6 +251,29 @@ static void run_charge(void)
     else if (g_main_para.ctrl_req == CMDBUS_CTRL_RECOVERY)
         fault_latch_clr();
     else if (!g_main_para.charge_active)
+        state_switch(CMDBUS_SELFCHECK);
+    g_main_para.ctrl_req = CMDBUS_CTRL_NONE;
+}
+
+/* ---- SELFCHECK: device self-check hook. Currently a pass-through: the start-up
+ * phase-loss check was removed in favour of the running-phase imbalance detector
+ * (phase_loss_1ms_proc), which is not fooled by the rotor position or by an
+ * upwind/downwind start. Kept as a state for future self-check items. ---- */
+static void entry_selfcheck(void)
+{
+}
+
+static void run_selfcheck(void)
+{
+    if (fault_get() != 0)
+        state_switch(CMDBUS_FAULT);
+    else if (g_main_para.ctrl_req == CMDBUS_CTRL_FAULT)
+        goto_user_fault();
+    else if (g_main_para.ctrl_req == CMDBUS_CTRL_STOP)
+        state_switch(CMDBUS_IDLE);
+    else if (g_main_para.ctrl_req == CMDBUS_CTRL_RECOVERY)
+        fault_latch_clr();
+    else
         state_switch(CMDBUS_RUNNING);
     g_main_para.ctrl_req = CMDBUS_CTRL_NONE;
 }
@@ -454,6 +480,65 @@ static void ac_peak_1ms_proc(void)
 }
 
 /* ------------------------------------------------------------------ */
+/* Running phase-loss detection (1 ms)                                 */
+/* ------------------------------------------------------------------ */
+/* A healthy motor's three phase currents have the same RMS. The carrier ISR
+ * accumulates |ia|/|ib|/|ic| over PHASE_LOSS_WIN_SAMPLES and raises pl_ready;
+ * here the per-phase averages are the sums shifted (window is a power of two, so
+ * no division), and a lost phase -- the smallest phase below
+ * PHASE_LOSS_RATIO_PCT of the largest, or below the absolute PHASE_LOSS_MIN_A --
+ * that holds for PHASE_LOSS_HOLD_WINS windows latches FAULT_ID_MOTOR_LOST_PHASE. */
+static void phase_loss_1ms_proc(void)
+{
+    static uint16_t bad_wins = 0;
+
+    if (g_main_para.main_state != CMDBUS_RUNNING)
+    {
+        bad_wins = 0; /* only meaningful while driving */
+        return;
+    }
+    if (!g_main_para.pl_ready)
+        return;
+
+    uint16_t a = (uint16_t)(g_main_para.pl_sum_a >> PHASE_LOSS_WIN_SHIFT);
+    uint16_t b = (uint16_t)(g_main_para.pl_sum_b >> PHASE_LOSS_WIN_SHIFT);
+    uint16_t c = (uint16_t)(g_main_para.pl_sum_c >> PHASE_LOSS_WIN_SHIFT);
+
+    /* release the window before evaluating: the ISR only accumulates while
+     * pl_ready==0, so this read/reset pair cannot race the carrier ISR. */
+    g_main_para.pl_sum_a = 0;
+    g_main_para.pl_sum_b = 0;
+    g_main_para.pl_sum_c = 0;
+    g_main_para.pl_cnt   = 0;
+    g_main_para.pl_ready = 0;
+
+    uint16_t mx = a, mn = a;
+    if (b > mx) mx = b;
+    if (c > mx) mx = c;
+    if (b < mn) mn = b;
+    if (c < mn) mn = c;
+
+    /* no phase carries current (light load / coasting): nothing to compare */
+    if (mx < PHASE_LOSS_MIN_PU)
+    {
+        bad_wins = 0;
+        return;
+    }
+
+    /* a lost phase shows up either as an absolute near-zero current or as a
+     * large imbalance against the other two */
+    if (mn < PHASE_LOSS_MIN_PU || (uint32_t)mn * 100u < (uint32_t)mx * PHASE_LOSS_RATIO_PCT)
+    {
+        if (++bad_wins >= PHASE_LOSS_HOLD_WINS)
+            fault_set(FAULT_ID_MOTOR_LOST_PHASE);
+    }
+    else
+    {
+        bad_wins = 0;
+    }
+}
+
+/* ------------------------------------------------------------------ */
 /* Public task API                                                     */
 /* ------------------------------------------------------------------ */
 void main_task_init(void)
@@ -500,6 +585,7 @@ void main_task_1ms(void)
     led_1ms_proc();
     foc_1ms_proc();
     fault_1ms_proc();
+    phase_loss_1ms_proc();
 
     /* monitoring snapshot only -- values may lag their source by up to 1 ms */
     g_monitor_para.state          = g_main_para.main_state;
@@ -543,6 +629,7 @@ void main_task_isr(int32_t ia_code, int32_t ib_code, int32_t ic_code, int32_t ud
     switch (g_main_para.main_state)
     {
         case CMDBUS_RUNNING:
+        case CMDBUS_SELFCHECK:
         {
             g_isr_foc_in.iabc_meas.a = ia;
             g_isr_foc_in.iabc_meas.b = ib;
@@ -551,6 +638,20 @@ void main_task_isr(int32_t ia_code, int32_t ib_code, int32_t ic_code, int32_t ud
             fault_isr_proc(ia, ib, ic);
             foc_isr_proc(&g_isr_foc_in, &g_main_para.duties_q15);
             tim_pwm_update_ccr(duty_to_ccr_arr(g_main_para.duties_q15.a), duty_to_ccr_arr(g_main_para.duties_q15.b), duty_to_ccr_arr(g_main_para.duties_q15.c));
+
+#if FAULT_ONE_SHOT_MOTOR_LOST_PHASE_ENABLE
+            if (g_main_para.main_state == CMDBUS_RUNNING && !g_main_para.pl_ready)
+            {
+                /* running phase-loss detection: accumulate |i| per phase; the
+                 * 1 ms task averages (shift) and checks the imbalance. */
+                int32_t ma = ia, mb = ib, mc = ic;
+                g_main_para.pl_sum_a += (uint32_t)(ma < 0 ? -ma : ma);
+                g_main_para.pl_sum_b += (uint32_t)(mb < 0 ? -mb : mb);
+                g_main_para.pl_sum_c += (uint32_t)(mc < 0 ? -mc : mc);
+                if (++g_main_para.pl_cnt >= PHASE_LOSS_WIN_SAMPLES)
+                    g_main_para.pl_ready = 1;
+            }
+#endif
             break;
         }
         case CMDBUS_CHARGE:

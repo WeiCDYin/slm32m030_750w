@@ -15,8 +15,8 @@ extern "C"
  *
  *   User registers:
  *     0x0000  CTRL         rw  0:Stop  1:Start  2:Fault  3:Recovery(clear faults + reset)
- *     0x0001  MST_STATE    r   main state machine: 0=INIT 1=IDLE(Stop)
- *                              2=RUNNING 3=CALI(offset calibration) 4=FAULT (latched, needs CTRL=3)
+ *     0x0001  MST_STATE    r   main state machine: 0=INIT 1=IDLE(Stop) 2=CALI
+ *                              3=CHARGE 4=SELFCHECK 5=RUNNING 6=FAULT (latched, needs CTRL=3)
  *     0x0002  FAULT_LATCH1 r   sticky fault history, LOW 16 bits; every fault
  *                              id that ever tripped; NOT cleared when the
  *                              fault recovers, only by CTRL=3 (Recovery)
@@ -42,7 +42,7 @@ extern "C"
 typedef enum
 {
     MB_REG_CTRL         = 0x0000, // rw, 0:Stop; 1:Start; 2:Fault; 3:Recovery
-    MB_REG_MST_STATE    = 0x0001, // r main state machine: 0:INIT 1:IDLE(Stop) 2:RUNNING 3:CALI 4:FAULT
+    MB_REG_MST_STATE    = 0x0001, // r main state machine: 0:INIT 1:IDLE 2:CALI 3:CHARGE 4:SELFCHECK 5:RUNNING 6:FAULT
     MB_REG_FAULT_LATCH1 = 0x0002, // r sticky fault history, low 16 bits; cleared only by CTRL=3 (Recovery)
     MB_REG_FAULT_LATCH2 = 0x0003, // r sticky fault history, high 16 bits
     MB_REG_REF_SPEED    = 0x0004, // rw [rpm]

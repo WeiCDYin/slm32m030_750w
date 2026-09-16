@@ -62,13 +62,22 @@ typedef struct
     volatile int32_t  cali_sum_ib;
     volatile int32_t  cali_sum_ic;
     volatile uint16_t cali_cnt;
+
+    /* Running phase-loss detection (CMDBUS_RUNNING): the carrier ISR accumulates
+     * |ia|/|ib|/|ic| over PHASE_LOSS_WIN_SAMPLES and raises pl_ready; the 1 ms
+     * task averages them (shift) and checks the imbalance. */
+    volatile uint32_t pl_sum_a;
+    volatile uint32_t pl_sum_b;
+    volatile uint32_t pl_sum_c;
+    volatile uint32_t pl_cnt;
+    volatile uint8_t  pl_ready;
 } main_para_t;
 
 /* main_task -- the top application task. It owns the main state machine
- * (INIT/IDLE/CALI/CHARGE/RUNNING/FAULT, held on the command bus) and is the
- * ONE place that drives the control engine: it orchestrates foc, poke, fault
- * and ntc. The other two tasks (modbus_task, poke_task) and the ISR never call
- * foc/fault/ntc directly -- they only post commands on cmdbus, which this task
+ * (INIT/IDLE/CALI/CHARGE/SELFCHECK/RUNNING/FAULT, held on the command bus) and
+ * is the ONE place that drives the control engine: it orchestrates foc, poke,
+ * fault and ntc. The other two tasks (modbus_task, poke_task) and the ISR never
+ * call foc/fault/ntc directly -- they only post commands on cmdbus, which this task
  * consumes.
  *
  *   main_task_init()  power-on: tune FOC, init fault table + ntc, register
