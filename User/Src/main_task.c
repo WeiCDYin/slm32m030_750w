@@ -1,15 +1,11 @@
 #include "main_task.h"
 #include "cmdbus.h"
-#include "user_config.h"
+#include "user_control.h"
 #include "poke_task.h"
 #include "foc.h"
 #include "fault.h"
 #include "convert.h"
 #include "ntc.h"
-#include "ad.h"
-#include "tim.h"
-#include "gpio.h"
-#include "iwdg.h"
 #include "port.h"
 
 /* Charge state: three low-side phases pumped in turn. */
@@ -181,8 +177,8 @@ static void exit_cali(void)
 
 static bool cali_offset_ok(void)
 {
-    int32_t delta_offset_ib  = g_main_para.adc_off_ib - (int32_t)ADC_OFFSET_CALI_DEFAULT;
-    int32_t delta_offset_ic  = g_main_para.adc_off_ic - (int32_t)ADC_OFFSET_CALI_DEFAULT;
+    int32_t delta_offset_ib = g_main_para.adc_off_ib - (int32_t)ADC_OFFSET_CALI_DEFAULT;
+    int32_t delta_offset_ic = g_main_para.adc_off_ic - (int32_t)ADC_OFFSET_CALI_DEFAULT;
 
 #if FAULT_ONE_SHOT_ZERO_OFFSET_ERR_ENABLE
     if (delta_offset_ib < -(int32_t)ADC_OFFSET_CALI_THRESHOLD || delta_offset_ib > (int32_t)ADC_OFFSET_CALI_THRESHOLD ||
@@ -222,9 +218,9 @@ static void run_cali(void)
 static void entry_charge(void)
 {
     ENTER_CRITICAL_SECTION();
-    tim_pwm_update_ccr(0, 0, 0);
-    tim_pwm_charge_phase(0);
-    tim_pwm_enable();
+    port_pwm_set_duty(0, 0, 0);
+    port_pwm_charge_phase(0);
+    port_pwm_enable();
     g_main_para.charge_active = 1;
     g_main_para.charge_phase  = 0;
     g_main_para.charge_cnt    = 0;
@@ -235,8 +231,8 @@ static void exit_charge(void)
 {
     ENTER_CRITICAL_SECTION();
     g_main_para.charge_active = 0;
-    tim_pwm_disable();
-    tim_pwm_restore();
+    port_pwm_disable();
+    port_pwm_restore();
     EXIT_CRITICAL_SECTION();
 }
 
@@ -403,8 +399,8 @@ static void cmd_vec(const void *payload)
 static void cmd_power(const void *payload)
 {
     /* power W, consumed by the application layer (no FOC event) */
-    const cmdbus_power_t *p = (const cmdbus_power_t *)payload;
-    g_main_para.pwr_watt_ref    = p->power_w;
+    const cmdbus_power_t *p  = (const cmdbus_power_t *)payload;
+    g_main_para.pwr_watt_ref = p->power_w;
 }
 
 /* ------------------------------------------------------------------ */
@@ -413,8 +409,8 @@ static void cmd_power(const void *payload)
 static void led_1ms_proc(void)
 {
     uint32_t half_period_ms = (fault_get() != 0) ? 100u : 500u; /* 5 Hz fault / 1 Hz ok */
-    uint32_t on             = ((systick_get() / half_period_ms) & 1u) == 0u;
-    gpio_led_set(on);
+    uint32_t on             = ((port_time_ms() / half_period_ms) & 1u) == 0u;
+    port_led_set(on);
 }
 
 static void dc_delay_1ms_proc(void)
@@ -432,7 +428,7 @@ static void dc_delay_1ms_proc(void)
         {
             if (++hold_cnt >= DC_DELAY_PIN_HOLD_MS)
             {
-                gpio_power_delay_set(1);
+                port_power_delay_set(1);
                 pin_high = 1;
                 hold_cnt = 0;
             }
@@ -446,7 +442,7 @@ static void dc_delay_1ms_proc(void)
         {
             if (++hold_cnt >= DC_DELAY_PIN_HOLD_MS)
             {
-                gpio_power_delay_set(0);
+                port_power_delay_set(0);
                 pin_high = 0;
                 hold_cnt = 0;
             }
@@ -462,7 +458,7 @@ static void ac_peak_1ms_proc(void)
     static uint32_t hi_v = 0;
     static uint32_t lo_v = 0xFFFFFFFFu;
 
-    uint32_t ac_v = ac_code_to_v((int32_t)adc_get_seq1_code(ADC_SEQ1_AC_PEAK));
+    uint32_t ac_v = ac_code_to_v((int32_t)port_adc_get(PORT_ADC_AC_PEAK));
     if (ac_v > hi_v)
         hi_v = ac_v;
     if (ac_v < lo_v)
@@ -513,10 +509,14 @@ static void phase_loss_1ms_proc(void)
     g_main_para.pl_ready = 0;
 
     uint16_t mx = a, mn = a;
-    if (b > mx) mx = b;
-    if (c > mx) mx = c;
-    if (b < mn) mn = b;
-    if (c < mn) mn = c;
+    if (b > mx)
+        mx = b;
+    if (c > mx)
+        mx = c;
+    if (b < mn)
+        mn = b;
+    if (c < mn)
+        mn = c;
 
     /* no phase carries current (light load / coasting): nothing to compare */
     if (mx < PHASE_LOSS_MIN_PU)
@@ -571,14 +571,14 @@ void main_task_1ms(void)
 
     /* Software-triggered SEQ1 (AC peak, BEMF, NTC): run one polled frame so the
      * slow-channel codes are fresh this tick. */
-    adc_seq1_sw_conv();
+    port_adc_trigger();
 
     /* DC bus V/I telemetry + protection feed (reconstruct idc from last duties). */
     g_main_para.udc_mv = udc_pu_to_mv(g_main_para.udc_meas);
     g_main_para.idc_ma = idc_pu_to_ma(g_main_para.idc_meas);
-    temperature    = ntc_temp_c((uint16_t)adc_get_seq1_code(ADC_SEQ1_NTC));
-    spd_rpm_fb     = pu_to_rpm(g_mc.act_spd_fb);
-    pwr_watt_fb    = udc_idc_to_pwr_x10(g_main_para.udc_mv, g_main_para.idc_ma);
+    temperature        = ntc_temp_c((uint16_t)port_adc_get(PORT_ADC_NTC));
+    spd_rpm_fb         = pu_to_rpm(g_mc.act_spd_fb);
+    pwr_watt_fb        = udc_idc_to_pwr_x10(g_main_para.udc_mv, g_main_para.idc_ma);
 
     ac_peak_1ms_proc();
     dc_delay_1ms_proc();
@@ -606,7 +606,7 @@ void main_task_1ms(void)
 /* Hardware break (TIM1): DC-bus over current latched by the break input. */
 void main_task_isr_break(void)
 {
-    tim_pwm_disable();
+    port_pwm_disable();
     fault_set(FAULT_ID_HW_IDC_OVER_CURRENT);
 }
 
@@ -637,7 +637,9 @@ void main_task_isr(int32_t ia_code, int32_t ib_code, int32_t ic_code, int32_t ud
             g_isr_foc_in.udc_meas    = g_main_para.udc_meas;
             fault_isr_proc(ia, ib, ic);
             foc_isr_proc(&g_isr_foc_in, &g_main_para.duties_q15);
-            tim_pwm_update_ccr(duty_to_ccr_arr(g_main_para.duties_q15.a), duty_to_ccr_arr(g_main_para.duties_q15.b), duty_to_ccr_arr(g_main_para.duties_q15.c));
+            uint16_t reload = port_pwm_get_reload();
+            port_pwm_set_duty(duty_to_ccr(g_main_para.duties_q15.a, reload), duty_to_ccr(g_main_para.duties_q15.b, reload),
+                              duty_to_ccr(g_main_para.duties_q15.c, reload));
 
 #if FAULT_ONE_SHOT_MOTOR_LOST_PHASE_ENABLE
             if (g_main_para.main_state == CMDBUS_RUNNING && !g_main_para.pl_ready)
@@ -668,7 +670,7 @@ void main_task_isr(int32_t ia_code, int32_t ib_code, int32_t ic_code, int32_t ud
                     }
                     else
                     {
-                        tim_pwm_charge_phase(g_main_para.charge_phase);
+                        port_pwm_charge_phase(g_main_para.charge_phase);
                     }
                 }
             }

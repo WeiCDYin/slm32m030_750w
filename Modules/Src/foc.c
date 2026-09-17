@@ -1,10 +1,10 @@
 #include "foc.h"
-#include "tim.h"
+#include "port.h"
 #include "conv.h"
 #include "convert.h"
 #include "cmdbus.h"
 #include "fault.h"
-#include "user_config.h"
+#include "user_control.h"
 
 // FOC loop periods [s], derived from the rates configured in main.h
 #define TS_FAST (1.0f / FOC_FAST_HZ)
@@ -80,11 +80,6 @@ void hsm_crit_exit(void)
     // nothing to do
 }
 
-static mc_hw_if_t g_pwm_hw_if = {
-    .pwm_enable  = tim_pwm_enable,
-    .pwm_disable = tim_pwm_disable,
-};
-
 void foc_init(void)
 {
     g_mc.cc  = &g_cc;
@@ -105,7 +100,7 @@ void foc_init(void)
     g_mc.tr_enable           = true;
     g_mc.if2foc_handover_spd = (spd_pu_t)(IF_HANDOVER_PU * (float)Q15_ONE);
     g_hsm.mc                 = &g_mc;
-    g_hsm.hw                 = &g_pwm_hw_if;
+    g_hsm.hw                 = port_hw_if(); /* power-stage vtable from the port layer */
     g_hsm_ptr                = &g_hsm;
     foc_hsm_set(EV_TRAN, EV_FIELD_A, ST_IDLE, 0, 0);
 }

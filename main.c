@@ -11,6 +11,8 @@
 #include "modbus_task.h"
 #include "poke_task.h"
 #include "cmdbus.h"
+#include "user_board.h"
+#include "user_control.h"
 
 volatile uint32_t g_poll_cyc;
 volatile uint32_t g_poll_cyc_max;

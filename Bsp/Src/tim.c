@@ -1,6 +1,6 @@
 #include "slm32x030_hal.h"
 #include "bsp_hal.h"
-#include "user_config.h"
+#include "user_board.h"
 #include "ad.h"
 #include "tim.h"
 

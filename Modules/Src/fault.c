@@ -1,10 +1,9 @@
 #include "fault.h"
-#include "user_config.h"
-#include "ad.h"
+#include "user_control.h"
 #include "convert.h"
 #include "ntc.h"
-#include "tim.h"
 #include "port.h"
+#include "stdlib.h"
 
 /* Limit enable mask for a [poll] channel's window edges, OR-ed into
  * fault_id_t.fault_msk at register time. */
@@ -253,7 +252,7 @@ void fault_isr_proc(q15_t ia, q15_t ib, q15_t ic)
         (int32_t)ib <= -(int32_t)SW_PHASE_OC_TRIP_PU || (int32_t)ic >= (int32_t)SW_PHASE_OC_TRIP_PU || (int32_t)ic <= -(int32_t)SW_PHASE_OC_TRIP_PU)
     {
         fault_set(FAULT_ID_SW_IPHASE_OVER_CURRENT);
-        tim_pwm_disable();
+        port_pwm_disable();
         return;
     }
 #endif

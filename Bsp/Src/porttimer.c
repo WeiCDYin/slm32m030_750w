@@ -6,7 +6,7 @@
 #include "bsp_hal.h"
 #include "mb.h"
 #include "mbport.h"
-#include "user_config.h"
+#include "user_board.h"
 
 #define TIM6_PRESCALER (64u - 1u) /* 64 MHz / 64 = 1 MHz -> 1 us per tick */
 

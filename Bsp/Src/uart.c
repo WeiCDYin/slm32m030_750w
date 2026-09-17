@@ -1,6 +1,6 @@
 #include "slm32x030_hal.h"
 #include "uart.h"
-#include "user_config.h"
+#include "user_board.h"
 
 USART_HandleTypeDef  g_uart2_handle;
 static volatile bool g_rx_en;

@@ -9,7 +9,7 @@ extern "C"
 #include <stdint.h>
 #include "slm32x030_hal.h"
 #include "saturn_ll_reg.h"
-#include "user_config.h" /* AFE_PGA_GAIN_NUM, HW_OC_TRIP_A, sense resistors */
+#include "user_board.h" /* AFE_PGA_GAIN_NUM, HW_OC_TRIP_A, sense resistors */
 
 /* PGA gain as the SATURN register enum (derived from the numeric AFE_PGA_GAIN_NUM). */
 #define AFE_PGA_GAIN (AFE_PGA_GAIN_NUM == 4u ? PGA_GAIN_4 : AFE_PGA_GAIN_NUM == 8u ? PGA_GAIN_8 : AFE_PGA_GAIN_NUM == 16u ? PGA_GAIN_16 : PGA_GAIN_32)

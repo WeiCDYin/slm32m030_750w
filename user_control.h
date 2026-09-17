@@ -1,5 +1,5 @@
-#ifndef __USER_CONFIG_H__
-#define __USER_CONFIG_H__
+#ifndef __USER_CONTROL_H__
+#define __USER_CONTROL_H__
 
 #ifdef __cplusplus
 extern "C"
@@ -7,60 +7,28 @@ extern "C"
 #endif
 
 #include <stdint.h>
+#include "user_board.h"
 #include "types.h"
 #include "mc.h"
 
-/* ===== 0. input power ===== */
-#define AC_PEAK_WIN_MS         (200u)
-#define AC_INPUT_VOLTAGE_RATED (381.0f)
-#define AC_INPUT_VOLTAGE_MIN   (AC_INPUT_VOLTAGE_RATED * 0.8f * 1.414f) /* 431 V */
-#define AC_INPUT_VOLTAGE_MAX   (AC_INPUT_VOLTAGE_RATED * 1.2f * 1.414f) /* 646 V */
-#define DC_VOLTAGE_MIN         (AC_INPUT_VOLTAGE_RATED * 0.7f * 1.414f) /* 377 V */
-#define DC_VOLTAGE_MAX         (AC_INPUT_VOLTAGE_RATED * 1.2f * 1.414f) /* 646 V */
-/* power-delay */
-#define DC_DELAY_PIN_ON_THRESH_MV ((uint32_t)(DC_VOLTAGE_MIN * 0.8f * 1000.0f)) /* raise at 0.8 * UV [mV] */
-#define DC_DELAY_PIN_HYST_MV      (30000u)                                      /* lower at ON threshold - 30 V [mV] */
-#define DC_DELAY_PIN_HOLD_MS      (30u)                                         /* confirm time before toggle [ms] */
+/* ===== application / control configuration =====
+ * Platform-independent (Modules/, User/, Core/). Board / hardware parameters
+ * come from user_board.h; hardware access goes through Bsp/Inc/port.h. */
 
-/* ===== 1. constants ===== */
-#define PI_F                       (3.14159265f)
+/* ===== 0. constants ===== */
+#define PI_F (3.14159265f)
+
+/* ===== 1. auto test (main.c) ===== */
 #define AUTO_RUN_MODE              (0u)     /* 0:normal; 1:free-running; 2:start-stop test */
 #define AUTO_RUN_SPD_RPM           (1200)   /* auto test spd [rpm] */
 #define AUTO_FREE_RUNNING_DELAY_MS (3000u)  /* delay time after poweron */
 #define AUTO_TEST_START_TIME_MS    (45000u) /* start-stop test start time */
 #define AUTO_TEST_STOP_TIME_MS     (15000u) /* start-stop test stop time */
-#define NVIC_PRIORITY_TIM_BREAK    (0)
-#define NVIC_PRIORITY_UART         (1)
-#define NVIC_PRIORITY_ADC          (2)
-#define NVIC_PRIORITY_TIM_MODBUS   (3)
 
-/* ===== 2. system clock ===== */
-#define SYSTEM_CORE_CLOCK_HZ (64000000ul) /* system clock [Hz] */
-
-/* ===== 3. timer / PWM config (Bsp tim.c) ===== */
-#define PWM_FREQ_HZ           (10000.0f) /* carrier frequency [Hz] */
-#define TIM_DEAD_TIME_NS      (1000.0f)  /* dead time [ns], 0..7937.5 */
-#define TIM_PWM_RELOAD_CNT    ((SYSTEM_CORE_CLOCK_HZ / (uint32_t)(2 * PWM_FREQ_HZ)) - 1)
+/* ===== 2. pre-charge timing ===== */
 #define CHARGE_CARRIER_CYCLES (5u) /* pre-charge: low-side on, per phase [carrier cycles] */
 
-/* ===== 4. analog front end ===== */
-/* 12-bit ADC: code [0,4095] -> [0, ANALOG_REF_VOLTAGE] V */
-#define ANALOG_REF_VOLTAGE        (5.0f)  /* ADC reference [V] */
-#define SAMPLE_RESISTOR_PHASE     (0.03f) /* phase-current sense resistor [ohm] */
-#define SAMPLE_RESISTOR_IBUS      (0.03f) /* DC-bus current sense resistor [ohm] */
-#define SAMPLE_DIVISION_RATE_VBUS ((301 * 5 + 6.2f) / 6.2f)
-#define SAMPLE_DIVISION_RATE_AC   ((301 * 5 + 6.2f) / 6.2f)
-/* AFE current-sense PGA gain: numeric multiple only (convert.h scales by it);
- * the SATURN register enum derived from it lives in the BSP afe.h. 4/8/16/32 */
-#define AFE_PGA_GAIN_NUM (8u)
-/* post-conversion current gain compensation, applied to the pu phase/bus
- * currents in the ADC ISR (slm32m030_it.c). Float multiple: 1.2f = x1.2,
- * 1.0f = no extra gain. Implemented as Q8 fixed-point (x * N >> 8). */
-#define CURRENT_GAIN_COMP  (1.2f)
-#define CURRENT_GAIN_Q8    ((int32_t)(CURRENT_GAIN_COMP * 256.0f + 0.5f))
-#define CURRENT_GAIN_SHIFT (8u)
-
-/* ===== 5. motor electrical / mechanical parameters ===== */
+/* ===== 3. motor electrical / mechanical parameters ===== */
 #define MOTOR_RS_OHM       (9.0f)    /* stator resistance [ohm]  */
 #define MOTOR_LD_H         (24e-3f)  /* d-axis inductance [H]    */
 #define MOTOR_LQ_H         (31e-3f)  /* q-axis inductance [H]    */
@@ -69,7 +37,7 @@ extern "C"
 #define MOTOR_J_KGM2       (0.06f)   /* rotor inertia [kg*m^2]   */
 #define MOTOR_B_NMS        (0.0f)    /* viscous friction [N*m*s] */
 
-/* ===== 6. FOC control-loop configuration ===== */
+/* ===== 4. FOC control-loop configuration ===== */
 #define SPEED_RATE_RPM    (1450)                               /* rate speed [rpm] */
 #define SPEED_BASE_RMP    (2000)                               /* pu speed, dueto feedback speed may over flow(negative) */
 #define SPEED_REF_DEFAULT (1260)                               /* default speed reference after start [rpm] */
@@ -102,7 +70,7 @@ extern "C"
 #define VV_MAG_PCT_MAX (5u)  /* VV voltage-vector |u|, % of u_base */
 #define CV_MAG_PCT_MAX (30u) /* CV current-vector |i|, % of i_base */
 
-/* ===== 7. fault parameters =====
+/* ===== 5. fault parameters =====
  * bit0~7 one-shot: fault_set() latches immediately (HW break, ISR OC); cleared
  *                 by CTRL=3 Recovery, not gated by FAULT_POLL_DETECT_ALL_ENABLE.
  * bit8~31 poll: window *_LIMIT + *_DETECT_CNT / *_RECOVER_CNT (1 ms polls). */
@@ -123,8 +91,6 @@ extern "C"
 #define FAULT_ONE_SHOT_ZERO_OFFSET_ERR_ENABLE  (1u)
 #define FAULT_ONE_SHOT_FOC_STARTUP_ERR_ENABLE  (0u)
 /***************** [one shot] fault threshold setting *****************/
-/* id 0: DC bus over current HW (DAC comparator; code built in BSP afe.h) */
-#define HW_OC_TRIP_A (8.0f) /* [A] */
 /* id 1: DC bus over current SW */
 #define SW_BUS_OC_TRIP_A  (8.0f) /* [A] */
 #define SW_BUS_OC_TRIP_PU ((q15_t)((SW_BUS_OC_TRIP_A / I_BASE_A) * Q15_ONE + 0.5f))
@@ -179,7 +145,7 @@ extern "C"
 #define AC_IN_LOST_PHASE_DETECT_CNT  (500u)
 #define AC_IN_LOST_PHASE_RECOVER_CNT (500u)
 
-/* ===== 8. modbus configuration ===== */
+/* ===== 6. modbus configuration ===== */
 #define MB_SLAVE_ADDR (0x01u)
 #define MB_BAUD       (9600u)
 
@@ -203,15 +169,11 @@ typedef struct
 } monitor_parameter_t;
 
 /* ===== shared application runtime data =====
- * g_mc is defined in foc.c; g_monitor_para in main_task.c. The main-task's
- * internal state (machine state, offsets, V/I telemetry, cali/charge counters)
- * is packed into a static block in main_task.c; the carrier ISR reads the
- * zero offsets directly from g_main_para.adc_off_ib/ic/idc. */
+ * g_mc is defined in foc.c; g_monitor_para in main_task.c. */
 extern mc_t                g_mc;
 extern monitor_parameter_t g_monitor_para;
 
 #ifdef __cplusplus
 }
 #endif
-
 #endif

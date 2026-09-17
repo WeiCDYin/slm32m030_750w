@@ -7,7 +7,6 @@ extern "C"
 #endif
 
 #include <stdint.h>
-#include "slm32x030_hal.h"
 
 /* ADC clock + sample-time timing (HAL enum based). Used by ad.c (setup) and
  * tim.c (CCR4 trigger point). */

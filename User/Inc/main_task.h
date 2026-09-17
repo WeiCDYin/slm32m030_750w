@@ -9,7 +9,7 @@ extern "C"
 #include <stdbool.h>
 #include <stddef.h>
 #include "mc.h"
-#include "user_config.h"
+#include "user_control.h"
 
 /* All main-task runtime state is packed into one static instance. The type is
  * main_para_t (not state_t, which is the HSM leaf-state enum from foc.h). */

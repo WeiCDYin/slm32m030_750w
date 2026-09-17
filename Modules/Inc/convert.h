@@ -5,7 +5,7 @@ extern "C"
 {
 #endif
 
-#include "user_config.h"
+#include "user_control.h"
 #include "svm.h" /* SVM_UDC_NOM */
 
 // adc code convert to I pu
@@ -61,8 +61,8 @@ extern "C"
  * the normal operating span, and the single saturate also rails the region the
  * old un-saturated gain multiply used to wrap. |delta| up to ~3268 counts stays
  * inside int32. Derived at compile time: IPHASE_SCALE_FIXED * GAIN / 8. */
-#define IPHASE_GAIN_SHIFT  (15)
-#define IPHASE_GAIN_FIXED  (((IPHASE_SCALE_FIXED * CURRENT_GAIN_Q8 + 4) / 8))
+#define IPHASE_GAIN_SHIFT (15)
+#define IPHASE_GAIN_FIXED (((IPHASE_SCALE_FIXED * CURRENT_GAIN_Q8 + 4) / 8))
 
 /* All converters are header-only static inline so the 6 kHz carrier path pays
  * no call boundary (push/pop/bl/bx) -- the bodies are a few integer ops. */
@@ -116,11 +116,11 @@ static inline int16_t pu_to_rpm(q15_t pu)
     return (int16_t)(((int32_t)pu * PU_TO_RPM_FIXED) >> PU_TO_RPM_SHIFT);
 }
 
-/* Carrier-ISR specialization: arr is the compile-time PWM reload, so the whole
- * scale+clamp expands inline with a constant multiplier (3 calls/tick). */
-static inline uint16_t duty_to_ccr_arr(q15_t d)
+/* Carrier-ISR duty -> CCR ticks. The caller passes the carrier reload (from
+ * port_pwm_get_reload()) so this stays platform-independent. */
+static inline uint16_t duty_to_ccr(q15_t d, uint16_t reload)
 {
-    int32_t c = ((int32_t)d * (int32_t)TIM_PWM_RELOAD_CNT) >> Q15_SHIFT;
+    int32_t c = ((int32_t)d * (int32_t)reload) >> Q15_SHIFT;
     return (uint16_t)c;
 }
 

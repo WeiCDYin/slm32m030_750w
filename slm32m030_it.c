@@ -3,7 +3,7 @@
 #include "main_task.h"
 #include "tim.h"
 #include "uart.h"
-#include "user_config.h"
+#include "user_control.h"
 
 /******************************************************************************/
 /*           Cortex-M0+ Processor Interruption and Exception Handlers */
